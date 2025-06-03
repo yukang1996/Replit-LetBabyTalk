@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 350 20% 98%; /* #fdf2f8 */
+  --foreground: 340 10% 15%; /* #2d1b25 */
+  --muted: 350 30% 94%; /* #f7e7ee */
+  --muted-foreground: 340 8% 45%; /* #736268 */
+  --popover: 350 20% 98%; /* #fdf2f8 */
+  --popover-foreground: 340 10% 15%; /* #2d1b25 */
+  --card: 0 0% 100%; /* #ffffff */
+  --card-foreground: 340 10% 15%; /* #2d1b25 */
+  --border: 350 25% 88%; /* #ebd0dc */
+  --input: 350 25% 88%; /* #ebd0dc */
+  --primary: 335 78% 68%; /* #f472b6 */
+  --primary-foreground: 0 0% 100%; /* #ffffff */
+  --secondary: 280 65% 85%; /* #d8b4fe */
+  --secondary-foreground: 280 20% 20%; /* #44337a */
+  --accent: 335 65% 85%; /* #f8d7da */
+  --accent-foreground: 335 20% 20%; /* #7c2d37 */
+  --destructive: 0 84% 60%; /* #ef4444 */
+  --destructive-foreground: 0 0% 98%; /* #fefefe */
+  --ring: 335 78% 68%; /* #f472b6 */
+  --radius: 1rem;
+}
+
+.dark {
+  --background: 340 15% 8%; /* #1a1216 */
+  --foreground: 350 10% 95%; /* #f5f0f2 */
+  --muted: 340 15% 12%; /* #241a1f */
+  --muted-foreground: 340 8% 65%; /* #a39096 */
+  --popover: 340 15% 8%; /* #1a1216 */
+  --popover-foreground: 350 10% 95%; /* #f5f0f2 */
+  --card: 340 15% 8%; /* #1a1216 */
+  --card-foreground: 350 10% 95%; /* #f5f0f2 */
+  --border: 340 15% 15%; /* #2d222a */
+  --input: 340 15% 15%; /* #2d222a */
+  --primary: 335 78% 68%; /* #f472b6 */
+  --primary-foreground: 0 0% 100%; /* #ffffff */
+  --secondary: 280 65% 25%; /* #5b21b6 */
+  --secondary-foreground: 280 10% 85%; /* #ddd6fe */
+  --accent: 335 65% 25%; /* #be185d */
+  --accent-foreground: 335 10% 85%; /* #fed7e2 */
+  --destructive: 0 62% 50%; /* #dc2626 */
+  --destructive-foreground: 0 0% 98%; /* #fefefe */
+  --ring: 335 78% 68%; /* #f472b6 */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-gradient-to-br from-pink-100 to-purple-100 text-foreground min-h-screen;
+  }
+}
+
+@layer components {
+  .gradient-bg {
+    background: linear-gradient(135deg, #f472b6 0%, #d8b4fe 100%);
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .bear-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .pulse-soft {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
