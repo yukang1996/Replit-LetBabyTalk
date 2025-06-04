@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,18 +14,24 @@ import {
   CreditCard, 
   FileText, 
   Shield, 
-  Phone 
+  Phone,
+  Check,
+  ArrowLeft
 } from "lucide-react";
+import { Language, languageNames } from "@shared/i18n";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, isGuest } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+  const [showLanguageSelection, setShowLanguageSelection] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: t('error.unauthorized'),
+        description: t('error.unauthorized'),
         variant: "destructive",
       });
       setTimeout(() => {
@@ -32,55 +39,121 @@ export default function Settings() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, t]);
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    if (isGuest) {
+      // Clear guest user data
+      localStorage.removeItem('guestUser');
+      localStorage.removeItem('hasCompletedIntro');
+      window.location.reload();
+    } else {
+      window.location.href = "/api/logout";
+    }
+  };
+
+  const handleLanguageSelect = (lang: Language) => {
+    setLanguage(lang);
+    setShowLanguageSelection(false);
+    toast({
+      title: t('common.success'),
+      description: "Language updated successfully!",
+    });
   };
 
   if (isLoading || !isAuthenticated) {
     return null;
   }
 
+  if (showLanguageSelection) {
+    const languages: Language[] = ['en', 'zh', 'ar', 'id'];
+    
+    return (
+      <div className="min-h-screen">
+        {/* Header */}
+        <div className="gradient-bg p-4 flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white hover:bg-white/20 mr-3"
+            onClick={() => setShowLanguageSelection(false)}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-white font-medium text-lg">{t('settings.language')}</span>
+        </div>
+
+        <div className="p-4 pb-20">
+          <Card className="glass-effect">
+            <CardContent className="p-4">
+              <div className="space-y-4">
+                {languages.map((lang) => (
+                  <Button
+                    key={lang}
+                    variant="ghost"
+                    onClick={() => handleLanguageSelect(lang)}
+                    className={cn(
+                      "w-full justify-between p-4 h-auto text-left rounded-2xl",
+                      language === lang 
+                        ? "bg-primary/5 text-primary" 
+                        : "hover:bg-gray-50"
+                    )}
+                  >
+                    <span className="font-medium">{languageNames[lang]}</span>
+                    {language === lang && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Navigation />
+      </div>
+    );
+  }
+
   const settingsItems = [
     {
       icon: User,
-      label: "Account",
+      label: t('settings.account'),
       onClick: () => console.log("Account settings"),
     },
     {
       icon: Baby,
-      label: "Baby Profile",
+      label: t('settings.babyProfile'),
       onClick: () => console.log("Baby profile settings"),
     },
     {
       icon: Globe,
-      label: "Language",
-      onClick: () => console.log("Language settings"),
+      label: t('settings.language'),
+      onClick: () => setShowLanguageSelection(true),
     },
     {
       icon: HelpCircle,
-      label: "User Guide",
+      label: t('settings.userGuide'),
       onClick: () => console.log("User guide"),
     },
     {
       icon: CreditCard,
-      label: "Subscription",
+      label: t('settings.subscription'),
       onClick: () => console.log("Subscription settings"),
     },
     {
       icon: FileText,
-      label: "Terms and Conditions",
+      label: t('settings.terms'),
       onClick: () => console.log("Terms and conditions"),
     },
     {
       icon: Shield,
-      label: "Privacy Policy",
+      label: t('settings.privacy'),
       onClick: () => console.log("Privacy policy"),
     },
     {
       icon: Phone,
-      label: "Contact Us",
+      label: t('settings.contact'),
       onClick: () => console.log("Contact us"),
     },
   ];
@@ -138,7 +211,7 @@ export default function Settings() {
             variant="outline"
             className="w-full border-red-300 text-red-600 hover:bg-red-50 rounded-2xl py-3"
           >
-            Sign Out
+            {t('settings.signOut')}
           </Button>
         </div>
       </div>

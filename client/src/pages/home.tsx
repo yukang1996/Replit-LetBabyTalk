@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Navigation from "@/components/navigation";
@@ -12,13 +13,14 @@ import { Mic, Play, Pause } from "lucide-react";
 export default function Home() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { t } = useLanguage();
 
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: t('error.unauthorized'),
+        description: t('error.unauthorized'),
         variant: "destructive",
       });
       setTimeout(() => {
@@ -26,14 +28,14 @@ export default function Home() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, t]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <BearMascot size="medium" className="mx-auto bear-float mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -49,14 +51,14 @@ export default function Home() {
       <div className="gradient-bg p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <BearMascot size="small" />
-          <span className="text-white font-medium">Enter your baby's info</span>
+          <span className="text-white font-medium">{t('home.enterBabyInfo')}</span>
         </div>
         <Button 
           variant="ghost" 
           size="sm"
           className="text-white hover:bg-white/20"
         >
-          Premium
+          {t('home.premium')}
         </Button>
       </div>
 

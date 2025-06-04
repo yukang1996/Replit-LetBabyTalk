@@ -1,39 +1,41 @@
 import { Link, useLocation } from "wouter";
 import { MessageCircle, BarChart3, Mic, History, Settings } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 
 export default function Navigation() {
   const [location] = useLocation();
+  const { t } = useLanguage();
 
   const navItems = [
     {
       href: "/chatbot",
       icon: MessageCircle,
-      label: "Chatbot",
+      label: t('nav.chatbot'),
       isActive: location === "/chatbot",
     },
     {
       href: "/advisor", 
       icon: BarChart3,
-      label: "Advisor",
+      label: t('nav.advisor'),
       isActive: location === "/advisor",
     },
     {
       href: "/",
       icon: Mic,
-      label: "Home",
+      label: t('nav.home'),
       isActive: location === "/",
     },
     {
       href: "/history",
       icon: History,
-      label: "History", 
+      label: t('nav.history'),
       isActive: location === "/history",
     },
     {
       href: "/settings",
       icon: Settings,
-      label: "Settings",
+      label: t('nav.settings'),
       isActive: location === "/settings",
     },
   ];
