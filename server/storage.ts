@@ -18,6 +18,9 @@ export interface IStorage {
   // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createGuestUser(): Promise<User>;
+  updateUserLanguage(id: string, language: string): Promise<User | undefined>;
+  updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined>;
   
   // Baby profile operations
   getBabyProfiles(userId: string): Promise<BabyProfile[]>;
@@ -85,7 +88,43 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(babyProfiles)
       .where(eq(babyProfiles.id, id) && eq(babyProfiles.userId, userId));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
+  }
+
+  async createGuestUser(): Promise<User> {
+    const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: guestId,
+        email: null,
+        firstName: "Guest",
+        lastName: "User",
+        profileImageUrl: null,
+        isGuest: true,
+        language: "en",
+        hasCompletedOnboarding: false,
+      })
+      .returning();
+    return user;
+  }
+
+  async updateUserLanguage(id: string, language: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ language, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ hasCompletedOnboarding: completed, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
   }
 
   // Recording operations
