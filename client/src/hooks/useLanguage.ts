@@ -1,19 +1,25 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import type { ReactNode } from "react";
+import { useState, useEffect } from "react";
 import { Language, getTranslation } from "@shared/i18n";
 
-interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-}
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
 export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
+  const [language, setLanguageState] = useState<Language>(() => {
+    const stored = localStorage.getItem('language') as Language;
+    return stored || 'en';
+  });
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('language', lang);
+    // Update document direction for RTL languages
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  };
+
+  const t = (key: string) => getTranslation(language, key);
+
+  useEffect(() => {
+    // Set initial direction
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
+
+  return { language, setLanguage, t };
 }

@@ -38,6 +38,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Guest user route
+  app.post('/api/auth/guest', async (req, res) => {
+    try {
+      const guestUser = await storage.createGuestUser();
+      res.status(201).json(guestUser);
+    } catch (error) {
+      console.error("Error creating guest user:", error);
+      res.status(500).json({ message: "Failed to create guest user" });
+    }
+  });
+
+  // Update user language
+  app.patch('/api/auth/user/language', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { language } = req.body;
+      const user = await storage.updateUserLanguage(userId, language);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user language:", error);
+      res.status(500).json({ message: "Failed to update language" });
+    }
+  });
+
+  // Update user onboarding status
+  app.patch('/api/auth/user/onboarding', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { completed } = req.body;
+      const user = await storage.updateUserOnboarding(userId, completed);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating onboarding status:", error);
+      res.status(500).json({ message: "Failed to update onboarding status" });
+    }
+  });
+
   // Baby profile routes
   app.get('/api/baby-profiles', isAuthenticated, async (req: any, res) => {
     try {
