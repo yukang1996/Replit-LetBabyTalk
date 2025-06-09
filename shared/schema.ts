@@ -46,6 +46,7 @@ export const babyProfiles = pgTable("baby_profiles", {
   name: varchar("name").notNull(),
   dateOfBirth: timestamp("date_of_birth").notNull(),
   gender: varchar("gender").notNull(), // 'male' or 'female'
+  photoUrl: varchar("photo_url"), // URL to baby's photo
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

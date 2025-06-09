@@ -9,6 +9,7 @@ import BearMascot from "@/components/bear-mascot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mic, Play, Pause } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
@@ -49,10 +50,12 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Header */}
       <div className="gradient-bg p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <BearMascot size="small" />
-          <span className="text-white font-medium">{t('home.enterBabyInfo')}</span>
-        </div>
+        <Link href="/baby-selection">
+          <div className="flex items-center space-x-3 cursor-pointer">
+            <BearMascot size="small" />
+            <span className="text-white font-medium">{t('home.enterBabyInfo')}</span>
+          </div>
+        </Link>
         <Button 
           variant="ghost" 
           size="sm"
