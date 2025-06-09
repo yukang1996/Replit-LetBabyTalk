@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import BabyProfile from "@/pages/baby-profile";
+import BabySelection from "@/pages/baby-selection";
 import Settings from "@/pages/settings";
 import History from "@/pages/history";
 import NotFound from "@/pages/not-found";
@@ -22,6 +23,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/baby-profile" component={BabyProfile} />
+          <Route path="/baby-selection" component={BabySelection} />
           <Route path="/settings" component={Settings} />
           <Route path="/history" component={History} />
         </>
