@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { insertBabyProfileSchema } from "@shared/schema";
+import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -34,10 +35,8 @@ export default function BabyProfile() {
   });
 
   const form = useForm<BabyProfileForm>({
-    resolver: zodResolver(insertBabyProfileSchema.extend({
-      dateOfBirth: insertBabyProfileSchema.shape.dateOfBirth.transform((date) => 
-        new Date(date)
-      ),
+    resolver: zodResolver(insertBabyProfileSchema.omit({ dateOfBirth: true }).extend({
+      dateOfBirth: z.string().min(1, "Date of birth is required"),
     })),
     defaultValues: {
       name: "",

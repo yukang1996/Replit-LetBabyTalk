@@ -17,6 +17,7 @@ import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertBabyProfileSchema } from "@shared/schema";
+import { z } from "zod";
 import { cn } from "@/lib/utils";
 
 type BabyProfileForm = {
@@ -50,10 +51,8 @@ export default function BabySelection() {
   }>;
 
   const form = useForm<BabyProfileForm>({
-    resolver: zodResolver(insertBabyProfileSchema.extend({
-      dateOfBirth: insertBabyProfileSchema.shape.dateOfBirth.transform((date) => 
-        new Date(date)
-      ),
+    resolver: zodResolver(insertBabyProfileSchema.omit({ dateOfBirth: true }).extend({
+      dateOfBirth: z.string().min(1, "Date of birth is required"),
     })),
     defaultValues: {
       name: "",
