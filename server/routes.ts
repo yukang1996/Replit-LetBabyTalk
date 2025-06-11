@@ -90,7 +90,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/baby-profiles', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const validatedData = insertBabyProfileSchema.parse(req.body);
+      // Convert dateOfBirth string to Date object before validation
+      const requestData = {
+        ...req.body,
+        dateOfBirth: new Date(req.body.dateOfBirth)
+      };
+      const validatedData = insertBabyProfileSchema.parse(requestData);
       const profile = await storage.createBabyProfile(userId, validatedData);
       res.status(201).json(profile);
     } catch (error) {

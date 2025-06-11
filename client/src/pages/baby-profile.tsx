@@ -49,13 +49,7 @@ export default function BabyProfile() {
 
   const createMutation = useMutation({
     mutationFn: async (data: BabyProfileForm) => {
-      const dateObj = new Date(data.dateOfBirth);
-      const payload = {
-        name: data.name,
-        gender: data.gender,
-        dateOfBirth: dateObj.toISOString(),
-      };
-      await apiRequest("POST", "/api/baby-profiles", payload);
+      await apiRequest("POST", "/api/baby-profiles", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
