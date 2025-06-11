@@ -35,9 +35,11 @@ export default function BabyProfile() {
   });
 
   const form = useForm<BabyProfileForm>({
-    resolver: zodResolver(insertBabyProfileSchema.omit({ dateOfBirth: true }).extend({
-      dateOfBirth: z.string().min(1, "Date of birth is required"),
-    })),
+    resolver: zodResolver(
+      insertBabyProfileSchema.omit({ dateOfBirth: true }).extend({
+        dateOfBirth: z.string().min(1, "Date of birth is required"),
+      }),
+    ),
     defaultValues: {
       name: "",
       dateOfBirth: "",
@@ -48,7 +50,8 @@ export default function BabyProfile() {
   const createMutation = useMutation({
     mutationFn: async (data: BabyProfileForm) => {
       const payload = {
-        ...data,
+        name: data.name,
+        gender: data.gender,
         dateOfBirth: new Date(data.dateOfBirth),
       };
       await apiRequest("POST", "/api/baby-profiles", payload);
@@ -140,7 +143,11 @@ export default function BabyProfile() {
       {/* Header */}
       <div className="gradient-bg p-4 flex items-center">
         <Link href="/">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 mr-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/20 mr-3"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
@@ -167,7 +174,10 @@ export default function BabyProfile() {
         {isEditing && (
           <Card className="glass-effect mb-4">
             <CardContent className="p-6">
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 {/* Profile Picture Placeholder */}
                 <div className="flex justify-center">
                   <div className="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center">
@@ -188,7 +198,9 @@ export default function BabyProfile() {
                     {...form.register("name")}
                   />
                   {form.formState.errors.name && (
-                    <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.name.message}
+                    </p>
                   )}
                 </div>
 
@@ -205,7 +217,9 @@ export default function BabyProfile() {
                     {...form.register("dateOfBirth")}
                   />
                   {form.formState.errors.dateOfBirth && (
-                    <p className="text-sm text-red-500">{form.formState.errors.dateOfBirth.message}</p>
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.dateOfBirth.message}
+                    </p>
                   )}
                 </div>
 
@@ -214,18 +228,26 @@ export default function BabyProfile() {
                   <Label className="text-gray-700">Gender</Label>
                   <RadioGroup
                     value={form.watch("gender")}
-                    onValueChange={(value) => form.setValue("gender", value as "male" | "female")}
+                    onValueChange={(value) =>
+                      form.setValue("gender", value as "male" | "female")
+                    }
                     className="flex space-x-4"
                   >
                     <div className="flex items-center space-x-2 bg-blue-50 rounded-full px-6 py-3 flex-1">
                       <RadioGroupItem value="male" id="male" />
-                      <Label htmlFor="male" className="text-blue-600 font-medium flex-1 text-center">
+                      <Label
+                        htmlFor="male"
+                        className="text-blue-600 font-medium flex-1 text-center"
+                      >
                         MALE
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 bg-pink-50 rounded-full px-6 py-3 flex-1">
                       <RadioGroupItem value="female" id="female" />
-                      <Label htmlFor="female" className="text-pink-600 font-medium flex-1 text-center">
+                      <Label
+                        htmlFor="female"
+                        className="text-pink-600 font-medium flex-1 text-center"
+                      >
                         FEMALE
                       </Label>
                     </div>
@@ -276,9 +298,12 @@ export default function BabyProfile() {
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-800">{profile.name}</h3>
+                        <h3 className="font-medium text-gray-800">
+                          {profile.name}
+                        </h3>
                         <p className="text-sm text-gray-500">
-                          {new Date(profile.dateOfBirth).toLocaleDateString()} • {profile.gender}
+                          {new Date(profile.dateOfBirth).toLocaleDateString()} •{" "}
+                          {profile.gender}
                         </p>
                       </div>
                     </div>
@@ -298,7 +323,9 @@ export default function BabyProfile() {
           </div>
         ) : !isEditing ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">No baby profiles yet. Add your first one!</p>
+            <p className="text-gray-500">
+              No baby profiles yet. Add your first one!
+            </p>
           </div>
         ) : null}
       </div>
