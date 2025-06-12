@@ -14,6 +14,7 @@ import { Eye, EyeOff, Mail, Lock, Facebook, Apple } from "lucide-react";
 import { FaGoogle, FaWeixin } from "react-icons/fa";
 import { Link } from "wouter";
 import { z } from "zod";
+import PhoneInput from "@/components/phone-input";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email").optional(),
@@ -160,12 +161,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 <Label htmlFor="phone" className="text-gray-700">
                   📱 Phone Number
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
+                <PhoneInput
+                  value={form.watch("phone") || ""}
+                  onChange={(value) => form.setValue("phone", value)}
                   placeholder="Enter your phone number"
-                  className="rounded-xl border-gray-200"
-                  {...form.register("phone")}
+                  className="rounded-xl"
                 />
                 {form.formState.errors.phone && (
                   <p className="text-sm text-red-500">

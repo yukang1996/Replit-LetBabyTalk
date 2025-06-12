@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { z } from "zod";
+import PhoneInput from "@/components/phone-input";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -180,12 +181,11 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
                 <Label htmlFor="phone" className="text-gray-700">
                   📱 Phone Number
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
+                <PhoneInput
+                  value={form.watch("phone") || ""}
+                  onChange={(value) => form.setValue("phone", value)}
                   placeholder="Enter your phone number"
-                  className="rounded-xl border-gray-200"
-                  {...form.register("phone")}
+                  className="rounded-xl"
                 />
                 {form.formState.errors.phone && (
                   <p className="text-sm text-red-500">
@@ -276,7 +276,11 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
               onClick={() => {
                 // Create guest account
                 fetch("/api/auth/guest", { method: "POST" })
-                  .then(() => window.location.reload())
+                  .then(response => response.json())
+                  .then(() => {
+                    localStorage.setItem("onboardingCompleted", "true");
+                    window.location.href = "/";
+                  })
                   .catch(() => {
                     toast({
                       title: "Error",

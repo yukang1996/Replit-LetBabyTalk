@@ -70,7 +70,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   };
 
   const handleWelcomeComplete = () => {
-    handleStepComplete("login");
+    handleStepComplete("signup");
   };
 
   const handleLoginSuccess = () => {
