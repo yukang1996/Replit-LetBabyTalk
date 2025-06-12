@@ -104,8 +104,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
-      <Card className="w-full max-w-md glass-effect">
+    <div className="min-h-screen gradient-bg flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <Card className="w-full max-w-sm sm:max-w-md lg:max-w-lg glass-effect">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800">
             Welcome Back

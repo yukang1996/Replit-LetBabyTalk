@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Responsive utilities */
+@layer components {
+  .container-responsive {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .text-responsive {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+  
+  .heading-responsive {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .card-responsive {
+    @apply w-full max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl;
+  }
+  
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
+}
+
 :root {
   --background: 350 20% 98%; /* #fdf2f8 */
   --foreground: 340 10% 15%; /* #2d1b25 */

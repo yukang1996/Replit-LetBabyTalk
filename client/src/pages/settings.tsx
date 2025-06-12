@@ -41,14 +41,21 @@ export default function Settings() {
     }
   }, [isAuthenticated, isLoading, toast, t]);
 
-  const handleLogout = () => {
-    if (isGuest) {
-      // Clear guest user data
-      localStorage.removeItem('guestUser');
-      localStorage.removeItem('hasCompletedIntro');
-      window.location.reload();
-    } else {
-      window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      // Clear session on server
+      await fetch('/api/auth/logout', { method: 'POST' });
+      
+      // Clear all local storage
+      localStorage.clear();
+      
+      // Redirect to login page
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Force redirect even if logout fails
+      localStorage.clear();
+      window.location.href = "/login";
     }
   };
 

@@ -31,7 +31,14 @@ function Router() {
         setShowOnboarding(true);
       }
     }
-  }, [isLoading, isAuthenticated]);
+    // Reset onboarding state if user logs out
+    if (!isLoading && !isAuthenticated && !showOnboarding) {
+      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
+      if (onboardingCompleted !== "true") {
+        setShowOnboarding(true);
+      }
+    }
+  }, [isLoading, isAuthenticated, showOnboarding]);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -45,8 +52,10 @@ function Router() {
   return (
     <Switch>
       {/* Protected routes */}
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={() => <Login onLoginSuccess={handleOnboardingComplete} />} />
+      {isLoading ? (
+        <Route path="*" component={() => <div className="min-h-screen flex items-center justify-center">Loading...</div>} />
+      ) : !isAuthenticated ? (
+        <Route path="*" component={() => <Login onLoginSuccess={handleOnboardingComplete} />} />
       ) : (
         <>
           <Route path="/" component={BabySelection} />
