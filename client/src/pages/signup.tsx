@@ -9,14 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Facebook, Apple } from "lucide-react";
+import { FaGoogle, FaWeixin } from "react-icons/fa";
 import { Link } from "wouter";
 import { z } from "zod";
 import PhoneInput from "@/components/phone-input";
 
 const signupSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email").optional(),
   phone: z.string().min(10, "Please enter a valid phone number").optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -45,8 +44,6 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
       email: "",
       phone: "",
       password: "",
@@ -98,42 +95,6 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-gray-700">
-                  <User className="w-4 h-4 inline mr-2" />
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  placeholder="First name"
-                  className="rounded-xl border-gray-200"
-                  {...form.register("firstName")}
-                />
-                {form.formState.errors.firstName && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.firstName.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-gray-700">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  placeholder="Last name"
-                  className="rounded-xl border-gray-200"
-                  {...form.register("lastName")}
-                />
-                {form.formState.errors.lastName && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.lastName.message}
-                  </p>
-                )}
-              </div>
-            </div>
 
             {/* Authentication Type Toggle */}
             <div className="flex space-x-2 mb-4">
