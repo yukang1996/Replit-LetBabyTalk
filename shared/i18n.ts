@@ -2,6 +2,13 @@ export type Language = 'en' | 'zh' | 'ar' | 'id';
 
 export const translations = {
   en: {
+    // Welcome
+    'welcome.title': 'Welcome to LetBabyTalk',
+    'welcome.subtitle': 'Your AI-powered parenting assistant to understand baby cries and needs',
+    'welcome.signInSignUp': 'Sign In / Sign Up',
+    'welcome.continueAsGuest': 'Continue as Guest',
+    'welcome.guestInfo': 'Guest accounts give you full access. You can create a permanent account later.',
+
     // Onboarding
     'onboarding.welcome': 'Welcome to LetBabyTalk',
     'onboarding.subtitle': 'Your Personalized Parenting Assistant',
