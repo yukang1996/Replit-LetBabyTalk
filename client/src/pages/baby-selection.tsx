@@ -381,16 +381,13 @@ export default function BabySelection() {
                   )}
                 </div>
 
-                {/* Recording Button */}
+                {/* Continue Button */}
                 <div className="text-center">
                   <Link href="/">
-                    <Button className="w-32 h-32 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                        <div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"></div>
-                      </div>
+                    <Button className="w-full gradient-bg text-white rounded-2xl py-3">
+                      Continue
                     </Button>
                   </Link>
-                  <p className="text-gray-600 mt-4">{t('home.tapToRecord')}</p>
                 </div>
               </div>
             ) : (
@@ -399,11 +396,11 @@ export default function BabySelection() {
                 <p className="text-gray-600 mb-6">{t('babyProfile.noProfiles')}</p>
                 <Button
                   onClick={() => setShowCreateForm(true)}
-                  className="w-32 h-32 rounded-full bg-pink-100 hover:bg-pink-200 text-pink-600 border-2 border-dashed border-pink-300"
+                  className="w-full gradient-bg text-white rounded-2xl py-3"
                 >
-                  <Plus className="w-12 h-12" />
+                  <Plus className="w-5 h-5 mr-2" />
+                  {t('babyProfile.add')}
                 </Button>
-                <p className="text-gray-600">{t('babyProfile.add')}</p>
               </div>
             )}
 
