@@ -75,7 +75,7 @@ export default function PhoneInput({ value, onChange, placeholder = "Enter phone
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[120px] justify-between rounded-r-none border-r-0"
+            className="w-[100px] sm:w-[120px] justify-between rounded-r-none border-r-0"
           >
             <span className="flex items-center">
               <span className="mr-1">{selectedCountry.flag}</span>
