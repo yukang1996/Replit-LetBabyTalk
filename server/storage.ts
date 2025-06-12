@@ -15,12 +15,14 @@ import { eq, desc } from "drizzle-orm";
 // Interface for storage operations
 export interface IStorage {
   // User operations
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createUser(user: UpsertUser): Promise<User>;
   createGuestUser(): Promise<User>;
   updateUserLanguage(id: string, language: string): Promise<User | undefined>;
   updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined>;
+  updateUserPassword(id: string, hashedPassword: string): Promise<User | undefined>;
   
   // Baby profile operations
   getBabyProfiles(userId: string): Promise<BabyProfile[]>;
@@ -32,6 +34,7 @@ export interface IStorage {
   getRecordings(userId: string): Promise<Recording[]>;
   createRecording(userId: string, recording: InsertRecording): Promise<Recording>;
   getRecording(id: number, userId: string): Promise<Recording | undefined>;
+  updateRecordingVote(id: number, userId: string, vote: string): Promise<Recording | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -40,6 +43,19 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .returning();
     return user;
   }
 
@@ -54,6 +70,18 @@ export class DatabaseStorage implements IStorage {
           updatedAt: new Date(),
         },
       })
+      .returning();
+    return user;
+  }
+
+  async updateUserPassword(id: string, hashedPassword: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ 
+        password: hashedPassword,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, id))
       .returning();
     return user;
   }
@@ -149,6 +177,15 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(recordings)
       .where(eq(recordings.id, id) && eq(recordings.userId, userId));
+    return recording;
+  }
+
+  async updateRecordingVote(id: number, userId: string, vote: string): Promise<Recording | undefined> {
+    const [recording] = await db
+      .update(recordings)
+      .set({ vote })
+      .where(eq(recordings.id, id) && eq(recordings.userId, userId))
+      .returning();
     return recording;
   }
 }
