@@ -19,24 +19,42 @@ export default function HistoryPage() {
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  const { data: recordings = [], isLoading: recordingsLoading } = useQuery({
+  const { data: recordings = [], isLoading } = useQuery({
     queryKey: ["/api/recordings"],
     enabled: isAuthenticated,
   });
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+  const voteMutation = useMutation({
+    mutationFn: async ({ recordingId, vote }: { recordingId: number; vote: string }) => {
+      return await apiRequest("POST", `/api/recordings/${recordingId}/vote`, { vote });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/recordings"] });
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: "Feedback Recorded",
+        description: "Thank you for your feedback!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Failed to record feedback",
         variant: "destructive",
       });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
+    },
+  });
+
+  const handlePlayPause = (recordingId: number) => {
+    if (playingId === recordingId) {
+      setPlayingId(null);
+    } else {
+      setPlayingId(recordingId);
     }
-  }, [isAuthenticated, isLoading, toast]);
+  };
+
+  const handleVote = (recordingId: number, vote: string) => {
+    voteMutation.mutate({ recordingId, vote });
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

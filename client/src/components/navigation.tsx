@@ -21,10 +21,10 @@ export default function Navigation() {
       isActive: location === "/advisor",
     },
     {
-      href: "/",
+      href: "/record",
       icon: Mic,
-      label: t('nav.home'),
-      isActive: location === "/",
+      label: "Record",
+      isActive: location === "/record",
     },
     {
       href: "/history",

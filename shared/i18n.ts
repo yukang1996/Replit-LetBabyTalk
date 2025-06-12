@@ -18,6 +18,7 @@ export const translations = {
     'nav.chatbot': 'Chatbot',
     'nav.advisor': 'Advisor',
     'nav.home': 'Home',
+    'nav.record': 'Record',
     'nav.history': 'History',
     'nav.settings': 'Settings',
     
