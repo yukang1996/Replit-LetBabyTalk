@@ -1,16 +1,23 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { History, Play, Clock, TrendingUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Play, Pause, ThumbsUp, ThumbsDown, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function HistoryPage() {
+  const { isAuthenticated, user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [playingId, setPlayingId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const { data: recordings = [], isLoading: recordingsLoading } = useQuery({
     queryKey: ["/api/recordings"],
