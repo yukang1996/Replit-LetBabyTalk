@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user onboarding status
   app.patch('/api/auth/user/onboarding', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { completed } = req.body;
       const user = await storage.updateUserOnboarding(userId, completed);
       res.json(user);
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Baby profile routes
   app.get('/api/baby-profiles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profiles = await storage.getBabyProfiles(userId);
       res.json(profiles);
     } catch (error) {
@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/baby-profiles', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       // Convert dateOfBirth string to Date object before validation
       const requestData = {
         ...req.body,
@@ -259,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/baby-profiles/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profileId = parseInt(req.params.id);
       const validatedData = insertBabyProfileSchema.partial().parse(req.body);
       const profile = await storage.updateBabyProfile(profileId, userId, validatedData);
@@ -277,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/baby-profiles/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profileId = parseInt(req.params.id);
       const deleted = await storage.deleteBabyProfile(profileId, userId);
       
@@ -295,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Recording routes
   app.get('/api/recordings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const recordings = await storage.getRecordings(userId);
       res.json(recordings);
     } catch (error) {
@@ -306,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/recordings', isAuthenticated, upload.single('audio'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       if (!req.file) {
         return res.status(400).json({ message: "No audio file provided" });
@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/recordings/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const recordingId = parseInt(req.params.id);
       const recording = await storage.getRecording(recordingId, userId);
       
