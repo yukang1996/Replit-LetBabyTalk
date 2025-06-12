@@ -16,12 +16,16 @@ import { z } from "zod";
 const signupSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Please enter a valid email"),
+  email: z.string().email("Please enter a valid email").optional(),
+  phone: z.string().min(10, "Please enter a valid phone number").optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine((data) => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 type SignupForm = z.infer<typeof signupSchema>;
@@ -33,6 +37,7 @@ interface SignupProps {
 export default function Signup({ onSignupSuccess }: SignupProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [authType, setAuthType] = useState<"email" | "phone">("email");
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -42,6 +47,7 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
       firstName: "",
       lastName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     },

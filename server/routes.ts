@@ -26,15 +26,21 @@ const upload = multer({
 });
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
   password: z.string().min(6),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+}).refine((data) => data.email || data.phone, {
+  message: "Either email or phone number is required",
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
   password: z.string(),
+}).refine((data) => data.email || data.phone, {
+  message: "Either email or phone number is required",
 });
 
 const forgotPasswordSchema = z.object({
@@ -64,10 +70,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register new user
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, password, firstName, lastName } = registerSchema.parse(req.body);
+      const { email, phone, password, firstName, lastName } = registerSchema.parse(req.body);
       
       // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
+      let existingUser = null;
+      if (email) {
+        existingUser = await storage.getUserByEmail(email);
+      }
+      if (!existingUser && phone) {
+        existingUser = await storage.getUserByPhone(phone);
+      }
+      
       if (existingUser) {
         return res.status(400).json({ message: "User already exists" });
       }
@@ -77,6 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newUser = await storage.createUser({
         id: uuidv4(),
         email,
+        phone,
         password: hashedPassword,
         firstName,
         lastName,
