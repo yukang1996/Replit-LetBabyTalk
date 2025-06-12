@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingFlow from "@/components/onboarding-flow";
+import Welcome from "@/pages/welcome";
 import BabySelection from "@/pages/baby-selection";
 import Home from "@/pages/home";
 import BabyProfile from "@/pages/baby-profile";
@@ -23,6 +24,7 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -41,12 +43,27 @@ function Router() {
   }, [isLoading, isAuthenticated, showOnboarding]);
 
   const handleOnboardingComplete = () => {
+    localStorage.setItem("onboardingCompleted", "true");
     setShowOnboarding(false);
+    setShowWelcome(true);
+  };
+
+  const handleWelcomeToLogin = () => {
+    setShowWelcome(false);
+  };
+
+  const handleGuestComplete = () => {
+    setShowWelcome(false);
   };
 
   // Show onboarding flow for new users
   if (showOnboarding) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
+
+  // Show welcome page for returning users
+  if (showWelcome) {
+    return <Welcome onLoginRedirect={handleWelcomeToLogin} onGuestComplete={handleGuestComplete} />;
   }
 
   return (
