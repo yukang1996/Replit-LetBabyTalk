@@ -24,6 +24,7 @@ export interface IStorage {
   updateUserLanguage(id: string, language: string): Promise<User | undefined>;
   updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined>;
   updateUserPassword(id: string, hashedPassword: string): Promise<User | undefined>;
+  linkGuestAccount(guestId: string, userData: Partial<UpsertUser>): Promise<User | undefined>;
   
   // Baby profile operations
   getBabyProfiles(userId: string): Promise<BabyProfile[]>;
@@ -193,6 +194,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(recordings.id, id) && eq(recordings.userId, userId))
       .returning();
     return recording;
+  }
+
+  async linkGuestAccount(guestId: string, userData: Partial<UpsertUser>): Promise<User | undefined> {
+    // Update guest account to full account
+    const [user] = await db
+      .update(users)
+      .set({
+        ...userData,
+        isGuest: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, guestId))
+      .returning();
+    return user;
   }
 }
 
