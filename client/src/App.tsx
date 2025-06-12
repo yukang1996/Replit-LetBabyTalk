@@ -44,13 +44,6 @@ function Router() {
 
   return (
     <Switch>
-      {/* Authentication routes (accessible without login) */}
-      <Route path="/login" component={Login} />
-      <Route path="/signup" component={Signup} />
-      <Route path="/forgot-password" component={ForgotPassword} />
-      <Route path="/verification" component={Verification} />
-      <Route path="/reset-password" component={ResetPassword} />
-      
       {/* Protected routes */}
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={() => <Login onLoginSuccess={handleOnboardingComplete} />} />
