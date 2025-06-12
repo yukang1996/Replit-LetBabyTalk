@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Mail, Lock, Facebook, Apple } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Facebook, Apple, ArrowLeft } from "lucide-react";
 import { FaGoogle, FaWeixin } from "react-icons/fa";
 import { Link } from "wouter";
 import { z } from "zod";
@@ -228,6 +228,46 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
               {signupMutation.isPending ? "Creating account..." : "Create Account"}
             </Button>
           </form>
+
+          {/* Social Login Options */}
+          <div className="space-y-4 mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Or sign up with</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: "Coming Soon",
+                    description: "Google login will be available soon",
+                  });
+                }}
+                className="rounded-xl border-gray-200 hover:bg-gray-50"
+              >
+                <FaGoogle className="w-4 h-4 text-red-500" />
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: "Coming Soon",
+                    description: "Facebook login will be available soon",
+                  });
+                }}
+                className="rounded-xl border-gray-200 hover:bg-gray-50"
+              >
+                <Facebook className="w-4 h-4 text-blue-600" />
+              </Button>
+            </div>
+          </div>
 
           <div className="text-center mt-6">
             <Button
