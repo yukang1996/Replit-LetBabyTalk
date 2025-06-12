@@ -29,6 +29,7 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   email: varchar("email").unique(),
+  password: varchar("password"), // For email/password auth
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -59,6 +60,7 @@ export const recordings = pgTable("recordings", {
   filename: varchar("filename").notNull(),
   duration: integer("duration"), // in seconds
   analysisResult: jsonb("analysis_result"), // AI analysis results
+  vote: varchar("vote"), // 'good' or 'bad' for user feedback
   recordedAt: timestamp("recorded_at").defaultNow(),
 });
 

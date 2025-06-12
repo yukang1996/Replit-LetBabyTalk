@@ -1,0 +1,51 @@
+Hello! I am developing a "LetBabyTalk" application using React, Vite, Express, and Drizzle ORM with PostgreSQL. I have an existing codebase and a flowchart that details the complete user pipeline I want to achieve.
+My goal is to refactor and enhance the current codebase to perfectly match the logic and flow described in the attached flowchart image. Please generate the complete, updated code for all necessary new and modified files.
+Here are the key areas of implementation based on the flowchart:
+1. Onboarding & Authentication Flow
+The current authentication is tied to Replit's OIDC and a guest mode. I need a more robust and generic system that follows the flowchart's linear onboarding process for all new users.
+Strict Onboarding Flow: For any user opening the app for the first time, enforce the following sequence:
+LetBabyTalk app page: This is the initial launch.
+5sec ads page: Create a simple, skippable placeholder component that shows for 5 seconds before automatically proceeding.
+Language selection page: The existing language-selection.tsx is a good base.
+Welcome page & Introduction of app: The existing onboarding.tsx flow can be adapted for this.
+Login/Sign Up Page: After the intro, the user must land here.
+Bypass Onboarding: Use localStorage to set a flag (e.g., onboardingCompleted: true) after a user finishes this flow once, so they are taken directly to the Login/Sign Up Page on subsequent visits.
+New Login/Sign Up Page:
+This should be a new page component.
+It must feature a primary login method using Email and Password.
+Include placeholder buttons for social logins: Facebook, WeChat, Apple, and Google. These buttons don't need full functionality yet but should be present in the UI.
+Provide clear links to separate "Sign Up" and "Forgot Password" pages/flows.
+Email/Password Flows:
+Sign Up: Create a new page for user registration with fields for email and password. After successful sign-up, lead to a placeholder Verification page which then redirects to the Login page.
+Forgot Password: Implement a three-step flow:
+Page to enter an email address.
+A placeholder Verification page (simulating a code being sent).
+A Change Password page to set a new password.
+Backend Implementation:
+Modify server/routes.ts and server/storage.ts.
+Add new API endpoints for user registration (/api/auth/register), login (/api/auth/login), and the forgot password flow.
+Integrate passport with passport-local for the email/password strategy. Use a library like bcrypt for password hashing.
+Update the users table in shared/schema.ts to include a password column for storing the hashed password.
+2. Post-Login Application Structure
+The user experience after logging in needs to be refined to match the flowchart.
+Homepage as a Hub: After a user logs in, they should be directed to a central Homepage. The current /baby-selection page is a good candidate to be repurposed as this Homepage. It should allow users to select their active baby profile.
+Navigation: The main bottom navigation bar (components/navigation.tsx) should be the primary way to access core features. Ensure it includes:
+Record (leads to the recording page, which can be the repurposed pages/home.tsx).
+History (leads to /history).
+Settings (leads to /settings).
+Advisor (Premium): Create a placeholder page for this that shows a "Premium Feature" message.
+Chatbot (Premium): Create another placeholder page for this with a "Premium Feature" message.
+Routing: Update the main router in client/src/App.tsx to include all these new and updated routes.
+3. History Page Enhancements
+The History page needs to be more data-rich as per the flowchart.
+Histogram View: In client/src/pages/history.tsx, implement a histogram (bar chart) at the top of the page using recharts. This chart should display the total count of different cry types (e.g., hunger, tired) recorded on a specific day. Add controls to let the user switch the view between different days.
+Good/Bad Voting: For each individual recording displayed in the list below the histogram, add "Good" (👍) and "Bad" (👎) voting buttons. When a user votes, the choice should be visually indicated and persisted.
+Backend for Voting:
+Create a new API endpoint: POST /api/recordings/:id/vote.
+Update the recordings table in shared/schema.ts to add a vote column (e.g., varchar that can store 'good' or 'bad').
+Implement the logic in server/storage.ts to update a recording's vote.
+4. Database Schema and Migrations
+Reflect the backend changes in the database schema.
+Update shared/schema.ts as described above (add password to users, vote to recordings).
+After updating the schema, please include the command to generate the new Drizzle Kit migration push command in your instructions, which would be npm run db:push.
+Please ensure all new UI components are styled consistently with the existing theme using Tailwind CSS and shadcn/ui. All new user-facing text should be added to shared/i18n.ts to maintain internationalization.
