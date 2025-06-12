@@ -35,15 +35,25 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Local strategy for email/password authentication
+  // Local strategy for email/phone/password authentication
   passport.use(new LocalStrategy(
     {
       usernameField: 'email',
-      passwordField: 'password'
+      passwordField: 'password',
+      passReqToCallback: true
     },
-    async (email, password, done) => {
+    async (req, username, password, done) => {
       try {
-        const user = await storage.getUserByEmail(email);
+        const { email, phone } = req.body;
+        let user = null;
+        
+        // Try to find user by email or phone
+        if (email) {
+          user = await storage.getUserByEmail(email);
+        } else if (phone) {
+          user = await storage.getUserByPhone(phone);
+        }
+        
         if (!user || !user.password) {
           return done(null, false, { message: 'Invalid email or password' });
         }

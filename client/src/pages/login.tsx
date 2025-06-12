@@ -16,8 +16,12 @@ import { Link } from "wouter";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
+  email: z.string().email("Please enter a valid email").optional(),
+  phone: z.string().min(10, "Please enter a valid phone number").optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
+}).refine((data) => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -28,6 +32,7 @@ interface LoginProps {
 
 export default function Login({ onLoginSuccess }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [authType, setAuthType] = useState<"email" | "phone">("email");
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -35,6 +40,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
+      phone: "",
       password: "",
     },
   });
@@ -108,24 +114,66 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         <CardContent className="space-y-6">
           {/* Email/Password Form */}
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">
-                <Mail className="w-4 h-4 inline mr-2" />
+            {/* Authentication Type Toggle */}
+            <div className="flex space-x-2 mb-4">
+              <Button
+                type="button"
+                variant={authType === "email" ? "default" : "outline"}
+                onClick={() => setAuthType("email")}
+                className="flex-1"
+              >
+                <Mail className="w-4 h-4 mr-2" />
                 Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="rounded-xl border-gray-200"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
+              </Button>
+              <Button
+                type="button"
+                variant={authType === "phone" ? "default" : "outline"}
+                onClick={() => setAuthType("phone")}
+                className="flex-1"
+              >
+                📱 Phone
+              </Button>
             </div>
+
+            {/* Email or Phone Input */}
+            {authType === "email" ? (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-700">
+                  <Mail className="w-4 h-4 inline mr-2" />
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className="rounded-xl border-gray-200"
+                  {...form.register("email")}
+                />
+                {form.formState.errors.email && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-gray-700">
+                  📱 Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  className="rounded-xl border-gray-200"
+                  {...form.register("phone")}
+                />
+                {form.formState.errors.phone && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.phone.message}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-700">

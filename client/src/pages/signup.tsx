@@ -134,24 +134,66 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">
-                <Mail className="w-4 h-4 inline mr-2" />
+            {/* Authentication Type Toggle */}
+            <div className="flex space-x-2 mb-4">
+              <Button
+                type="button"
+                variant={authType === "email" ? "default" : "outline"}
+                onClick={() => setAuthType("email")}
+                className="flex-1"
+              >
+                <Mail className="w-4 h-4 mr-2" />
                 Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="rounded-xl border-gray-200"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
+              </Button>
+              <Button
+                type="button"
+                variant={authType === "phone" ? "default" : "outline"}
+                onClick={() => setAuthType("phone")}
+                className="flex-1"
+              >
+                📱 Phone
+              </Button>
             </div>
+
+            {/* Email or Phone Input */}
+            {authType === "email" ? (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-700">
+                  <Mail className="w-4 h-4 inline mr-2" />
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className="rounded-xl border-gray-200"
+                  {...form.register("email")}
+                />
+                {form.formState.errors.email && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-gray-700">
+                  📱 Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  className="rounded-xl border-gray-200"
+                  {...form.register("phone")}
+                />
+                {form.formState.errors.phone && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.phone.message}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-700">
@@ -227,6 +269,26 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
           </form>
 
           <div className="text-center mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mb-4"
+              onClick={() => {
+                // Create guest account
+                fetch("/api/auth/guest", { method: "POST" })
+                  .then(() => window.location.reload())
+                  .catch(() => {
+                    toast({
+                      title: "Error",
+                      description: "Failed to create guest account",
+                      variant: "destructive",
+                    });
+                  });
+              }}
+            >
+              Continue as Guest
+            </Button>
+            
             <span className="text-gray-600 text-sm">
               Already have an account?{" "}
               <Link href="/login">
