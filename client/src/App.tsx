@@ -26,6 +26,9 @@ function Router() {
   const { isAuthenticated, isLoading, refetch } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [, navigate] = useLocation();
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState<string>("");
+  const [showForgotPasswordVerification, setShowForgotPasswordVerification] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -76,7 +79,34 @@ function Router() {
         <>
           <Route path="/signin" component={() => <Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/signup" component={() => <Signup onSignupSuccess={handleSignupSuccess} />} />
-          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/forgot-password">
+          {showForgotPasswordVerification ? (
+            <Verification
+              type="forgot-password"
+              email={forgotPasswordEmail}
+              onVerificationSuccess={() => {
+                setShowForgotPasswordVerification(false);
+                setShowResetPassword(true);
+              }}
+            />
+          ) : showResetPassword ? (
+            <ResetPassword
+              email={forgotPasswordEmail}
+              onResetSuccess={() => {
+                setShowResetPassword(false);
+                setForgotPasswordEmail("");
+                // Navigate back to login
+                navigate("/signin");
+              }}
+            />
+          ) : (
+            <ForgotPassword onSubmitSuccess={(email) => {
+              console.log('Forgot password submitted for:', email);
+              setForgotPasswordEmail(email);
+              setShowForgotPasswordVerification(true);
+            }} />
+          )}
+        </Route>
           <Route path="/verification" component={Verification} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/" component={() => <Welcome onLoginRedirect={handleLoginRedirect} onGuestComplete={handleGuestComplete} />} />
