@@ -15,15 +15,23 @@ import { z } from "zod";
 import PhoneInput from "@/components/phone-input";
 
 const signupSchema = z.object({
-  email: z.string().email("Please enter a valid email").optional(),
-  phone: z.string().min(10, "Please enter a valid phone number").optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-}).refine((data) => data.email || data.phone, {
-  message: "Either email or phone number is required",
+}).refine((data) => {
+  if (data.email && data.email.length > 0) {
+    return z.string().email().safeParse(data.email).success;
+  }
+  if (data.phone && data.phone.length > 0) {
+    return data.phone.length >= 10;
+  }
+  return data.email || data.phone;
+}, {
+  message: "Please enter a valid email or phone number",
   path: ["email"],
 });
 
@@ -77,10 +85,11 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
     // Clear the field that's not being used based on auth type
     const submitData = { ...data };
     if (authType === "email") {
-      submitData.phone = undefined;
+      delete submitData.phone;
     } else {
-      submitData.email = undefined;
+      delete submitData.email;
     }
+    console.log('Submitting signup data:', submitData);
     signupMutation.mutate(submitData);
   };
 
