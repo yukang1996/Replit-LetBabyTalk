@@ -25,15 +25,12 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showJourneyStart, setShowJourneyStart] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       const onboardingCompleted = localStorage.getItem("onboardingCompleted");
       if (onboardingCompleted !== "true") {
         setShowOnboarding(true);
-      } else {
-        setShowJourneyStart(true);
       }
     }
   }, [isLoading, isAuthenticated]);
@@ -41,25 +38,11 @@ function Router() {
   const handleOnboardingComplete = () => {
     localStorage.setItem("onboardingCompleted", "true");
     setShowOnboarding(false);
-    setShowJourneyStart(true);
-  };
-
-  const handleJourneyToLogin = () => {
-    setShowJourneyStart(false);
-  };
-
-  const handleGuestComplete = () => {
-    setShowJourneyStart(false);
   };
 
   // Show onboarding flow for new users
   if (showOnboarding) {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
-  }
-
-  // Show journey start page
-  if (showJourneyStart) {
-    return <JourneyStart onSignInSignUp={handleJourneyToLogin} onGuestComplete={handleGuestComplete} />;
   }
 
   return (
@@ -69,8 +52,10 @@ function Router() {
         <Route path="*" component={() => <div className="min-h-screen flex items-center justify-center">Loading...</div>} />
       ) : !isAuthenticated ? (
         <>
-          <Route path="/signup" component={() => <Signup onSignupSuccess={() => setShowJourneyStart(false)} />} />
-          <Route path="*" component={() => <Login onLoginSuccess={() => setShowJourneyStart(false)} />} />
+          <Route path="/signin" component={() => <Login onLoginSuccess={() => {}} />} />
+          <Route path="/signup" component={() => <Signup onSignupSuccess={() => {}} />} />
+          <Route path="/" component={() => <Welcome onLoginRedirect={() => {}} onGuestComplete={() => {}} />} />
+          <Route component={NotFound} />
         </>
       ) : (
         <>
@@ -84,7 +69,6 @@ function Router() {
           <Route path="/chatbot" component={Chatbot} />
         </>
       )}
-      <Route component={NotFound} />
     </Switch>
   );
 }
