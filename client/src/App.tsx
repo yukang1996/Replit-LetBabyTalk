@@ -81,7 +81,7 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/" component={() => <Welcome onLoginRedirect={handleLoginRedirect} onGuestComplete={handleGuestComplete} />} />
           <Route component={NotFound} />
-        </></Route>
+        </>
       ) : (
         <>
           <Route path="/" component={BabySelection} />
