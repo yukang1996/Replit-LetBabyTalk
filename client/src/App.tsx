@@ -42,15 +42,23 @@ function Router() {
   };
 
   const handleLoginSuccess = () => {
+    console.log("Login success, refetching auth...");
     refetch();
   };
 
   const handleSignupSuccess = () => {
+    console.log("Signup success, refetching auth...");
     refetch();
   };
 
   const handleGuestComplete = () => {
+    console.log("Guest complete, refetching auth...");
     refetch();
+  };
+
+  const handleLoginRedirect = () => {
+    console.log("Navigating to signin...");
+    navigate('/signin');
   };
 
   // Show onboarding flow for new users
@@ -67,7 +75,7 @@ function Router() {
         <>
           <Route path="/signin" component={() => <Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/signup" component={() => <Signup onSignupSuccess={handleSignupSuccess} />} />
-          <Route path="/" component={() => <Welcome onLoginRedirect={() => navigate('/signin')} onGuestComplete={handleGuestComplete} />} />
+          <Route path="/" component={() => <Welcome onLoginRedirect={handleLoginRedirect} onGuestComplete={handleGuestComplete} />} />
           <Route component={NotFound} />
         </>
       ) : (

@@ -58,7 +58,7 @@ export default function Welcome({ onLoginRedirect, onGuestComplete }: WelcomePro
           {/* Action Buttons */}
           <div className="space-y-4">
             <Button
-              onClick={() => navigate('/signin')}
+              onClick={onLoginRedirect}
               className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 text-responsive"
               size="lg"
             >
