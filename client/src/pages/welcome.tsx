@@ -20,7 +20,7 @@ export default function Welcome({ onLoginRedirect, onGuestComplete }: WelcomePro
 
   const guestMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('/api/auth/guest', 'POST', {});
+      const response = await apiRequest('POST', '/api/auth/guest', {});
       return await response.json();
     },
     onSuccess: (data) => {
