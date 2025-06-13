@@ -8,10 +8,10 @@ import { Link } from "wouter";
 interface VerificationProps {
   email?: string;
   type: "signup" | "forgot-password";
-  onComplete: () => void;
+  onVerificationSuccess: () => void;
 }
 
-export default function Verification({ email, type, onComplete }: VerificationProps) {
+export default function Verification({ email, type, onVerificationSuccess }: VerificationProps) {
   const [code, setCode] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -35,7 +35,7 @@ export default function Verification({ email, type, onComplete }: VerificationPr
     if (code.length === 6) {
       // Simulate verification success
       setTimeout(() => {
-        onComplete();
+        onVerificationSuccess();
       }, 1000);
     }
   };
