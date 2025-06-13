@@ -30,7 +30,8 @@ function Router() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       const onboardingCompleted = localStorage.getItem("onboardingCompleted");
-      if (onboardingCompleted !== "true") {
+      // Only show onboarding for completely new users, not after logout
+      if (onboardingCompleted !== "true" && !window.location.pathname.includes('/signin')) {
         setShowOnboarding(true);
       }
     }
