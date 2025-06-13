@@ -20,14 +20,17 @@ export default function Welcome({ onLoginRedirect, onGuestComplete }: WelcomePro
 
   const guestMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/auth/guest', 'POST', {});
+      const response = await apiRequest('/api/auth/guest', 'POST', {});
+      return await response.json();
     },
     onSuccess: (data) => {
+      console.log('Guest user created successfully:', data);
       // Store guest user data in localStorage
       localStorage.setItem('guestUser', JSON.stringify(data));
       onGuestComplete();
     },
     onError: (error) => {
+      console.error('Guest user creation error:', error);
       toast({
         title: 'Error',
         description: 'Failed to create guest account',
