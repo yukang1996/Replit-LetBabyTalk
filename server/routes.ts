@@ -143,17 +143,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/forgot-password', async (req, res) => {
     try {
       const { email } = forgotPasswordSchema.parse(req.body);
+      console.log('Forgot password request for email:', email);
       const user = await storage.getUserByEmail(email);
       
       if (!user) {
         // Don't reveal if user exists for security
-        return res.json({ message: "If the email exists, a reset link has been sent" });
+        return res.status(200).json({ 
+          success: true, 
+          message: "If the email exists, a reset link has been sent" 
+        });
       }
 
       // In a real app, you would send an email here
-      res.json({ message: "If the email exists, a reset link has been sent" });
+      console.log('Would send reset email to:', email);
+      res.status(200).json({ 
+        success: true, 
+        message: "If the email exists, a reset link has been sent" 
+      });
     } catch (error) {
-      res.status(400).json({ message: "Invalid request data" });
+      console.error('Forgot password error:', error);
+      res.status(400).json({ 
+        success: false, 
+        message: "Invalid request data" 
+      });
     }
   });
 

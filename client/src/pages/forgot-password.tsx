@@ -39,8 +39,9 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
       const response = await apiRequest("POST", "/api/auth/forgot-password", data);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       const email = form.getValues("email");
+      console.log('Forgot password response:', response);
       toast({
         title: "Email Sent",
         description: "If the email exists, a reset link has been sent",
@@ -48,6 +49,7 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
       onSubmitSuccess(email);
     },
     onError: (error: any) => {
+      console.error('Forgot password error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to send reset email",
