@@ -76,9 +76,12 @@ function Router() {
         <>
           <Route path="/signin" component={() => <Login onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/signup" component={() => <Signup onSignupSuccess={handleSignupSuccess} />} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/verification" component={Verification} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route path="/" component={() => <Welcome onLoginRedirect={handleLoginRedirect} onGuestComplete={handleGuestComplete} />} />
           <Route component={NotFound} />
-        </>
+        </></Route>
       ) : (
         <>
           <Route path="/" component={BabySelection} />
