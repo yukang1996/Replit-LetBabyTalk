@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +27,7 @@ export default function Settings() {
   const { isAuthenticated, isLoading, user, isGuest } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [showLanguageSelection, setShowLanguageSelection] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -49,13 +51,17 @@ export default function Settings() {
       // Clear all local storage
       localStorage.clear();
       
-      // Redirect to login page
-      window.location.href = "/login";
+      // Invalidate all queries
+      queryClient.clear();
+      
+      // Redirect to signin page
+      window.location.href = "/signin";
     } catch (error) {
       console.error("Logout error:", error);
       // Force redirect even if logout fails
       localStorage.clear();
-      window.location.href = "/login";
+      queryClient.clear();
+      window.location.href = "/signin";
     }
   };
 
