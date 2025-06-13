@@ -296,7 +296,7 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
             
             <span className="text-gray-600 text-sm">
               Already have an account?{" "}
-              <Link href="/signin">
+              <Link href="/login">
                 <span className="text-pink-600 hover:text-pink-700 cursor-pointer font-medium">
                   Sign in
                 </span>
