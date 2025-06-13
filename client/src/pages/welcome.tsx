@@ -22,13 +22,15 @@ export default function Welcome({ onLoginRedirect, onGuestComplete }: WelcomePro
     mutationFn: async () => {
       return await apiRequest('/api/auth/guest', 'POST', {});
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Store guest user data in localStorage
+      localStorage.setItem('guestUser', JSON.stringify(data));
       onGuestComplete();
     },
     onError: (error) => {
       toast({
-        title: t('common.error'),
-        description: t('error.failedToCreate'),
+        title: 'Error',
+        description: 'Failed to create guest account',
         variant: "destructive",
       });
     },
