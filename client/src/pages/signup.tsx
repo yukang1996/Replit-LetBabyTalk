@@ -48,6 +48,7 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
       password: "",
       confirmPassword: "",
     },
+    mode: "onChange",
   });
 
   const signupMutation = useMutation({
@@ -73,7 +74,14 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
   });
 
   const onSubmit = (data: SignupForm) => {
-    signupMutation.mutate(data);
+    // Clear the field that's not being used based on auth type
+    const submitData = { ...data };
+    if (authType === "email") {
+      submitData.phone = undefined;
+    } else {
+      submitData.email = undefined;
+    }
+    signupMutation.mutate(submitData);
   };
 
   return (
@@ -100,7 +108,11 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
               <Button
                 type="button"
                 variant={authType === "email" ? "default" : "outline"}
-                onClick={() => setAuthType("email")}
+                onClick={() => {
+                  setAuthType("email");
+                  form.setValue("phone", "");
+                  form.clearErrors("phone");
+                }}
                 className="flex-1"
               >
                 <Mail className="w-4 h-4 mr-2" />
@@ -109,7 +121,11 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
               <Button
                 type="button"
                 variant={authType === "phone" ? "default" : "outline"}
-                onClick={() => setAuthType("phone")}
+                onClick={() => {
+                  setAuthType("phone");
+                  form.setValue("email", "");
+                  form.clearErrors("email");
+                }}
                 className="flex-1"
               >
                 📱 Phone
