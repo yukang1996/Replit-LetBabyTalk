@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import OnboardingFlow from "@/components/onboarding-flow";
 import Welcome from "@/pages/welcome";
+import JourneyStart from "@/pages/journey-start";
 import BabySelection from "@/pages/baby-selection";
 import Home from "@/pages/home";
 import BabyProfile from "@/pages/baby-profile";
@@ -24,36 +25,31 @@ import NotFound from "@/pages/not-found";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [showJourneyStart, setShowJourneyStart] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       const onboardingCompleted = localStorage.getItem("onboardingCompleted");
       if (onboardingCompleted !== "true") {
         setShowOnboarding(true);
+      } else {
+        setShowJourneyStart(true);
       }
     }
-    // Reset onboarding state if user logs out
-    if (!isLoading && !isAuthenticated && !showOnboarding) {
-      const onboardingCompleted = localStorage.getItem("onboardingCompleted");
-      if (onboardingCompleted !== "true") {
-        setShowOnboarding(true);
-      }
-    }
-  }, [isLoading, isAuthenticated, showOnboarding]);
+  }, [isLoading, isAuthenticated]);
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("onboardingCompleted", "true");
     setShowOnboarding(false);
-    setShowWelcome(true);
+    setShowJourneyStart(true);
   };
 
-  const handleWelcomeToLogin = () => {
-    setShowWelcome(false);
+  const handleJourneyToLogin = () => {
+    setShowJourneyStart(false);
   };
 
   const handleGuestComplete = () => {
-    setShowWelcome(false);
+    setShowJourneyStart(false);
   };
 
   // Show onboarding flow for new users
@@ -61,9 +57,9 @@ function Router() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
-  // Show welcome page for returning users
-  if (showWelcome) {
-    return <Welcome onLoginRedirect={handleWelcomeToLogin} onGuestComplete={handleGuestComplete} />;
+  // Show journey start page
+  if (showJourneyStart) {
+    return <JourneyStart onSignInSignUp={handleJourneyToLogin} onGuestComplete={handleGuestComplete} />;
   }
 
   return (
@@ -72,7 +68,10 @@ function Router() {
       {isLoading ? (
         <Route path="*" component={() => <div className="min-h-screen flex items-center justify-center">Loading...</div>} />
       ) : !isAuthenticated ? (
-        <Route path="*" component={() => <Login onLoginSuccess={handleOnboardingComplete} />} />
+        <>
+          <Route path="/signup" component={() => <Signup onSignupSuccess={() => setShowJourneyStart(false)} />} />
+          <Route path="*" component={() => <Login onLoginSuccess={() => setShowJourneyStart(false)} />} />
+        </>
       ) : (
         <>
           <Route path="/" component={BabySelection} />

@@ -108,9 +108,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       <Card className="w-full max-w-sm sm:max-w-md lg:max-w-lg glass-effect">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800">
-            Welcome Back
+            Sign In
           </CardTitle>
-          <p className="text-gray-600">Sign in to your account</p>
+          <p className="text-gray-600">Welcome back! Please sign in to your account</p>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Email/Password Form */}
