@@ -17,11 +17,22 @@ import { z } from "zod";
 import PhoneInput from "@/components/phone-input";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email").optional(),
-  phone: z.string().min(10, "Please enter a valid phone number").optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
-}).refine((data) => data.email || data.phone, {
-  message: "Either email or phone number is required",
+}).refine((data) => data.password === data.password, {
+  message: "Password is required",
+  path: ["password"],
+}).refine((data) => {
+  if (data.email && data.email.length > 0) {
+    return z.string().email().safeParse(data.email).success;
+  }
+  if (data.phone && data.phone.length > 0) {
+    return data.phone.length >= 10;
+  }
+  return data.email || data.phone;
+}, {
+  message: "Please enter a valid email or phone number",
   path: ["email"],
 });
 
@@ -44,6 +55,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       phone: "",
       password: "",
     },
+    mode: "onChange",
   });
 
   const loginMutation = useMutation({
@@ -89,7 +101,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   });
 
   const onSubmit = (data: LoginForm) => {
-    loginMutation.mutate(data);
+    // Clear the field that's not being used based on auth type
+    const submitData = { ...data };
+    if (authType === "email") {
+      delete submitData.phone;
+    } else {
+      delete submitData.email;
+    }
+    console.log('Submitting login data:', submitData);
+    loginMutation.mutate(submitData);
   };
 
   const handleGuestLogin = () => {
@@ -120,7 +140,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               <Button
                 type="button"
                 variant={authType === "email" ? "default" : "outline"}
-                onClick={() => setAuthType("email")}
+                onClick={() => {
+                  setAuthType("email");
+                  form.setValue("phone", "");
+                  form.clearErrors("phone");
+                }}
                 className="flex-1"
               >
                 <Mail className="w-4 h-4 mr-2" />
@@ -129,7 +153,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               <Button
                 type="button"
                 variant={authType === "phone" ? "default" : "outline"}
-                onClick={() => setAuthType("phone")}
+                onClick={() => {
+                  setAuthType("phone");
+                  form.setValue("email", "");
+                  form.clearErrors("email");
+                }}
                 className="flex-1"
               >
                 📱 Phone

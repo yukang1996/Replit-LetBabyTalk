@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { z } from "zod";
 import PhoneInput from "@/components/phone-input";
 
@@ -47,6 +47,7 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
   const [authType, setAuthType] = useState<"email" | "phone">("email");
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [, navigate] = useLocation();
 
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
@@ -68,9 +69,10 @@ export default function Signup({ onSignupSuccess }: SignupProps) {
     onSuccess: () => {
       toast({
         title: "Account Created",
-        description: "Please check your email for verification",
+        description: "Account created successfully! Please sign in.",
       });
-      onSignupSuccess();
+      // Redirect to sign-in page
+      navigate("/signin");
     },
     onError: (error: any) => {
       toast({
