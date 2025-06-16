@@ -12,9 +12,10 @@ interface VerificationProps {
   phone?: string;
   type: "signup" | "forgot-password";
   onVerificationSuccess: () => void;
+  onBackToForgotPassword?: () => void;
 }
 
-export default function Verification({ email, phone, type, onVerificationSuccess }: VerificationProps) {
+export default function Verification({ email, phone, type, onVerificationSuccess, onBackToForgotPassword }: VerificationProps) {
   const [code, setCode] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -106,7 +107,11 @@ export default function Verification({ email, phone, type, onVerificationSuccess
               className="absolute left-4 top-4"
               onClick={(e) => {
                 e.preventDefault();
-                navigate("/forgot-password");
+                if (onBackToForgotPassword) {
+                  onBackToForgotPassword();
+                } else {
+                  navigate("/forgot-password");
+                }
               }}
             >
               <ArrowLeft className="w-4 h-4" />

@@ -88,6 +88,10 @@ function Router() {
                 setShowForgotPasswordVerification(false);
                 setShowResetPassword(true);
               }}
+              onBackToForgotPassword={() => {
+                setShowForgotPasswordVerification(false);
+                setForgotPasswordEmail("");
+              }}
             />
           ) : showResetPassword ? (
             <ResetPassword
