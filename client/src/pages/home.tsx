@@ -58,7 +58,7 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Header */}
       <div className="gradient-bg p-4 flex items-center justify-between">
-        <Link href="/baby-selection">
+        <Link href="/baby-selection?from=/record">
           <div className="flex items-center space-x-3 cursor-pointer">
             <BearMascot size="small" baby={selectedBaby} />
             <span className="text-white font-medium">

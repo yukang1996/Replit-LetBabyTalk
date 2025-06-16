@@ -580,8 +580,9 @@ export default function BabySelection() {
                 className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
                 disabled={!selectedBabyId}
                 onClick={() => {
-                  // If coming from settings, go back to settings, otherwise go to record
-                  const destination = referrer === '/settings' ? '/settings' : '/record';
+                  // Navigate back to the referrer page, defaulting to record if no specific referrer
+                  const destination = referrer === '/settings' ? '/settings' : 
+                                    referrer === '/record' ? '/record' : '/record';
                   navigate(destination);
                 }}
               >
