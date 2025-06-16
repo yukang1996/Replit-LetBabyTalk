@@ -16,11 +16,11 @@ export function useAuth() {
   const currentUser = parsedGuestUser || user;
   const isAuthenticated = !!(parsedGuestUser || user);
 
-  const refetchAuth = () => {
+  const refetchAuth = async () => {
     // Clear guest user and refetch
     localStorage.removeItem('guestUser');
-    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    refetch();
+    await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    await refetch();
   };
 
   return {

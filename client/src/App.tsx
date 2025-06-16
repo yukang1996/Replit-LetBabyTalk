@@ -45,19 +45,22 @@ function Router() {
     setShowOnboarding(false);
   };
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
     console.log("Login success, refetching auth...");
-    refetch();
+    await refetch();
+    navigate('/');
   };
 
-  const handleSignupSuccess = () => {
+  const handleSignupSuccess = async () => {
     console.log("Signup success, refetching auth...");
-    refetch();
+    await refetch();
+    navigate('/');
   };
 
-  const handleGuestComplete = () => {
+  const handleGuestComplete = async () => {
     console.log("Guest complete, refetching auth...");
-    refetch();
+    await refetch();
+    navigate('/');
   };
 
   const handleLoginRedirect = () => {
