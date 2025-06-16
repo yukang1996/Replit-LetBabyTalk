@@ -374,7 +374,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const profileId = parseInt(req.params.id);
-      const validatedData = insertBabyProfileSchema.partial().parse(req.body);
+      
+      // Convert dateOfBirth string to Date object before validation
+      const requestData = {
+        ...req.body,
+        ...(req.body.dateOfBirth && { dateOfBirth: new Date(req.body.dateOfBirth) })
+      };
+      
+      const validatedData = insertBabyProfileSchema.partial().parse(requestData);
       const profile = await storage.updateBabyProfile(profileId, userId, validatedData);
       
       if (!profile) {
