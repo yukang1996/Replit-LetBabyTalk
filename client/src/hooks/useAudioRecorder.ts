@@ -8,6 +8,8 @@ export function useAudioRecorder() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentPlaybackTime, setCurrentPlaybackTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   // All refs after state
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -15,6 +17,7 @@ export function useAudioRecorder() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoStopRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const startTimer = useCallback(() => {
     timerRef.current = setInterval(() => {
@@ -143,19 +146,44 @@ export function useAudioRecorder() {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       
+      audio.onloadedmetadata = () => {
+        setAudioDuration(audio.duration);
+      };
+
+      audio.ontimeupdate = () => {
+        setCurrentPlaybackTime(audio.currentTime);
+      };
+      
       audio.onended = () => {
         setIsPlaying(false);
+        setCurrentPlaybackTime(0);
+        if (playbackTimerRef.current) {
+          clearInterval(playbackTimerRef.current);
+          playbackTimerRef.current = null;
+        }
         URL.revokeObjectURL(audioUrl);
       };
 
       audio.onerror = () => {
         setIsPlaying(false);
+        setCurrentPlaybackTime(0);
+        if (playbackTimerRef.current) {
+          clearInterval(playbackTimerRef.current);
+          playbackTimerRef.current = null;
+        }
         URL.revokeObjectURL(audioUrl);
       };
 
       audioRef.current = audio;
       audio.play();
       setIsPlaying(true);
+      
+      // Start tracking playback time
+      playbackTimerRef.current = setInterval(() => {
+        if (audioRef.current) {
+          setCurrentPlaybackTime(audioRef.current.currentTime);
+        }
+      }, 100);
     }
   }, [audioBlob, isPlaying]);
 
@@ -164,8 +192,36 @@ export function useAudioRecorder() {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
+      setCurrentPlaybackTime(0);
+      if (playbackTimerRef.current) {
+        clearInterval(playbackTimerRef.current);
+        playbackTimerRef.current = null;
+      }
     }
   }, [isPlaying]);
+
+  const seekTo = useCallback((time: number) => {
+    if (audioRef.current && audioDuration > 0) {
+      audioRef.current.currentTime = Math.max(0, Math.min(time, audioDuration));
+      setCurrentPlaybackTime(audioRef.current.currentTime);
+    }
+  }, [audioDuration]);
+
+  const deleteRecording = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (playbackTimerRef.current) {
+      clearInterval(playbackTimerRef.current);
+      playbackTimerRef.current = null;
+    }
+    setAudioBlob(null);
+    setIsPlaying(false);
+    setCurrentPlaybackTime(0);
+    setAudioDuration(0);
+    setRecordingTime(0);
+  }, []);
 
   return {
     isRecording,
@@ -173,11 +229,15 @@ export function useAudioRecorder() {
     recordingTime,
     audioBlob,
     isPlaying,
+    currentPlaybackTime,
+    audioDuration,
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
     playRecording,
     stopPlayback,
+    seekTo,
+    deleteRecording,
   };
 }
