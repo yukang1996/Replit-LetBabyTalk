@@ -137,7 +137,7 @@ export default function Settings() {
     {
       icon: Baby,
       label: t('settings.babyProfile'),
-      onClick: () => window.location.href = "/baby-selection",
+      onClick: () => window.location.href = "/baby-selection?from=/settings",
     },
     {
       icon: Globe,

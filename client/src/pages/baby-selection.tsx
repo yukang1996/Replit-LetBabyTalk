@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Plus, UserCircle, Calendar, Camera, Trash2, Edit3 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertBabyProfileSchema } from "@shared/schema";
@@ -37,6 +37,11 @@ export default function BabySelection() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingBabyId, setEditingBabyId] = useState<number | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [, navigate] = useLocation();
+
+  // Get referrer from URL params or default to home
+  const urlParams = new URLSearchParams(window.location.search);
+  const referrer = urlParams.get('from') || '/';
 
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
     queryKey: ["/api/baby-profiles"],
@@ -433,11 +438,14 @@ export default function BabySelection() {
       {/* Header */}
       <div className="gradient-bg p-4 flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 mr-3">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white hover:bg-white/20 mr-3"
+            onClick={() => navigate(referrer)}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
           <span className="text-white font-medium">Hi, {user?.firstName || 'User'} 👋</span>
         </div>
         <Button 
@@ -568,14 +576,17 @@ export default function BabySelection() {
 
             {/* Continue Button */}
             <div className="fixed bottom-20 left-4 right-4 z-10">
-              <Link href="/record">
-                <Button 
-                  className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
-                  disabled={!selectedBabyId}
-                >
-                  Continue with {selectedBabyId ? typedProfiles.find(p => p.id === selectedBabyId)?.name : 'Baby'}
-                </Button>
-              </Link>
+              <Button 
+                className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
+                disabled={!selectedBabyId}
+                onClick={() => {
+                  // If coming from settings, go back to settings, otherwise go to record
+                  const destination = referrer === '/settings' ? '/settings' : '/record';
+                  navigate(destination);
+                }}
+              >
+                Continue with {selectedBabyId ? typedProfiles.find(p => p.id === selectedBabyId)?.name : 'Baby'}
+              </Button>
             </div>
           </div>
         ) : (
