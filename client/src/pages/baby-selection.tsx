@@ -106,7 +106,6 @@ export default function BabySelection() {
       await apiRequest("DELETE", `/api/baby-profiles/${id}`);
     },
     onSuccess: (_, deletedId) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
       toast({
         title: t('common.success'),
         description: t('success.profileDeleted'),
@@ -120,6 +119,8 @@ export default function BabySelection() {
           setSelectedBabyId(null);
         }
       }
+      // Invalidate queries after updating state
+      queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
