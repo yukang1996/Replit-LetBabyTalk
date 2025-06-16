@@ -13,9 +13,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ArrowLeft, Mail, Send, CheckCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { z } from "zod";
+import PhoneInput from "@/components/phone-input";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email"),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+}).refine((data) => {
+  if (data.email && data.email.length > 0) {
+    return z.string().email().safeParse(data.email).success;
+  }
+  if (data.phone && data.phone.length > 0) {
+    return data.phone.length >= 10;
+  }
+  return data.email || data.phone;
+}, {
+  message: "Please enter a valid email or phone number",
+  path: ["email"],
 });
 
 type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
@@ -30,12 +43,15 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
   const [, navigate] = useLocation();
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
+  const [authType, setAuthType] = useState<"email" | "phone">("email");
 
   const form = useForm<ForgotPasswordForm>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: "",
+      phone: "",
     },
+    mode: "onChange",
   });
 
   const forgotPasswordMutation = useMutation({
@@ -45,8 +61,10 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
     },
     onSuccess: (response) => {
       const email = form.getValues("email");
+      const phone = form.getValues("phone");
+      const contact = authType === "email" ? email : phone;
       console.log('Forgot password response:', response);
-      setSentEmail(email);
+      setSentEmail(contact || "");
       setShowSuccessDialog(true);
     },
     onError: (error: any) => {
@@ -60,7 +78,15 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
   });
 
   const onSubmit = (data: ForgotPasswordForm) => {
-    forgotPasswordMutation.mutate(data);
+    // Clear the field that's not being used based on auth type
+    const submitData = { ...data };
+    if (authType === "email") {
+      delete submitData.phone;
+    } else {
+      delete submitData.email;
+    }
+    console.log('Submitting forgot password data:', submitData);
+    forgotPasswordMutation.mutate(submitData);
   };
 
   return (
@@ -84,29 +110,78 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
             Forgot Password?
           </CardTitle>
           <p className="text-gray-600">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your {authType === "email" ? "email address" : "phone number"} and we'll send you a code to reset your password
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700">
-                <Mail className="w-4 h-4 inline mr-2" />
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="rounded-xl border-gray-200"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
+            {/* Authentication Type Toggle */}
+            <div className="flex space-x-2 mb-4">
+              <Button
+                type="button"
+                variant={authType === "email" ? "default" : "outline"}
+                onClick={() => {
+                  setAuthType("email");
+                  form.setValue("phone", "");
+                  form.clearErrors("phone");
+                }}
+                className="flex-1"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Email
+              </Button>
+              <Button
+                type="button"
+                variant={authType === "phone" ? "default" : "outline"}
+                onClick={() => {
+                  setAuthType("phone");
+                  form.setValue("email", "");
+                  form.clearErrors("email");
+                }}
+                className="flex-1"
+              >
+                📱 Phone
+              </Button>
             </div>
+
+            {/* Email or Phone Input */}
+            {authType === "email" ? (
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-700">
+                  <Mail className="w-4 h-4 inline mr-2" />
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className="rounded-xl border-gray-200"
+                  {...form.register("email")}
+                />
+                {form.formState.errors.email && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-gray-700">
+                  📱 Phone Number
+                </Label>
+                <PhoneInput
+                  value={form.watch("phone") || ""}
+                  onChange={(value) => form.setValue("phone", value)}
+                  placeholder="Enter your phone number"
+                  className="rounded-xl"
+                />
+                {form.formState.errors.phone && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.phone.message}
+                  </p>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"

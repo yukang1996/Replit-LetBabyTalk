@@ -9,11 +9,12 @@ import { apiRequest } from "@/lib/queryClient";
 
 interface VerificationProps {
   email?: string;
+  phone?: string;
   type: "signup" | "forgot-password";
   onVerificationSuccess: () => void;
 }
 
-export default function Verification({ email, type, onVerificationSuccess }: VerificationProps) {
+export default function Verification({ email, phone, type, onVerificationSuccess }: VerificationProps) {
   const [code, setCode] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -41,6 +42,7 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
       try {
         await apiRequest('POST', '/api/auth/verify-otp', {
           email,
+          phone,
           code,
           type,
         });
@@ -55,10 +57,37 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
     }
   };
 
-  const handleResend = () => {
-    setCanResend(false);
-    setCountdown(60);
-    // Simulate resending code
+  const handleResend = async () => {
+    try {
+      setCanResend(false);
+      setCountdown(60);
+      
+      // Start countdown timer
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Actually resend the code
+      if (type === "forgot-password") {
+        const requestData: any = {};
+        if (email) requestData.email = email;
+        if (phone) requestData.phone = phone;
+        await apiRequest('POST', '/api/auth/forgot-password', requestData);
+      }
+      
+      console.log('Code resent successfully');
+    } catch (error: any) {
+      console.error('Failed to resend code:', error);
+      setCanResend(true);
+      setCountdown(0);
+    }
   };
 
   const title = type === "signup" ? "Verify Your Email" : "Enter Verification Code";
@@ -89,9 +118,9 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
           <p className="text-gray-600 text-sm">
             {description}
           </p>
-          {email && (
+          {(email || phone) && (
             <p className="text-pink-600 text-sm font-medium">
-              {email}
+              {email || phone}
             </p>
           )}
         </CardHeader>

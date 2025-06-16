@@ -52,7 +52,10 @@ const loginSchema = z.object({
 });
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+}).refine((data) => data.email || data.phone, {
+  message: "Either email or phone number is required",
 });
 
 const resetPasswordSchema = z.object({
@@ -150,29 +153,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Forgot password - generate and store OTP
   app.post('/api/auth/forgot-password', async (req, res) => {
     try {
-      const { email } = forgotPasswordSchema.parse(req.body);
-      console.log('Forgot password request for email:', email);
-      const user = await storage.getUserByEmail(email);
+      const { email, phone } = forgotPasswordSchema.parse(req.body);
+      console.log('Forgot password request for:', email || phone);
+      
+      let user = null;
+      let identifier = "";
+      
+      if (email) {
+        user = await storage.getUserByEmail(email);
+        identifier = email;
+      } else if (phone) {
+        user = await storage.getUserByPhone(phone);
+        identifier = phone;
+      }
       
       if (!user) {
         // Don't reveal if user exists for security
         return res.status(200).json({ 
           success: true, 
-          message: "If the email exists, a reset code has been sent" 
+          message: "If the contact info exists, a reset code has been sent" 
         });
       }
 
       // Generate OTP and store it
       const otp = generateOTP();
       const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
-      otpStorage.set(email, { code: otp, expiresAt, type: 'forgot-password' });
+      otpStorage.set(identifier, { code: otp, expiresAt, type: 'forgot-password' });
 
-      // In a real app, you would send an email here
-      console.log(`Generated OTP for ${email}: ${otp} (expires at ${new Date(expiresAt)})`);
+      // In a real app, you would send an email/SMS here
+      console.log(`Generated OTP for ${identifier}: ${otp} (expires at ${new Date(expiresAt)})`);
       
       res.status(200).json({ 
         success: true, 
-        message: "If the email exists, a reset code has been sent",
+        message: "If the contact info exists, a reset code has been sent",
         // Remove this in production - only for testing
         debug: { otp }
       });
@@ -188,13 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Verify OTP endpoint
   app.post('/api/auth/verify-otp', async (req, res) => {
     try {
-      const { email, code, type } = req.body;
+      const { email, phone, code, type } = req.body;
       
-      if (!email || !code || !type) {
-        return res.status(400).json({ message: "Email, code, and type are required" });
+      if ((!email && !phone) || !code || !type) {
+        return res.status(400).json({ message: "Email or phone, code, and type are required" });
       }
 
-      const storedOTP = otpStorage.get(email);
+      const identifier = email || phone;
+      const storedOTP = otpStorage.get(identifier);
       
       if (!storedOTP) {
         return res.status(400).json({ message: "Invalid or expired code" });
@@ -205,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (Date.now() > storedOTP.expiresAt) {
-        otpStorage.delete(email);
+        otpStorage.delete(identifier);
         return res.status(400).json({ message: "Verification code has expired" });
       }
 
@@ -215,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Don't delete OTP yet for forgot-password (needed for reset)
       if (type === 'signup') {
-        otpStorage.delete(email);
+        otpStorage.delete(identifier);
       }
 
       res.json({ 
