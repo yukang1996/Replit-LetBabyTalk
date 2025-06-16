@@ -35,6 +35,7 @@ export default function BabySelection() {
   const queryClient = useQueryClient();
   const [selectedBabyId, setSelectedBabyId] = useState<number | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingBabyId, setEditingBabyId] = useState<number | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
@@ -96,6 +97,44 @@ export default function BabySelection() {
       toast({
         title: t('common.error'),
         description: t('error.failedToCreate'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: BabyProfileForm }) => {
+      const payload = {
+        ...data,
+        dateOfBirth: new Date(data.dateOfBirth),
+      };
+      await apiRequest("PUT", `/api/baby-profiles/${id}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
+      toast({
+        title: t('common.success'),
+        description: "Baby profile updated successfully!",
+      });
+      setEditingBabyId(null);
+      setPhotoPreview(null);
+      form.reset();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: t('error.unauthorized'),
+          description: t('error.unauthorized'),
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: t('common.error'),
+        description: "Failed to update baby profile",
         variant: "destructive",
       });
     },
@@ -179,7 +218,32 @@ export default function BabySelection() {
   };
 
   const onSubmit = (data: BabyProfileForm) => {
-    createMutation.mutate(data);
+    if (editingBabyId) {
+      updateMutation.mutate({ id: editingBabyId, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEditBaby = (profile: any) => {
+    setEditingBabyId(profile.id);
+    setShowCreateForm(true);
+    form.reset({
+      name: profile.name,
+      dateOfBirth: new Date(profile.dateOfBirth).toISOString().split('T')[0],
+      gender: profile.gender,
+      photoUrl: profile.photoUrl || "",
+    });
+    if (profile.photoUrl) {
+      setPhotoPreview(profile.photoUrl);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowCreateForm(false);
+    setEditingBabyId(null);
+    setPhotoPreview(null);
+    form.reset();
   };
 
   const calculateAge = (birthDate: string) => {
@@ -236,15 +300,13 @@ export default function BabySelection() {
             variant="ghost" 
             size="sm" 
             className="text-white hover:bg-white/20 mr-3"
-            onClick={() => {
-              setShowCreateForm(false);
-              setPhotoPreview(null);
-              form.reset();
-            }}
+            onClick={handleCancelEdit}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <span className="text-white font-medium text-lg">{t('babyProfile.title')}</span>
+          <span className="text-white font-medium text-lg">
+            {editingBabyId ? "Edit Baby Profile" : t('babyProfile.title')}
+          </span>
         </div>
 
         <div className="p-4 pb-20">
@@ -339,19 +401,16 @@ export default function BabySelection() {
                 <div className="flex space-x-4 pt-6">
                   <Button
                     type="submit"
-                    disabled={createMutation.isPending}
+                    disabled={createMutation.isPending || updateMutation.isPending}
                     className="flex-1 gradient-bg text-white rounded-2xl py-3"
                   >
-                    {createMutation.isPending ? "Saving..." : t('babyProfile.save')}
+                    {(createMutation.isPending || updateMutation.isPending) ? "Saving..." : 
+                     editingBabyId ? "Update" : t('babyProfile.save')}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setPhotoPreview(null);
-                      form.reset();
-                    }}
+                    onClick={handleCancelEdit}
                     className="flex-1 border-pink-300 text-pink-600 rounded-2xl py-3"
                   >
                     {t('babyProfile.cancel')}
@@ -429,6 +488,19 @@ export default function BabySelection() {
                       
                       {/* Action Buttons */}
                       <div className="flex flex-col space-y-2">
+                        {/* Edit Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-500 hover:bg-blue-50 hover:text-blue-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditBaby(profile);
+                          }}
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Button>
+
                         {/* Delete Button with Confirmation */}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
