@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { ArrowLeft, Mail, CheckCircle, AlertCircle } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
 interface VerificationProps {
@@ -19,6 +19,7 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
   const [canResend, setCanResend] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -74,7 +75,7 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
               variant="ghost" 
               size="sm" 
               className="absolute left-4 top-4"
-              onClick={() => window.history.back()}
+              onClick={() => navigate("/forgot-password")}
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
