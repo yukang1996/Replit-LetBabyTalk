@@ -116,6 +116,8 @@ export default function BabySelection() {
         title: t('common.success'),
         description: "Baby profile updated successfully!",
       });
+      // Exit edit mode and return to main view
+      setShowCreateForm(false);
       setEditingBabyId(null);
       setPhotoPreview(null);
       form.reset();
