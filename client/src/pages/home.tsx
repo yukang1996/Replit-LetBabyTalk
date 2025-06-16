@@ -60,7 +60,7 @@ export default function Home() {
       <div className="gradient-bg p-4 flex items-center justify-between">
         <Link href="/baby-selection">
           <div className="flex items-center space-x-3 cursor-pointer">
-            <BearMascot size="small" />
+            <BearMascot size="small" baby={selectedBaby} />
             <span className="text-white font-medium">
               {selectedBaby ? selectedBaby.name : t('home.enterBabyInfo')}
             </span>

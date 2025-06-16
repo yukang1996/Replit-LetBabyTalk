@@ -1,17 +1,55 @@
+
 import { cn } from "@/lib/utils";
 
 interface BearMascotProps {
   size?: "small" | "medium" | "large";
   className?: string;
+  baby?: {
+    name: string;
+    photoUrl?: string;
+  };
 }
 
-export default function BearMascot({ size = "medium", className }: BearMascotProps) {
+export default function BearMascot({ size = "medium", className, baby }: BearMascotProps) {
   const sizeClasses = {
     small: "w-10 h-10",
     medium: "w-16 h-16",
     large: "w-24 h-24",
   };
 
+  // If baby profile with photo is provided, show the baby's photo
+  if (baby?.photoUrl) {
+    return (
+      <div className={cn(
+        "bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden",
+        sizeClasses[size],
+        className
+      )}>
+        <img 
+          src={baby.photoUrl} 
+          alt={baby.name}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // If baby profile without photo is provided, show baby's initial
+  if (baby?.name) {
+    return (
+      <div className={cn(
+        "bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center shadow-lg",
+        sizeClasses[size],
+        className
+      )}>
+        <span className="text-white font-medium text-sm">
+          {baby.name.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  }
+
+  // Default bear mascot when no baby is provided
   return (
     <div className={cn(
       "bg-white rounded-full flex items-center justify-center shadow-lg",
