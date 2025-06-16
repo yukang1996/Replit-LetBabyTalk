@@ -94,13 +94,26 @@ export default function AudioRecorder() {
 
   return (
     <div className="text-center space-y-6">
-      {/* Recording Button */}
+      {/* Recording Button with Animation */}
       <div className="relative flex justify-center">
+        {/* Outer pulsing rings */}
+        {isRecording && !isPaused && (
+          <>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-40 h-40 border-4 border-red-300 rounded-full animate-ping opacity-75" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-48 h-48 border-2 border-red-200 rounded-full animate-pulse opacity-50" 
+                   style={{ animationDelay: '0.5s' }} />
+            </div>
+          </>
+        )}
+        
         <Button
           onClick={handleRecordingToggle}
           disabled={uploadMutation.isPending}
           className={cn(
-            "w-32 h-32 rounded-full transition-all duration-300 relative overflow-hidden",
+            "w-32 h-32 rounded-full transition-all duration-300 relative z-10",
             isRecording 
               ? "bg-red-500 hover:bg-red-600"
               : "gradient-bg hover:opacity-90"
@@ -110,11 +123,6 @@ export default function AudioRecorder() {
             <Square className="w-12 h-12 text-white" />
           ) : (
             <Mic className="w-12 h-12 text-white" />
-          )}
-          
-          {/* Recording animation - contained within button */}
-          {isRecording && !isPaused && (
-            <div className="absolute inset-1 border-2 border-red-300 rounded-full animate-pulse opacity-75" />
           )}
         </Button>
       </div>
