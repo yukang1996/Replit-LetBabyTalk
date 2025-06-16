@@ -114,7 +114,7 @@ export default function AudioRecorder() {
         
         {/* Recording indicator - contained within button area */}
         {isRecording && !isPaused && (
-          <div className="absolute inset-0 border-4 border-red-300 rounded-full animate-ping" />
+          <div className="absolute inset-2 border-2 border-red-300 rounded-full animate-pulse opacity-75" />
         )}
       </div>
 
