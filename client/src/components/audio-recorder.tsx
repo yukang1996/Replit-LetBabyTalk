@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -93,17 +92,17 @@ export default function AudioRecorder() {
   };
 
   return (
-    <div className="text-center space-y-6">
+    <div className="text-center space-y-6 py-8">
       {/* Recording Button with Animation */}
-      <div className="relative flex justify-center">
-        {/* Outer pulsing rings */}
+      <div className="relative flex justify-center h-48 items-center overflow-hidden">
+        {/* Outer pulsing rings - contained within the component */}
         {isRecording && !isPaused && (
           <>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-40 h-40 border-4 border-red-300 rounded-full animate-ping opacity-75" />
+              <div className="w-40 h-40 border-4 border-pink-300 rounded-full animate-ping opacity-75" />
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-48 h-48 border-2 border-red-200 rounded-full animate-pulse opacity-50" 
+              <div className="w-44 h-44 border-2 border-purple-200 rounded-full animate-pulse opacity-50" 
                    style={{ animationDelay: '0.5s' }} />
             </div>
           </>
@@ -114,9 +113,7 @@ export default function AudioRecorder() {
           disabled={uploadMutation.isPending}
           className={cn(
             "w-32 h-32 rounded-full transition-all duration-300 relative z-10",
-            isRecording 
-              ? "bg-red-500 hover:bg-red-600"
-              : "gradient-bg hover:opacity-90"
+            "gradient-bg hover:opacity-90"
           )}
         >
           {isRecording ? (
