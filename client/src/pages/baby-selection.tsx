@@ -105,15 +105,15 @@ export default function BabySelection() {
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/baby-profiles/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
       toast({
         title: t('common.success'),
         description: t('success.profileDeleted'),
       });
-      // Reset selected baby if it was deleted
-      if (selectedBabyId && typedProfiles.length > 1) {
-        const remainingProfiles = typedProfiles.filter(p => p.id !== selectedBabyId);
+      // Reset selected baby if the deleted one was selected
+      if (selectedBabyId === deletedId) {
+        const remainingProfiles = typedProfiles.filter(p => p.id !== deletedId);
         if (remainingProfiles.length > 0) {
           setSelectedBabyId(remainingProfiles[0].id);
         } else {
