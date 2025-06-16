@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
+import { ArrowLeft, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -16,6 +17,8 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
   const [code, setCode] = useState("");
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -44,7 +47,8 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
         onVerificationSuccess();
       } catch (error: any) {
         console.error('Verification failed:', error.message);
-        alert(error.message || 'Invalid verification code');
+        setErrorMessage(error.message || 'Invalid verification code');
+        setShowErrorDialog(true);
         setCode(""); // Clear the code
       }
     }
@@ -142,6 +146,44 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
           </div>
         </CardContent>
       </Card>
+
+      {/* Custom Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-xl font-bold text-gray-800">
+              Verification Failed
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 mt-2">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-6">
+            <Button
+              onClick={() => setShowErrorDialog(false)}
+              className="w-full gradient-bg text-white rounded-2xl py-3"
+            >
+              Try Again
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowErrorDialog(false);
+                setCanResend(true);
+                setCountdown(0);
+              }}
+              className="w-full border-pink-300 text-pink-600 rounded-2xl py-3"
+            >
+              Resend Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
