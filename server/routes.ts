@@ -10,6 +10,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Temporary in-memory storage for OTPs (use Redis or database in production)
+const otpStorage = new Map<string, { code: string; expiresAt: number; type: 'forgot-password' | 'signup' }>();
+
+// Generate 6-digit OTP
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: 'uploads/',
@@ -139,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Forgot password (placeholder for email sending)
+  // Forgot password - generate and store OTP
   app.post('/api/auth/forgot-password', async (req, res) => {
     try {
       const { email } = forgotPasswordSchema.parse(req.body);
@@ -150,15 +158,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't reveal if user exists for security
         return res.status(200).json({ 
           success: true, 
-          message: "If the email exists, a reset link has been sent" 
+          message: "If the email exists, a reset code has been sent" 
         });
       }
 
+      // Generate OTP and store it
+      const otp = generateOTP();
+      const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+      otpStorage.set(email, { code: otp, expiresAt, type: 'forgot-password' });
+
       // In a real app, you would send an email here
-      console.log('Would send reset email to:', email);
+      console.log(`Generated OTP for ${email}: ${otp} (expires at ${new Date(expiresAt)})`);
+      
       res.status(200).json({ 
         success: true, 
-        message: "If the email exists, a reset link has been sent" 
+        message: "If the email exists, a reset code has been sent",
+        // Remove this in production - only for testing
+        debug: { otp }
       });
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -169,18 +185,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reset password (simplified version)
+  // Verify OTP endpoint
+  app.post('/api/auth/verify-otp', async (req, res) => {
+    try {
+      const { email, code, type } = req.body;
+      
+      if (!email || !code || !type) {
+        return res.status(400).json({ message: "Email, code, and type are required" });
+      }
+
+      const storedOTP = otpStorage.get(email);
+      
+      if (!storedOTP) {
+        return res.status(400).json({ message: "Invalid or expired code" });
+      }
+
+      if (storedOTP.code !== code) {
+        return res.status(400).json({ message: "Invalid verification code" });
+      }
+
+      if (Date.now() > storedOTP.expiresAt) {
+        otpStorage.delete(email);
+        return res.status(400).json({ message: "Verification code has expired" });
+      }
+
+      if (storedOTP.type !== type) {
+        return res.status(400).json({ message: "Invalid verification type" });
+      }
+
+      // Don't delete OTP yet for forgot-password (needed for reset)
+      if (type === 'signup') {
+        otpStorage.delete(email);
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Verification successful" 
+      });
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      res.status(500).json({ message: "Verification failed" });
+    }
+  });
+
+  // Reset password (requires prior OTP verification)
   app.post('/api/auth/reset-password', async (req, res) => {
     try {
       const { email, password } = resetPasswordSchema.parse(req.body);
-      const user = await storage.getUserByEmail(email);
       
+      // Check if there's a valid OTP for this email
+      const storedOTP = otpStorage.get(email);
+      if (!storedOTP || storedOTP.type !== 'forgot-password') {
+        return res.status(400).json({ message: "Invalid reset request. Please request a new code." });
+      }
+
+      if (Date.now() > storedOTP.expiresAt) {
+        otpStorage.delete(email);
+        return res.status(400).json({ message: "Reset code has expired. Please request a new one." });
+      }
+
+      const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       const hashedPassword = await hashPassword(password);
       await storage.updateUserPassword(user.id, hashedPassword);
+      
+      // Clean up the OTP after successful reset
+      otpStorage.delete(email);
       
       res.json({ message: "Password reset successful" });
     } catch (error) {

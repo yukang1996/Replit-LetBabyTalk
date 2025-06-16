@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
 
 interface VerificationProps {
   email?: string;
@@ -31,12 +32,21 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
     return () => clearInterval(timer);
   }, []);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (code.length === 6) {
-      // Simulate verification success
-      setTimeout(() => {
+      try {
+        await apiRequest('POST', '/api/auth/verify-otp', {
+          email,
+          code,
+          type,
+        });
+        
         onVerificationSuccess();
-      }, 1000);
+      } catch (error: any) {
+        console.error('Verification failed:', error.message);
+        alert(error.message || 'Invalid verification code');
+        setCode(""); // Clear the code
+      }
     }
   };
 
