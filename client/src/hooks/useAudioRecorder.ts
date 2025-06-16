@@ -147,11 +147,28 @@ export function useAudioRecorder() {
       const audio = new Audio(audioUrl);
       
       audio.onloadedmetadata = () => {
-        setAudioDuration(audio.duration);
+        console.log('Audio duration loaded:', audio.duration);
+        if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+          setAudioDuration(audio.duration);
+        } else {
+          // Fallback to recorded time if duration is invalid
+          setAudioDuration(recordingTime);
+        }
+      };
+
+      audio.onloadeddata = () => {
+        // Additional check when audio data is loaded
+        if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+          setAudioDuration(audio.duration);
+        } else {
+          setAudioDuration(recordingTime);
+        }
       };
 
       audio.ontimeupdate = () => {
-        setCurrentPlaybackTime(audio.currentTime);
+        if (audio.currentTime && !isNaN(audio.currentTime)) {
+          setCurrentPlaybackTime(audio.currentTime);
+        }
       };
       
       audio.onended = () => {
@@ -165,6 +182,7 @@ export function useAudioRecorder() {
       };
 
       audio.onerror = () => {
+        console.error('Audio playback error');
         setIsPlaying(false);
         setCurrentPlaybackTime(0);
         if (playbackTimerRef.current) {
@@ -175,17 +193,28 @@ export function useAudioRecorder() {
       };
 
       audioRef.current = audio;
-      audio.play();
+      
+      // Set fallback duration immediately
+      if (audioDuration === 0 || isNaN(audioDuration)) {
+        setAudioDuration(recordingTime);
+      }
+      
+      audio.play().catch(error => {
+        console.error('Audio play failed:', error);
+        setIsPlaying(false);
+        URL.revokeObjectURL(audioUrl);
+      });
+      
       setIsPlaying(true);
       
       // Start tracking playback time
       playbackTimerRef.current = setInterval(() => {
-        if (audioRef.current) {
+        if (audioRef.current && !isNaN(audioRef.current.currentTime)) {
           setCurrentPlaybackTime(audioRef.current.currentTime);
         }
       }, 100);
     }
-  }, [audioBlob, isPlaying]);
+  }, [audioBlob, isPlaying, recordingTime, audioDuration]);
 
   const stopPlayback = useCallback(() => {
     if (audioRef.current && isPlaying) {
@@ -201,9 +230,12 @@ export function useAudioRecorder() {
   }, [isPlaying]);
 
   const seekTo = useCallback((time: number) => {
-    if (audioRef.current && audioDuration > 0) {
-      audioRef.current.currentTime = Math.max(0, Math.min(time, audioDuration));
-      setCurrentPlaybackTime(audioRef.current.currentTime);
+    if (audioRef.current && audioDuration > 0 && !isNaN(audioDuration) && !isNaN(time)) {
+      const safeTime = Math.max(0, Math.min(time, audioDuration));
+      if (isFinite(safeTime)) {
+        audioRef.current.currentTime = safeTime;
+        setCurrentPlaybackTime(safeTime);
+      }
     }
   }, [audioDuration]);
 

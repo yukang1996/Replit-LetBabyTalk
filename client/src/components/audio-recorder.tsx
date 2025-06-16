@@ -95,12 +95,15 @@ export default function AudioRecorder() {
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (audioDuration > 0) {
+    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+    if (effectiveDuration > 0) {
       const rect = e.currentTarget.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      const percentage = clickX / rect.width;
-      const seekTime = percentage * audioDuration;
-      seekTo(seekTime);
+      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+      const seekTime = percentage * effectiveDuration;
+      if (!isNaN(seekTime) && isFinite(seekTime)) {
+        seekTo(seekTime);
+      }
     }
   };
 
@@ -181,8 +184,8 @@ export default function AudioRecorder() {
         <div className="bg-gray-100 rounded-lg p-6 space-y-4">
           {/* Time displays */}
           <div className="flex justify-between text-sm text-gray-600">
-            <span>{formatTime(currentPlaybackTime)}</span>
-            <span>{formatTime(audioDuration || recordingTime)}</span>
+            <span>{formatTime(currentPlaybackTime || 0)}</span>
+            <span>{formatTime((audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime)}</span>
           </div>
           
           {/* Progress bar */}
@@ -193,18 +196,26 @@ export default function AudioRecorder() {
             <div 
               className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
               style={{ 
-                width: audioDuration > 0 
-                  ? `${(currentPlaybackTime / audioDuration) * 100}%` 
-                  : '0%' 
+                width: (() => {
+                  const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+                  const effectiveTime = currentPlaybackTime || 0;
+                  return effectiveDuration > 0 && !isNaN(effectiveTime) 
+                    ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                    : '0%';
+                })()
               }}
             />
             {/* Scrubber */}
             <div 
               className="absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150 group-hover:scale-110"
               style={{ 
-                left: audioDuration > 0 
-                  ? `${(currentPlaybackTime / audioDuration) * 100}%` 
-                  : '0%' 
+                left: (() => {
+                  const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+                  const effectiveTime = currentPlaybackTime || 0;
+                  return effectiveDuration > 0 && !isNaN(effectiveTime)
+                    ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                    : '0%';
+                })()
               }}
             />
           </div>
