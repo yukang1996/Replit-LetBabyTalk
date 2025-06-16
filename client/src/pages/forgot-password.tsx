@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Mail, Send } from "lucide-react";
-import { Link } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ArrowLeft, Mail, Send, CheckCircle } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { z } from "zod";
 
 const forgotPasswordSchema = z.object({
@@ -26,6 +27,9 @@ interface ForgotPasswordProps {
 export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps) {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [, navigate] = useLocation();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
 
   const form = useForm<ForgotPasswordForm>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -42,11 +46,8 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
     onSuccess: (response) => {
       const email = form.getValues("email");
       console.log('Forgot password response:', response);
-      toast({
-        title: "Email Sent",
-        description: "If the email exists, a reset link has been sent",
-      });
-      onSubmitSuccess(email);
+      setSentEmail(email);
+      setShowSuccessDialog(true);
     },
     onError: (error: any) => {
       console.error('Forgot password error:', error);
@@ -67,11 +68,14 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
       <Card className="w-full max-w-md glass-effect">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="absolute left-4 top-4">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="absolute left-4 top-4"
+              onClick={() => navigate("/signin")}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           </div>
           <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="w-8 h-8 text-pink-600" />
@@ -123,15 +127,57 @@ export default function ForgotPassword({ onSubmitSuccess }: ForgotPasswordProps)
           <div className="text-center mt-6">
             <span className="text-gray-600 text-sm">
               Remember your password?{" "}
-              <Link href="/login">
-                <span className="text-pink-600 hover:text-pink-700 cursor-pointer font-medium">
-                  Sign in
-                </span>
-              </Link>
+              <span 
+                className="text-pink-600 hover:text-pink-700 cursor-pointer font-medium"
+                onClick={() => navigate("/signin")}
+              >
+                Sign in
+              </span>
             </span>
           </div>
         </CardContent>
       </Card>
+
+      {/* Custom Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-xl font-bold text-gray-800">
+              Email Sent Successfully!
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 mt-2">
+              We've sent password reset instructions to <strong>{sentEmail}</strong>. 
+              Please check your email and follow the instructions to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-6">
+            <Button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                onSubmitSuccess(sentEmail);
+              }}
+              className="w-full gradient-bg text-white rounded-2xl py-3"
+            >
+              Continue to Verification
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSuccessDialog(false);
+                navigate("/signin");
+              }}
+              className="w-full border-pink-300 text-pink-600 rounded-2xl py-3"
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
