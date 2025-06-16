@@ -104,7 +104,10 @@ export default function Verification({ email, phone, type, onVerificationSuccess
               variant="ghost" 
               size="sm" 
               className="absolute left-4 top-4"
-              onClick={() => navigate("/forgot-password")}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/forgot-password");
+              }}
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
@@ -198,14 +201,18 @@ export default function Verification({ email, phone, type, onVerificationSuccess
           </DialogHeader>
           <div className="flex flex-col gap-3 mt-6">
             <Button
-              onClick={() => setShowErrorDialog(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                setShowErrorDialog(false);
+              }}
               className="w-full gradient-bg text-white rounded-2xl py-3"
             >
               Try Again
             </Button>
             <Button
               variant="outline"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 setShowErrorDialog(false);
                 handleResend();
               }}
