@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,8 +12,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { ArrowLeft, Plus, UserCircle, Calendar, Camera } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Plus, UserCircle, Calendar, Camera, Trash2, Edit3 } from "lucide-react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -100,6 +101,46 @@ export default function BabySelection() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/baby-profiles/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
+      toast({
+        title: t('common.success'),
+        description: t('success.profileDeleted'),
+      });
+      // Reset selected baby if it was deleted
+      if (selectedBabyId && typedProfiles.length > 1) {
+        const remainingProfiles = typedProfiles.filter(p => p.id !== selectedBabyId);
+        if (remainingProfiles.length > 0) {
+          setSelectedBabyId(remainingProfiles[0].id);
+        } else {
+          setSelectedBabyId(null);
+        }
+      }
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: t('error.unauthorized'),
+          description: t('error.unauthorized'),
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: t('common.error'),
+        description: t('error.failedToDelete'),
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -141,23 +182,37 @@ export default function BabySelection() {
     const birth = new Date(birthDate);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - birth.getTime());
-    const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
-    return `${diffWeeks} weeks`;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+    } else if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30);
+      return `${months} month${months !== 1 ? 's' : ''}`;
+    } else {
+      const years = Math.floor(diffDays / 365);
+      return `${years} year${years !== 1 ? 's' : ''}`;
+    }
   };
 
-  const getBabyAvatar = (profile: any) => {
+  const getBabyAvatar = (profile: any, size: "sm" | "lg" = "sm") => {
+    const sizeClasses = size === "lg" ? "w-20 h-20 text-2xl" : "w-12 h-12 text-lg";
+    
     if (profile.photoUrl) {
       return (
         <img 
           src={profile.photoUrl} 
           alt={profile.name}
-          className="w-12 h-12 rounded-full object-cover"
+          className={`${sizeClasses} rounded-full object-cover border-2 border-white shadow-md`}
         />
       );
     }
     return (
-      <div className="w-12 h-12 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center">
-        <span className="text-white font-medium text-lg">
+      <div className={`${sizeClasses} bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center border-2 border-white shadow-md`}>
+        <span className="text-white font-medium">
           {profile.name.charAt(0).toUpperCase()}
         </span>
       </div>
@@ -170,7 +225,7 @@ export default function BabySelection() {
 
   if (showCreateForm) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
         {/* Header */}
         <div className="gradient-bg p-4 flex items-center">
           <Button 
@@ -204,7 +259,7 @@ export default function BabySelection() {
                     />
                     <label
                       htmlFor="photo-upload"
-                      className="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-pink-200 transition-colors"
+                      className="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-pink-200 transition-colors border-2 border-dashed border-pink-300"
                     >
                       {photoPreview ? (
                         <img 
@@ -309,7 +364,7 @@ export default function BabySelection() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
       {/* Header */}
       <div className="gradient-bg p-4 flex items-center justify-between">
         <div className="flex items-center">
@@ -330,94 +385,142 @@ export default function BabySelection() {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-4">
-        <Card className="w-full max-w-md glass-effect">
-          <CardContent className="pt-8 pb-8">
-            {/* Baby Carousel or List */}
-            {profilesLoading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">{t('common.loading')}</p>
-              </div>
-            ) : typedProfiles.length > 0 ? (
-              <div className="space-y-6">
-                {/* Baby Selection Carousel */}
-                <div className="text-center">
-                  <h3 className="text-lg font-medium text-gray-800 mb-4">Select Your Baby</h3>
-                  
-                  {typedProfiles.length === 1 ? (
-                    // Single baby - no carousel needed
-                    <div className="flex flex-col items-center space-y-4">
-                      {getBabyAvatar(typedProfiles[0])}
-                      <div className="text-center">
-                        <p className="font-medium text-gray-800">{typedProfiles[0].name}</p>
-                        <p className="text-sm text-gray-500">Age: {calculateAge(typedProfiles[0].dateOfBirth)}</p>
+      <div className="p-4 pb-20">
+        {profilesLoading ? (
+          <div className="flex justify-center items-center min-h-[50vh]">
+            <p className="text-gray-500 text-lg">{t('common.loading')}</p>
+          </div>
+        ) : typedProfiles.length > 0 ? (
+          <div className="space-y-6">
+            {/* Page Title */}
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Baby</h2>
+              <p className="text-gray-600">Choose which baby profile to use for cry analysis</p>
+            </div>
+
+            {/* Baby Profiles Grid */}
+            <div className="grid gap-4">
+              {typedProfiles.map((profile) => (
+                <Card 
+                  key={profile.id} 
+                  className={cn(
+                    "glass-effect cursor-pointer transition-all duration-200 hover:shadow-lg",
+                    selectedBabyId === profile.id ? "ring-2 ring-pink-400 shadow-lg" : ""
+                  )}
+                  onClick={() => setSelectedBabyId(profile.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {getBabyAvatar(profile, "lg")}
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-800 text-lg">{profile.name}</h3>
+                          <p className="text-gray-600 capitalize">{profile.gender}</p>
+                          <p className="text-sm text-gray-500">Age: {calculateAge(profile.dateOfBirth)}</p>
+                          <p className="text-xs text-gray-400">
+                            Born: {new Date(profile.dateOfBirth).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex flex-col space-y-2">
+                        {/* Delete Button with Confirmation */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Baby Profile</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete <strong>{profile.name}'s</strong> profile? 
+                                This will permanently remove all data associated with this baby profile, 
+                                including recordings and analysis history. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteMutation.mutate(profile.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                                disabled={deleteMutation.isPending}
+                              >
+                                {deleteMutation.isPending ? "Deleting..." : "Delete Profile"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
+                        {/* Selected Indicator */}
+                        {selectedBabyId === profile.id && (
+                          <div className="text-center">
+                            <div className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center mx-auto">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    // Multiple babies - show carousel
-                    <Carousel className="w-full max-w-xs mx-auto">
-                      <CarouselContent>
-                        {typedProfiles.map((profile) => (
-                          <CarouselItem key={profile.id}>
-                            <div 
-                              className={cn(
-                                "flex flex-col items-center space-y-4 p-4 rounded-lg cursor-pointer transition-colors",
-                                selectedBabyId === profile.id ? "bg-pink-50" : "hover:bg-gray-50"
-                              )}
-                              onClick={() => setSelectedBabyId(profile.id)}
-                            >
-                              {getBabyAvatar(profile)}
-                              <div className="text-center">
-                                <p className="font-medium text-gray-800">Name: {profile.name}</p>
-                                <p className="text-sm text-gray-500">Age: {calculateAge(profile.dateOfBirth)}</p>
-                              </div>
-                            </div>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
-                  )}
-                </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-                {/* Continue Button */}
-                <div className="text-center">
-                  <Link href="/">
-                    <Button className="w-full gradient-bg text-white rounded-2xl py-3">
-                      Continue
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              // No babies - show add baby option
-              <div className="text-center space-y-6">
-                <p className="text-gray-600 mb-6">{t('babyProfile.noProfiles')}</p>
+            {/* Add New Baby Button */}
+            <Card className="glass-effect border-2 border-dashed border-pink-300 hover:border-pink-400 transition-colors">
+              <CardContent className="p-4">
                 <Button
                   onClick={() => setShowCreateForm(true)}
-                  className="w-full gradient-bg text-white rounded-2xl py-3"
+                  variant="ghost"
+                  className="w-full h-20 text-pink-600 hover:bg-pink-50 flex-col space-y-2"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
-                  {t('babyProfile.add')}
+                  <Plus className="w-8 h-8" />
+                  <span className="font-medium">Add Another Baby</span>
                 </Button>
-              </div>
-            )}
+              </CardContent>
+            </Card>
 
-            {/* Add Another Baby Button */}
-            {typedProfiles.length > 0 && (
-              <div className="text-center mt-8">
-                <Button
-                  onClick={() => setShowCreateForm(true)}
-                  variant="outline"
-                  className="w-16 h-16 rounded-full border-pink-300 text-pink-600 hover:bg-pink-50"
+            {/* Continue Button */}
+            <div className="fixed bottom-20 left-4 right-4 z-10">
+              <Link href="/">
+                <Button 
+                  className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
+                  disabled={!selectedBabyId}
                 >
-                  <Plus className="w-6 h-6" />
+                  Continue with {selectedBabyId ? typedProfiles.find(p => p.id === selectedBabyId)?.name : 'Baby'}
                 </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          // No babies - show welcome state
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+            <div className="w-32 h-32 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center">
+              <UserCircle className="w-16 h-16 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">No Baby Profiles Yet</h2>
+              <p className="text-gray-600 mb-6 max-w-md">
+                Create your first baby profile to start using LetBabyTalk's cry analysis features
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowCreateForm(true)}
+              className="gradient-bg text-white rounded-2xl py-4 px-8 text-lg font-medium"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Create First Baby Profile
+            </Button>
+          </div>
+        )}
       </div>
 
       <Navigation />
