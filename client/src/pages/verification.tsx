@@ -70,11 +70,14 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
       <Card className="w-full max-w-md glass-effect">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <Link href={type === "signup" ? "/signup" : "/forgot-password"}>
-              <Button variant="ghost" size="sm" className="absolute left-4 top-4">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="absolute left-4 top-4"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           </div>
           <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="w-8 h-8 text-pink-600" />
@@ -160,7 +163,7 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
               Verification Failed
             </DialogTitle>
             <DialogDescription className="text-gray-600 mt-2">
-              {errorMessage}
+              Invalid verification code
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 mt-6">
@@ -174,8 +177,7 @@ export default function Verification({ email, type, onVerificationSuccess }: Ver
               variant="outline"
               onClick={() => {
                 setShowErrorDialog(false);
-                setCanResend(true);
-                setCountdown(0);
+                handleResend();
               }}
               className="w-full border-pink-300 text-pink-600 rounded-2xl py-3"
             >
