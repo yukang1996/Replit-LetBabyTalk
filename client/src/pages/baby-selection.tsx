@@ -106,21 +106,24 @@ export default function BabySelection() {
       await apiRequest("DELETE", `/api/baby-profiles/${id}`);
     },
     onSuccess: (_, deletedId) => {
-      toast({
-        title: t('common.success'),
-        description: t('success.profileDeleted'),
-      });
-      // Reset selected baby if the deleted one was selected
+      // Handle selecting next baby if the deleted one was selected
       if (selectedBabyId === deletedId) {
         const remainingProfiles = typedProfiles.filter(p => p.id !== deletedId);
         if (remainingProfiles.length > 0) {
+          // Select the next baby in the list
           setSelectedBabyId(remainingProfiles[0].id);
         } else {
           setSelectedBabyId(null);
         }
       }
-      // Invalidate queries after updating state
+      
+      // Invalidate queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
+      
+      toast({
+        title: t('common.success'),
+        description: t('success.profileDeleted'),
+      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
