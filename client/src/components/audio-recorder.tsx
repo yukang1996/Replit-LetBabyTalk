@@ -101,7 +101,7 @@ export default function AudioRecorder() {
           className={cn(
             "w-32 h-32 rounded-full transition-all duration-300",
             isRecording 
-              ? "bg-red-500 hover:bg-red-600 animate-pulse" 
+              ? "bg-red-500 hover:bg-red-600" + (isPaused ? "" : " animate-pulse")
               : "gradient-bg hover:opacity-90"
           )}
         >
@@ -112,9 +112,9 @@ export default function AudioRecorder() {
           )}
         </Button>
         
-        {/* Recording indicator */}
-        {isRecording && (
-          <div className="absolute -inset-2 border-4 border-red-300 rounded-full animate-ping" />
+        {/* Recording indicator - contained within button area */}
+        {isRecording && !isPaused && (
+          <div className="absolute inset-0 border-4 border-red-300 rounded-full animate-ping" />
         )}
       </div>
 
@@ -125,7 +125,7 @@ export default function AudioRecorder() {
         </h3>
         <p className="text-sm text-gray-600">
           {isRecording 
-            ? "Tap again to stop recording (max 30 seconds)" 
+            ? "Tap again to stop recording" 
             : "Record 8-30 seconds to get the best results"
           }
         </p>
@@ -137,29 +137,12 @@ export default function AudioRecorder() {
           <div className="text-2xl font-mono text-gray-700">
             {formatTime(recordingTime)}
           </div>
-          {isRecording && (
-            <div className="text-sm text-gray-500 mt-1">
-              / {formatTime(30)} max
-            </div>
-          )}
         </div>
       )}
 
-      {/* Recording Controls */}
-      {isRecording && (
-        <div className="flex justify-center space-x-4">
-          <Button
-            onClick={isPaused ? resumeRecording : pauseRecording}
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-          >
-            {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-          </Button>
-        </div>
-      )}
+      
 
-      {/* Playback and Upload */}
+      {/* Playback and Submit */}
       {audioBlob && !isRecording && (
         <div className="space-y-4">
           <div className="flex justify-center space-x-4">
@@ -171,15 +154,15 @@ export default function AudioRecorder() {
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               <span className="ml-2">{isPlaying ? "Stop" : "Play"}</span>
             </Button>
+            
+            <Button
+              onClick={handleUpload}
+              disabled={uploadMutation.isPending}
+              className="gradient-bg text-white rounded-full px-6"
+            >
+              {uploadMutation.isPending ? "Submitting..." : "Submit"}
+            </Button>
           </div>
-
-          <Button
-            onClick={handleUpload}
-            disabled={uploadMutation.isPending}
-            className="w-full gradient-bg text-white rounded-2xl py-3"
-          >
-            {uploadMutation.isPending ? "Analyzing..." : "Analyze Cry"}
-          </Button>
         </div>
       )}
 
