@@ -494,7 +494,7 @@ export default function BabySelection() {
 
             {/* Continue Button */}
             <div className="fixed bottom-20 left-4 right-4 z-10">
-              <Link href="/">
+              <Link href="/record">
                 <Button 
                   className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
                   disabled={!selectedBabyId}
