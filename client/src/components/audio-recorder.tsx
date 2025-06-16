@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -77,12 +78,12 @@ export default function AudioRecorder() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleStartRecording = () => {
-    startRecording();
-  };
-
-  const handleStopRecording = () => {
-    stopRecording();
+  const handleRecordingToggle = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
   const handleUpload = () => {
@@ -94,14 +95,14 @@ export default function AudioRecorder() {
   return (
     <div className="text-center space-y-6">
       {/* Recording Button */}
-      <div className="relative">
+      <div className="relative flex justify-center">
         <Button
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
+          onClick={handleRecordingToggle}
           disabled={uploadMutation.isPending}
           className={cn(
-            "w-32 h-32 rounded-full transition-all duration-300",
+            "w-32 h-32 rounded-full transition-all duration-300 relative overflow-hidden",
             isRecording 
-              ? "bg-red-500 hover:bg-red-600" + (isPaused ? "" : " animate-pulse")
+              ? "bg-red-500 hover:bg-red-600"
               : "gradient-bg hover:opacity-90"
           )}
         >
@@ -110,12 +111,12 @@ export default function AudioRecorder() {
           ) : (
             <Mic className="w-12 h-12 text-white" />
           )}
+          
+          {/* Recording animation - contained within button */}
+          {isRecording && !isPaused && (
+            <div className="absolute inset-1 border-2 border-red-300 rounded-full animate-pulse opacity-75" />
+          )}
         </Button>
-        
-        {/* Recording indicator - contained within button area */}
-        {isRecording && !isPaused && (
-          <div className="absolute inset-2 border-2 border-red-300 rounded-full animate-pulse opacity-75" />
-        )}
       </div>
 
       {/* Instructions */}
@@ -139,8 +140,6 @@ export default function AudioRecorder() {
           </div>
         </div>
       )}
-
-      
 
       {/* Playback and Submit */}
       {audioBlob && !isRecording && (
