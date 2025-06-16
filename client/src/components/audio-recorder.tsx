@@ -121,20 +121,27 @@ export default function AudioRecorder() {
       {/* Instructions */}
       <div>
         <h3 className="text-xl font-medium text-gray-800 mb-2">
-          {isRecording ? "Recording..." : "Tap to start recording"}
+          {isRecording ? (isPaused ? "Recording Paused" : "Recording...") : "Tap to start recording"}
         </h3>
         <p className="text-sm text-gray-600">
           {isRecording 
-            ? "Tap again to stop recording" 
-            : "Record more than 8 seconds to get better results"
+            ? "Tap again to stop recording (max 30 seconds)" 
+            : "Record 8-30 seconds to get the best results"
           }
         </p>
       </div>
 
       {/* Recording Timer */}
       {(isRecording || audioBlob) && (
-        <div className="text-2xl font-mono text-gray-700">
-          {formatTime(recordingTime)}
+        <div className="text-center">
+          <div className="text-2xl font-mono text-gray-700">
+            {formatTime(recordingTime)}
+          </div>
+          {isRecording && (
+            <div className="text-sm text-gray-500 mt-1">
+              / {formatTime(30)} max
+            </div>
+          )}
         </div>
       )}
 

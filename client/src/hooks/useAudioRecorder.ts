@@ -10,6 +10,7 @@ export function useAudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoStopRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const startTimer = useCallback(() => {
@@ -52,9 +53,21 @@ export function useAudioRecorder() {
           type: 'audio/webm;codecs=opus' 
         });
         setAudioBlob(audioBlob);
+        setIsRecording(false);
+        setIsPaused(false);
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
+        
+        // Clear timers
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        if (autoStopRef.current) {
+          clearTimeout(autoStopRef.current);
+          autoStopRef.current = null;
+        }
       };
 
       mediaRecorderRef.current = mediaRecorder;
@@ -65,35 +78,62 @@ export function useAudioRecorder() {
       setRecordingTime(0);
       setAudioBlob(null);
       startTimer();
+      
+      // Auto-stop after 30 seconds
+      autoStopRef.current = setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 30000);
+      
     } catch (error) {
       console.error('Error accessing microphone:', error);
     }
   }, [startTimer]);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && (mediaRecorderRef.current.state === 'recording' || mediaRecorderRef.current.state === 'paused')) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsPaused(false);
-      stopTimer();
+      
+      // Clear auto-stop timer if manually stopped
+      if (autoStopRef.current) {
+        clearTimeout(autoStopRef.current);
+        autoStopRef.current = null;
+      }
     }
-  }, [isRecording, stopTimer]);
+  }, []);
 
   const pauseRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording && !isPaused) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.pause();
       setIsPaused(true);
       stopTimer();
+      
+      // Pause auto-stop timer
+      if (autoStopRef.current) {
+        clearTimeout(autoStopRef.current);
+        autoStopRef.current = null;
+      }
     }
-  }, [isRecording, isPaused, stopTimer]);
+  }, [stopTimer]);
 
   const resumeRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording && isPaused) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
       mediaRecorderRef.current.resume();
       setIsPaused(false);
       startTimer();
+      
+      // Resume auto-stop timer with remaining time
+      const remainingTime = 30000 - (recordingTime * 1000);
+      if (remainingTime > 0) {
+        autoStopRef.current = setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+          }
+        }, remainingTime);
+      }
     }
-  }, [isRecording, isPaused, startTimer]);
+  }, [startTimer, recordingTime]);
 
   const playRecording = useCallback(() => {
     if (audioBlob && !isPlaying) {
