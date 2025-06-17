@@ -142,67 +142,98 @@ export function useAudioRecorder() {
   }, [startTimer, recordingTime]);
 
   const playRecording = useCallback(() => {
-    if (audioBlob && !isPlaying) {
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      
-      audio.onloadedmetadata = () => {
-        console.log('Audio duration loaded:', audio.duration);
-        if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
-          setAudioDuration(audio.duration);
-        } else {
-          // Fallback to recorded time if duration is invalid
+    if (audioBlob) {
+      // If audio is already loaded and paused, just resume
+      if (audioRef.current && !isPlaying) {
+        audioRef.current.play().catch(error => {
+          console.error('Audio resume failed:', error);
+        });
+        setIsPlaying(true);
+        
+        // Restart tracking playback time
+        playbackTimerRef.current = setInterval(() => {
+          if (audioRef.current && !isNaN(audioRef.current.currentTime)) {
+            setCurrentPlaybackTime(audioRef.current.currentTime);
+          }
+        }, 100);
+        return;
+      }
+
+      // Create new audio instance if not exists
+      if (!audioRef.current) {
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.onloadedmetadata = () => {
+          console.log('Audio duration loaded:', audio.duration);
+          if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+            setAudioDuration(audio.duration);
+          } else {
+            // Fallback to recorded time if duration is invalid
+            setAudioDuration(recordingTime);
+          }
+        };
+
+        audio.onloadeddata = () => {
+          // Additional check when audio data is loaded
+          if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+            setAudioDuration(audio.duration);
+          } else {
+            setAudioDuration(recordingTime);
+          }
+        };
+
+        audio.ontimeupdate = () => {
+          if (audio.currentTime && !isNaN(audio.currentTime)) {
+            setCurrentPlaybackTime(audio.currentTime);
+          }
+        };
+        
+        audio.onpause = () => {
+          setIsPlaying(false);
+          if (playbackTimerRef.current) {
+            clearInterval(playbackTimerRef.current);
+            playbackTimerRef.current = null;
+          }
+        };
+        
+        audio.onended = () => {
+          setIsPlaying(false);
+          setCurrentPlaybackTime(0);
+          if (playbackTimerRef.current) {
+            clearInterval(playbackTimerRef.current);
+            playbackTimerRef.current = null;
+          }
+          // Reset to beginning for next play
+          audio.currentTime = 0;
+        };
+
+        audio.onerror = () => {
+          console.error('Audio playback error');
+          setIsPlaying(false);
+          setCurrentPlaybackTime(0);
+          if (playbackTimerRef.current) {
+            clearInterval(playbackTimerRef.current);
+            playbackTimerRef.current = null;
+          }
+        };
+
+        audioRef.current = audio;
+        
+        // Set fallback duration immediately
+        if (audioDuration === 0 || isNaN(audioDuration)) {
           setAudioDuration(recordingTime);
         }
-      };
-
-      audio.onloadeddata = () => {
-        // Additional check when audio data is loaded
-        if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
-          setAudioDuration(audio.duration);
-        } else {
-          setAudioDuration(recordingTime);
+        
+        // Set to current playback position if resuming
+        if (currentPlaybackTime > 0) {
+          audio.currentTime = currentPlaybackTime;
         }
-      };
-
-      audio.ontimeupdate = () => {
-        if (audio.currentTime && !isNaN(audio.currentTime)) {
-          setCurrentPlaybackTime(audio.currentTime);
-        }
-      };
-      
-      audio.onended = () => {
-        setIsPlaying(false);
-        setCurrentPlaybackTime(0);
-        if (playbackTimerRef.current) {
-          clearInterval(playbackTimerRef.current);
-          playbackTimerRef.current = null;
-        }
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.onerror = () => {
-        console.error('Audio playback error');
-        setIsPlaying(false);
-        setCurrentPlaybackTime(0);
-        if (playbackTimerRef.current) {
-          clearInterval(playbackTimerRef.current);
-          playbackTimerRef.current = null;
-        }
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audioRef.current = audio;
-      
-      // Set fallback duration immediately
-      if (audioDuration === 0 || isNaN(audioDuration)) {
-        setAudioDuration(recordingTime);
       }
       
-      audio.play().catch(error => {
+      audioRef.current.play().catch(error => {
         console.error('Audio play failed:', error);
         setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
       });
       
       setIsPlaying(true);
@@ -214,10 +245,10 @@ export function useAudioRecorder() {
         }
       }, 100);
     }
-  }, [audioBlob, isPlaying, recordingTime, audioDuration]);
+  }, [audioBlob, isPlaying, recordingTime, audioDuration, currentPlaybackTime]);
 
   const stopPlayback = useCallback(() => {
-    if (audioRef.current && isPlaying) {
+    if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
@@ -227,17 +258,20 @@ export function useAudioRecorder() {
         playbackTimerRef.current = null;
       }
     }
-  }, [isPlaying]);
+  }, []);
 
   const seekTo = useCallback((time: number) => {
-    if (audioRef.current && audioDuration > 0 && !isNaN(audioDuration) && !isNaN(time)) {
-      const safeTime = Math.max(0, Math.min(time, audioDuration));
+    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+    if (effectiveDuration > 0 && !isNaN(time)) {
+      const safeTime = Math.max(0, Math.min(time, effectiveDuration));
       if (isFinite(safeTime)) {
-        audioRef.current.currentTime = safeTime;
         setCurrentPlaybackTime(safeTime);
+        if (audioRef.current) {
+          audioRef.current.currentTime = safeTime;
+        }
       }
     }
-  }, [audioDuration]);
+  }, [audioDuration, recordingTime]);
 
   const deleteRecording = useCallback(() => {
     if (audioRef.current) {

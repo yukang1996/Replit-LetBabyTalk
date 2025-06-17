@@ -94,18 +94,65 @@ export default function AudioRecorder() {
     }
   };
 
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const calculateSeekTime = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent, element: HTMLDivElement) => {
     const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
     if (effectiveDuration > 0) {
-      const rect = e.currentTarget.getBoundingClientRect();
+      const rect = element.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const percentage = Math.max(0, Math.min(1, clickX / rect.width));
       const seekTime = percentage * effectiveDuration;
       if (!isNaN(seekTime) && isFinite(seekTime)) {
+        return seekTime;
+      }
+    }
+    return null;
+  }, [audioDuration, recordingTime]);
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const seekTime = calculateSeekTime(e, e.currentTarget);
+    if (seekTime !== null) {
+      seekTo(seekTime);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    const seekTime = calculateSeekTime(e, e.currentTarget);
+    if (seekTime !== null) {
+      seekTo(seekTime);
+    }
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const progressBar = document.querySelector('.progress-bar') as HTMLDivElement;
+    if (progressBar) {
+      const seekTime = calculateSeekTime(e, progressBar);
+      if (seekTime !== null) {
         seekTo(seekTime);
       }
     }
-  };
+  }, [isDragging, calculateSeekTime, seekTo]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Add global mouse event listeners for dragging
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleDelete = () => {
     deleteRecording();
@@ -190,8 +237,9 @@ export default function AudioRecorder() {
           
           {/* Progress bar */}
           <div 
-            className="relative h-2 bg-gray-200 rounded-full cursor-pointer group"
-            onClick={handleSeek}
+            className="relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
+            onMouseDown={handleMouseDown}
+            onClick={!isDragging ? handleSeek : undefined}
           >
             <div 
               className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
@@ -207,7 +255,10 @@ export default function AudioRecorder() {
             />
             {/* Scrubber */}
             <div 
-              className="absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150 group-hover:scale-110"
+              className={cn(
+                "absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150",
+                isDragging ? "scale-125" : "group-hover:scale-110"
+              )}
               style={{ 
                 left: (() => {
                   const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
@@ -225,7 +276,7 @@ export default function AudioRecorder() {
         <div className="flex justify-center space-x-4">
           {/* Play/Pause Button */}
           <Button
-            onClick={isPlaying ? stopPlayback : playRecording}
+            onClick={isPlaying ? () => audioRef.current?.pause() : playRecording}
             className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
           >
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
