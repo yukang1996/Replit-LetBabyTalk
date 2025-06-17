@@ -21,6 +21,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import Verification from "@/pages/verification";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
+import Results from "./pages/results";
 
 function Router() {
   const { isAuthenticated, isLoading, refetch } = useAuth();
@@ -129,6 +130,7 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/advisor" component={Advisor} />
           <Route path="/chatbot" component={Chatbot} />
+          <Route path="/results/:id" component={Results} />
         </>
       )}
     </Switch>

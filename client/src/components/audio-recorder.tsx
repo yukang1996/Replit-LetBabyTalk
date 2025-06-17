@@ -1,18 +1,22 @@
-
-
 import React, { useState, useCallback } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mic, Square, Play, Pause, Trash2, Upload } from "lucide-react";
+import { Mic, Square, Upload, Play, Pause } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { apiRequest } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 export default function AudioRecorder() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const {
     isRecording,
     isPaused,
@@ -129,7 +133,7 @@ export default function AudioRecorder() {
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
-    
+
     const progressBar = document.querySelector('.progress-bar') as HTMLDivElement;
     if (progressBar) {
       const seekTime = calculateSeekTime(e, progressBar);
@@ -148,7 +152,7 @@ export default function AudioRecorder() {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -178,7 +182,7 @@ export default function AudioRecorder() {
               </div>
             </>
           )}
-          
+
           <Button
             onClick={handleRecordingToggle}
             disabled={uploadMutation.isPending}
@@ -228,7 +232,7 @@ export default function AudioRecorder() {
         <h3 className="text-xl font-medium text-gray-800">
           Recording Complete
         </h3>
-        
+
         {/* Track Bar */}
         <div className="bg-gray-100 rounded-lg p-6 space-y-4">
           {/* Time displays */}
@@ -236,7 +240,7 @@ export default function AudioRecorder() {
             <span>{formatTime(currentPlaybackTime || 0)}</span>
             <span>{formatTime((audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime)}</span>
           </div>
-          
+
           {/* Progress bar */}
           <div 
             className="relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
@@ -283,7 +287,7 @@ export default function AudioRecorder() {
           >
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
           </Button>
-          
+
           {/* Delete Button */}
           <Button
             onClick={handleDelete}
@@ -334,4 +338,3 @@ export default function AudioRecorder() {
     </div>
   );
 }
-
