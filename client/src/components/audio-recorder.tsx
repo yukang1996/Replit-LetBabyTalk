@@ -1,5 +1,6 @@
 
 
+import React, { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -276,7 +277,7 @@ export default function AudioRecorder() {
         <div className="flex justify-center space-x-4">
           {/* Play/Pause Button */}
           <Button
-            onClick={isPlaying ? () => audioRef.current?.pause() : playRecording}
+            onClick={isPlaying ? stopPlayback : playRecording}
             className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
           >
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
