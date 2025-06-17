@@ -247,6 +247,17 @@ export function useAudioRecorder() {
     }
   }, [audioBlob, isPlaying, recordingTime, audioDuration, currentPlaybackTime]);
 
+  const pausePlayback = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      if (playbackTimerRef.current) {
+        clearInterval(playbackTimerRef.current);
+        playbackTimerRef.current = null;
+      }
+    }
+  }, []);
+
   const stopPlayback = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -302,6 +313,7 @@ export function useAudioRecorder() {
     pauseRecording,
     resumeRecording,
     playRecording,
+    pausePlayback,
     stopPlayback,
     seekTo,
     deleteRecording,

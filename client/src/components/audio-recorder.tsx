@@ -21,6 +21,7 @@ export default function AudioRecorder() {
     startRecording,
     stopRecording,
     playRecording,
+    pausePlayback,
     stopPlayback,
     isPlaying,
     currentPlaybackTime,
@@ -277,7 +278,7 @@ export default function AudioRecorder() {
         <div className="flex justify-center space-x-4">
           {/* Play/Pause Button */}
           <Button
-            onClick={isPlaying ? stopPlayback : playRecording}
+            onClick={isPlaying ? pausePlayback : playRecording}
             className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
           >
             {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
