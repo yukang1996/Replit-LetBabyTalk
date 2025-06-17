@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from "react";
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mic, Square, Upload, Play, Pause } from "lucide-react";
+import { Mic, Square, Upload, Play, Pause, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
