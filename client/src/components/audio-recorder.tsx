@@ -10,12 +10,22 @@ import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export default function AudioRecorder() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const [showResultsDialog, setShowResultsDialog] = useState(false);
+  const [currentRecordingId, setCurrentRecordingId] = useState(null);
   const {
     isRecording,
     isPaused,
@@ -59,7 +69,9 @@ export default function AudioRecorder() {
         description: `Detected: ${data.analysisResult?.cryType || 'Unknown cry type'}`,
       });
       // Navigate to results page
-      navigate(`/results/${data.id}`);
+      //navigate(`/results/${data.id}`);
+      setCurrentRecordingId(data.id);
+      setShowResultsDialog(true);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -165,6 +177,11 @@ export default function AudioRecorder() {
     deleteRecording();
   };
 
+  const handleCloseResultsDialog = () => {
+    setShowResultsDialog(false);
+    setCurrentRecordingId(null);
+  };
+
   // Show recording interface when no audio or currently recording
   if (!audioBlob || isRecording) {
     return (
@@ -221,94 +238,139 @@ export default function AudioRecorder() {
             </div>
           </div>
         )}
+
+        {/* Results Dialog */}
+        <ResultsDialog 
+          isOpen={showResultsDialog}
+          onClose={handleCloseResultsDialog}
+          recordingId={currentRecordingId}
+        />
       </div>
     );
   }
 
   // Show track bar interface after recording completion
   return (
-    <div className="text-center space-y-6 py-8">
-      {/* Audio Track Bar */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-medium text-gray-800">
-          Recording Complete
-        </h3>
+    <>
+      <div className="text-center space-y-6 py-8">
+        {/* Audio Track Bar */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-medium text-gray-800">
+            Recording Complete
+          </h3>
 
-        {/* Track Bar */}
-        <div className="bg-gray-100 rounded-lg p-6 space-y-4">
-          {/* Time displays */}
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>{formatTime(currentPlaybackTime || 0)}</span>
-            <span>{formatTime((audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime)}</span>
+          {/* Track Bar */}
+          <div className="bg-gray-100 rounded-lg p-6 space-y-4">
+            {/* Time displays */}
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{formatTime(currentPlaybackTime || 0)}</span>
+              <span>{formatTime((audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime)}</span>
+            </div>
+
+            {/* Progress bar */}
+            <div 
+              className="relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
+              onMouseDown={handleMouseDown}
+              onClick={!isDragging ? handleSeek : undefined}
+            >
+              <div 
+                className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
+                style={{ 
+                  width: (() => {
+                    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+                    const effectiveTime = currentPlaybackTime || 0;
+                    return effectiveDuration > 0 && !isNaN(effectiveTime) 
+                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                      : '0%';
+                  })()
+                }}
+              />
+              {/* Scrubber */}
+              <div 
+                className={cn(
+                  "absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150",
+                  isDragging ? "scale-125" : "group-hover:scale-110"
+                )}
+                style={{ 
+                  left: (() => {
+                    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+                    const effectiveTime = currentPlaybackTime || 0;
+                    return effectiveDuration > 0 && !isNaN(effectiveTime)
+                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                      : '0%';
+                  })()
+                }}
+              />
+            </div>
           </div>
 
-          {/* Progress bar */}
-          <div 
-            className="relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
-            onMouseDown={handleMouseDown}
-            onClick={!isDragging ? handleSeek : undefined}
-          >
-            <div 
-              className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
-              style={{ 
-                width: (() => {
-                  const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
-                  const effectiveTime = currentPlaybackTime || 0;
-                  return effectiveDuration > 0 && !isNaN(effectiveTime) 
-                    ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
-                    : '0%';
-                })()
-              }}
-            />
-            {/* Scrubber */}
-            <div 
-              className={cn(
-                "absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150",
-                isDragging ? "scale-125" : "group-hover:scale-110"
-              )}
-              style={{ 
-                left: (() => {
-                  const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
-                  const effectiveTime = currentPlaybackTime || 0;
-                  return effectiveDuration > 0 && !isNaN(effectiveTime)
-                    ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
-                    : '0%';
-                })()
-              }}
-            />
+          {/* Control Buttons */}
+          <div className="flex justify-center space-x-4">
+            {/* Play/Pause Button */}
+            <Button
+              onClick={isPlaying ? pausePlayback : playRecording}
+              className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
+            >
+              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+            </Button>
+
+            {/* Delete Button */}
+            <Button
+              onClick={handleDelete}
+              variant="outline"
+              className="w-16 h-16 rounded-full border-red-300 text-red-500 hover:bg-red-50"
+            >
+              <Trash2 className="w-6 h-6" />
+            </Button>
           </div>
-        </div>
 
-        {/* Control Buttons */}
-        <div className="flex justify-center space-x-4">
-          {/* Play/Pause Button */}
+          {/* Submit Button */}
           <Button
-            onClick={isPlaying ? pausePlayback : playRecording}
-            className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
+            onClick={handleUpload}
+            disabled={uploadMutation.isPending}
+            className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
           >
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-          </Button>
-
-          {/* Delete Button */}
-          <Button
-            onClick={handleDelete}
-            variant="outline"
-            className="w-16 h-16 rounded-full border-red-300 text-red-500 hover:bg-red-50"
-          >
-            <Trash2 className="w-6 h-6" />
+            <Upload className="w-5 h-5 mr-2" />
+            {uploadMutation.isPending ? "Analyzing..." : "Submit for Analysis"}
           </Button>
         </div>
-
-        {/* Submit Button */}
-        <Button
-          onClick={handleUpload}
-          disabled={uploadMutation.isPending}
-          className="w-full gradient-bg text-white rounded-2xl py-4 text-lg font-medium shadow-lg"
-        >
-          <Upload className="w-5 h-5 mr-2" />
-          {uploadMutation.isPending ? "Analyzing..." : "Submit for Analysis"}
-        </Button>
       </div>
-    </div>
+
+      {/* Results Dialog */}
+      <ResultsDialog 
+        isOpen={showResultsDialog}
+        onClose={handleCloseResultsDialog}
+        recordingId={currentRecordingId}
+      />
+    </>
+  );
+}
+
+function ResultsDialog({ isOpen, onClose, recordingId }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["/api/recordings", recordingId],
+    queryFn: () => apiRequest(`/api/recordings/${recordingId}`),
+    enabled: isOpen && !!recordingId,
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Analysis Results</DialogTitle>
+          <DialogDescription>
+            Here are the results of the analysis.
+          </DialogDescription>
+        </DialogHeader>
+        {isLoading && <p>Loading...</p>}
+        {isError && <p>Error loading results.</p>}
+        {data && (
+          <div>
+            <p>Cry Type: {data.analysisResult?.cryType || "Unknown"}</p>
+            <p>Additional Notes: Analysis is complete</p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
