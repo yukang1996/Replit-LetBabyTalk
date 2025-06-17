@@ -48,17 +48,23 @@ export default function Results() {
       if (!recordingId) throw new Error("No recording ID");
       return await apiRequest("POST", `/api/recordings/${recordingId}/vote`, { vote });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/recordings", recordingId] });
+      queryClient.setQueryData(["/api/recordings", recordingId], (oldData: Recording | undefined) => {
+        if (oldData) {
+          return { ...oldData, vote: data.vote };
+        }
+        return oldData;
+      });
       toast({
         title: "Feedback Recorded",
         description: "Thank you for your feedback!",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to record feedback",
+        description: error.message || "Failed to record feedback",
         variant: "destructive",
       });
     },
@@ -145,19 +151,22 @@ export default function Results() {
         {/* Bear Mascot and Main Result */}
         <Card className="glass-effect text-center">
           <CardContent className="p-6">
-            <div className="w-32 h-32 mx-auto mb-4 bg-white rounded-2xl border-4 border-blue-200 flex items-center justify-center">
-              <BearMascot className="w-24 h-24" />
+            <div className="w-40 h-40 mx-auto mb-6 bg-white rounded-3xl border-4 border-blue-200 flex items-center justify-center shadow-lg">
+              <BearMascot className="w-32 h-32" />
             </div>
             
-            <div className="text-4xl font-bold text-gray-800 mb-2">
-              {mainCryType.emoji} {Math.round(confidence * 100)}%
+            <div className="text-5xl font-bold text-gray-800 mb-3">
+              {Math.round(confidence * 100)}%
             </div>
             
-            <Badge className={`${mainCryType.color} text-lg px-4 py-2`}>
-              {mainCryType.label}
-            </Badge>
+            <div className="flex items-center justify-center mb-4">
+              <span className="text-3xl mr-2">{mainCryType.emoji}</span>
+              <Badge className={`${mainCryType.color} text-xl px-6 py-2 rounded-full`}>
+                {mainCryType.label}
+              </Badge>
+            </div>
             
-            <div className="flex items-center justify-center text-sm text-gray-500 mt-4">
+            <div className="flex items-center justify-center text-sm text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
               <span>Recorded at {formatTime(recording.recordedAt)}</span>
             </div>
@@ -167,26 +176,27 @@ export default function Results() {
         {/* Other Probabilities */}
         {otherProbs.length > 0 && (
           <Card className="glass-effect">
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-800">Other Possibilities</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {otherProbs.map(([key, prob]) => {
-                const typeInfo = getCryTypeDisplay(key === 'hunger_food' ? 'hunger' : 
-                                                  key === 'sleepiness' ? 'tired' : 
-                                                  key.includes('pain') ? 'pain' : 'discomfort');
-                return (
-                  <div key={key} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{typeInfo.emoji}</span>
-                      <span className="text-gray-700">{typeInfo.label}</span>
+            <CardContent className="p-4">
+              <div className="space-y-3">
+                {otherProbs.map(([key, prob]) => {
+                  const typeInfo = getCryTypeDisplay(key === 'hunger_food' ? 'hunger' : 
+                                                    key === 'sleepiness' ? 'tired' : 
+                                                    key.includes('pain') ? 'pain' : 'discomfort');
+                  return (
+                    <div key={key} className="flex items-center justify-between py-2">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-xl">{typeInfo.emoji}</span>
+                        <span className="text-gray-700 font-medium">{typeInfo.label}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-gray-600 font-bold text-lg">
+                          {Math.round(prob * 100)}%
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-gray-600 font-medium">
-                      {Math.round(prob * 100)}%
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         )}
@@ -247,22 +257,22 @@ export default function Results() {
         {/* Feedback Section */}
         <Card className="glass-effect">
           <CardContent className="p-6">
-            <h3 className="text-lg font-medium text-gray-800 text-center mb-4">
+            <h3 className="text-lg font-medium text-gray-800 text-center mb-6">
               评价预测准确度
             </h3>
-            <div className="flex justify-center space-x-6">
+            <div className="flex justify-center space-x-8">
               <Button
                 variant={recording.vote === 'good' ? 'default' : 'outline'}
                 size="lg"
-                className={`rounded-full w-16 h-16 ${
+                className={`rounded-full w-20 h-20 shadow-lg transition-all ${
                   recording.vote === 'good' 
-                    ? 'bg-pink-500 hover:bg-pink-600' 
-                    : 'border-pink-200 hover:bg-pink-50'
+                    ? 'bg-pink-500 hover:bg-pink-600 scale-105' 
+                    : 'border-2 border-pink-300 hover:bg-pink-50 hover:scale-105'
                 }`}
                 onClick={() => handleVote('good')}
                 disabled={voteMutation.isPending}
               >
-                <ThumbsUp className={`w-6 h-6 ${
+                <ThumbsUp className={`w-8 h-8 ${
                   recording.vote === 'good' ? 'text-white' : 'text-pink-500'
                 }`} />
               </Button>
@@ -270,23 +280,29 @@ export default function Results() {
               <Button
                 variant={recording.vote === 'bad' ? 'default' : 'outline'}
                 size="lg"
-                className={`rounded-full w-16 h-16 ${
+                className={`rounded-full w-20 h-20 shadow-lg transition-all ${
                   recording.vote === 'bad' 
-                    ? 'bg-blue-500 hover:bg-blue-600' 
-                    : 'border-blue-200 hover:bg-blue-50'
+                    ? 'bg-blue-500 hover:bg-blue-600 scale-105' 
+                    : 'border-2 border-blue-300 hover:bg-blue-50 hover:scale-105'
                 }`}
                 onClick={() => handleVote('bad')}
                 disabled={voteMutation.isPending}
               >
-                <ThumbsDown className={`w-6 h-6 ${
+                <ThumbsDown className={`w-8 h-8 ${
                   recording.vote === 'bad' ? 'text-white' : 'text-blue-500'
                 }`} />
               </Button>
             </div>
             
             {recording.vote && (
-              <p className="text-center text-sm text-gray-500 mt-3">
+              <p className="text-center text-sm text-gray-500 mt-4">
                 Thank you for your feedback!
+              </p>
+            )}
+            
+            {voteMutation.isPending && (
+              <p className="text-center text-sm text-gray-500 mt-4">
+                Recording your feedback...
               </p>
             )}
           </CardContent>

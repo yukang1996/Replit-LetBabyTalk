@@ -82,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register', async (req, res) => {
     try {
       const { email, phone, password, firstName, lastName } = registerSchema.parse(req.body);
-      
+
       // Check if user already exists
       let existingUser = null;
       if (email) {
@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingUser && phone) {
         existingUser = await storage.getUserByPhone(phone);
       }
-      
+
       if (existingUser) {
         return res.status(400).json({ message: "User already exists" });
       }
@@ -155,10 +155,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, phone } = forgotPasswordSchema.parse(req.body);
       console.log('Forgot password request for:', email || phone);
-      
+
       let user = null;
       let identifier = "";
-      
+
       if (email) {
         user = await storage.getUserByEmail(email);
         identifier = email;
@@ -166,7 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user = await storage.getUserByPhone(phone);
         identifier = phone;
       }
-      
+
       if (!user) {
         // Don't reveal if user exists for security
         return res.status(200).json({ 
@@ -182,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // In a real app, you would send an email/SMS here
       console.log(`Generated OTP for ${identifier}: ${otp} (expires at ${new Date(expiresAt)})`);
-      
+
       res.status(200).json({ 
         success: true, 
         message: "If the contact info exists, a reset code has been sent",
@@ -202,14 +202,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/verify-otp', async (req, res) => {
     try {
       const { email, phone, code, type } = req.body;
-      
+
       if ((!email && !phone) || !code || !type) {
         return res.status(400).json({ message: "Email or phone, code, and type are required" });
       }
 
       const identifier = email || phone;
       const storedOTP = otpStorage.get(identifier);
-      
+
       if (!storedOTP) {
         return res.status(400).json({ message: "Invalid or expired code" });
       }
@@ -246,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/reset-password', async (req, res) => {
     try {
       const { email, password } = resetPasswordSchema.parse(req.body);
-      
+
       // Check if there's a valid OTP for this email
       const storedOTP = otpStorage.get(email);
       if (!storedOTP || storedOTP.type !== 'forgot-password') {
@@ -265,10 +265,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const hashedPassword = await hashPassword(password);
       await storage.updateUserPassword(user.id, hashedPassword);
-      
+
       // Clean up the OTP after successful reset
       otpStorage.delete(email);
-      
+
       res.json({ message: "Password reset successful" });
     } catch (error) {
       console.error("Password reset error:", error);
@@ -374,20 +374,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const profileId = parseInt(req.params.id);
-      
+
       // Convert dateOfBirth string to Date object before validation
       const requestData = {
         ...req.body,
         ...(req.body.dateOfBirth && { dateOfBirth: new Date(req.body.dateOfBirth) })
       };
-      
+
       const validatedData = insertBabyProfileSchema.partial().parse(requestData);
       const profile = await storage.updateBabyProfile(profileId, userId, validatedData);
-      
+
       if (!profile) {
         return res.status(404).json({ message: "Baby profile not found" });
       }
-      
+
       res.json(profile);
     } catch (error) {
       console.error("Error updating baby profile:", error);
@@ -400,11 +400,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const profileId = parseInt(req.params.id);
       const deleted = await storage.deleteBabyProfile(profileId, userId);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Baby profile not found" });
       }
-      
+
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting baby profile:", error);
@@ -427,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/recordings', isAuthenticated, upload.single('audio'), async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       if (!req.file) {
         return res.status(400).json({ message: "No audio file provided" });
       }
@@ -437,20 +437,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const FormData = require('form-data');
         const fs = require('fs');
-        
+
         const formData = new FormData();
         formData.append('audio', fs.createReadStream(req.file.path), {
           filename: req.file.originalname || 'recording.webm',
           contentType: req.file.mimetype || 'audio/webm'
         });
-        
+
         // Prepare metadata
         const metadata = {
           user_id: userId,
           timestamp: new Date().toISOString(),
           audio_format: req.file.mimetype || 'audio/webm'
         };
-        
+
         formData.append('metadata', JSON.stringify(metadata));
         formData.append('pressing', 'true');
 
@@ -494,7 +494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const detectedClass = result.class;
         const confidence = result.probs[detectedClass] || 0;
-        
+
         // Generate recommendations based on detected cry type
         const recommendationsMap = {
           'hunger_food': [
@@ -579,14 +579,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertRecordingSchema.parse(recordingData);
       const recording = await storage.createRecording(userId, validatedData);
-      
+
       // Clean up uploaded file
       try {
         fs.unlinkSync(req.file.path);
       } catch (cleanupError) {
         console.error("File cleanup error:", cleanupError);
       }
-      
+
       res.status(201).json(recording);
     } catch (error) {
       console.error("Error creating recording:", error);
@@ -599,11 +599,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const recordingId = parseInt(req.params.id);
       const recording = await storage.getRecording(recordingId, userId);
-      
+
       if (!recording) {
         return res.status(404).json({ message: "Recording not found" });
       }
-      
+
       res.json(recording);
     } catch (error) {
       console.error("Error fetching recording:", error);
@@ -615,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/audio/:filename', isAuthenticated, (req, res) => {
     const filename = req.params.filename;
     const filepath = path.join(process.cwd(), 'uploads', filename);
-    
+
     if (fs.existsSync(filepath)) {
       res.sendFile(filepath);
     } else {

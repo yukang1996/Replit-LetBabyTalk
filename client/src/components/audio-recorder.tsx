@@ -58,6 +58,8 @@ export default function AudioRecorder() {
         title: "Analysis Complete!",
         description: `Detected: ${data.analysisResult?.cryType || 'Unknown cry type'}`,
       });
+      // Navigate to results page
+      navigate(`/results/${data.id}`);
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -307,33 +309,6 @@ export default function AudioRecorder() {
           {uploadMutation.isPending ? "Analyzing..." : "Submit for Analysis"}
         </Button>
       </div>
-
-      {/* Analysis Results */}
-      {uploadMutation.isSuccess && uploadMutation.data && (
-        <Card className="glass-effect">
-          <CardContent className="p-4">
-            <h4 className="font-medium text-gray-800 mb-2">Analysis Results</h4>
-            <div className="text-left space-y-2">
-              <p className="text-sm">
-                <span className="font-medium">Cry Type:</span> {uploadMutation.data.analysisResult?.cryType}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium">Confidence:</span> {Math.round((uploadMutation.data.analysisResult?.confidence || 0) * 100)}%
-              </p>
-              {uploadMutation.data.analysisResult?.recommendations && (
-                <div className="text-sm">
-                  <span className="font-medium">Recommendations:</span>
-                  <ul className="mt-1 space-y-1">
-                    {uploadMutation.data.analysisResult.recommendations.map((rec: string, index: number) => (
-                      <li key={index} className="text-gray-600">• {rec}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
