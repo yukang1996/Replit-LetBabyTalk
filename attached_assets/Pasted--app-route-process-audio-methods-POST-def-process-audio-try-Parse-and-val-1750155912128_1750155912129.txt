@@ -1,0 +1,116 @@
+@app.route("/process_audio", methods=["POST"])
+def process_audio():
+    try:
+        # Parse and validate input
+        audio = request.files.get('audio')
+        metadata = json.loads(request.form['metadata'])
+        pressing = bool(request.form['pressing'])
+
+        print(audio)
+        print(metadata)
+        print(pressing)
+
+        # Validate required fields
+        if not audio or not metadata or pressing is None:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        user_id = metadata.get("user_id")
+        timestamp = metadata.get("timestamp")
+        audio_format = metadata.get("audio_format")
+
+        if not user_id or not timestamp or not audio_format:
+            return jsonify({"error": "Missing required metadata fields"}), 400
+
+        print('User: {}, Timestamp: {}, Audio_format: {}'.format(user_id, timestamp, audio_format))
+
+        bin_vote, predicted, probs, score = utils.process_score(audio)
+
+        confidence = False
+        threshold = 0.6
+
+        bin_vote = 1
+
+        if bin_vote == 0:
+            #no cry detected
+            probabilities = {
+                "hunger_food": 0.00,
+                "hunger_milk": 0.00,
+                "sleepiness": 0.00,
+                "lack_of_security": 0.00,
+                "diaper_urine": 0.00,
+                "diaper_bowel": 0.0,
+                "internal_pain": 0.00,
+                "external_pain": 0.00,
+                "physical_discomfort": 0.0,
+                "unmet_needs": 0.00,
+                "breathing_difficulties": 0.00,
+                "normal": 0.00,
+                "no_cry_detected": 1
+            }
+            max_class = 'no_cry_detected'
+
+
+        else:
+            #cry detected
+            # probs, max_class = utils.randomize_probabilities()
+            probabilities = {}
+            temp = probs.tolist()[0]
+            probabilities['internal_pain'] = temp[0]
+            probabilities['hunger_milk'] = temp[1]
+            probabilities['breathing_difficulties'] = temp[2]
+            probabilities['external_pain'] = temp[3]
+            probabilities['hunger_food'] = 0
+            probabilities['lack_of_security'] = 0
+            probabilities['diaper_urine'] = 0
+            probabilities['diaper_bowel'] = 0
+            probabilities['normal'] = 0
+            probabilities['unmet_needs'] = 0
+            probabilities['physical_discomfort'] = 0
+            probabilities['sleepiness'] = 0
+            probabilities['no_cry_detected'] = 0
+
+            max_class = max(probabilities, key=probabilities.get)
+
+        show = True
+        # if max_class_probs := probs[max_class] > threshold:
+        #     print('Class: {}, probs: {} pass threshold of 0.6'.format(max_class, max_class_probs))
+        #     confidence = True
+        #
+        # show = False
+        # if pressing and confidence:
+        #     show = True
+        # elif not pressing:
+        #     show = True
+
+        result = {
+            "class": max_class,
+            "probs": probabilities,
+            "show": show
+        }
+
+        # result = {
+        #     "class": "hunger_food",
+        #     "probs": {
+        #         "hunger_food": 0.961,
+        #         "hunger_milk": 0.02,
+        #         "sleepiness": 0.04,
+        #         "lack_of_security": 0.022,
+        #         "diaper_urine": 0.032,
+        #         "diaper_bowel": 0.03,
+        #         "internal_pain": 0.02,
+        #         "external_pain": 0.001,
+        #         "physical_discomfort": 0.01,
+        #         "unmet_needs": 0.003,
+        #         "breathing_difficulties": 0.001,
+        #         "normal": 0.09,
+        #         "no_cry_detected": 0.03
+        #     },
+        #     "show": True
+        # }
+        response = {"data": {"result": result}}
+        print('response: ', response)
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
