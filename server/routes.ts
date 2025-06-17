@@ -432,26 +432,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No audio file provided" });
       }
 
-      // Mock AI analysis - replace with actual AI service
-      const mockAnalysis = {
-        cryType: ['hunger', 'tired', 'discomfort', 'pain'][Math.floor(Math.random() * 4)],
-        confidence: Math.random() * 0.4 + 0.6, // 60-100%
-        recommendations: [
-          "Try feeding if it's been more than 2 hours",
-          "Check diaper and comfort level",
-          "Consider burping or changing position"
-        ]
-      };
+      // Call external AI API
+      let analysisResult;
+      try {
+        const FormData = require('form-data');
+        const fs = require('fs');
+        
+        const formData = new FormData();
+        formData.append('audio', fs.createReadStream(req.file.path), {
+          filename: req.file.originalname || 'recording.webm',
+          contentType: req.file.mimetype || 'audio/webm'
+        });
+        
+        // Prepare metadata
+        const metadata = {
+          user_id: userId,
+          timestamp: new Date().toISOString(),
+          audio_format: req.file.mimetype || 'audio/webm'
+        };
+        
+        formData.append('metadata', JSON.stringify(metadata));
+        formData.append('pressing', 'true');
+
+        const fetch = require('node-fetch');
+        const response = await fetch('https://api.letbabytalk.com/process_audio', {
+          method: 'POST',
+          headers: {
+            ...formData.getHeaders()
+          },
+          body: formData,
+          timeout: 30000 // 30 seconds timeout
+        });
+
+        if (!response.ok) {
+          throw new Error(`AI API responded with status: ${response.status}`);
+        }
+
+        const aiResponse = await response.json();
+        const result = aiResponse.data?.result;
+
+        if (!result) {
+          throw new Error('Invalid response format from AI API');
+        }
+
+        // Map AI response to our format
+        const cryTypeMapping = {
+          'hunger_food': 'hunger',
+          'hunger_milk': 'hunger', 
+          'sleepiness': 'tired',
+          'lack_of_security': 'discomfort',
+          'diaper_urine': 'discomfort',
+          'diaper_bowel': 'discomfort',
+          'internal_pain': 'pain',
+          'external_pain': 'pain',
+          'physical_discomfort': 'discomfort',
+          'unmet_needs': 'discomfort',
+          'breathing_difficulties': 'discomfort',
+          'normal': 'normal',
+          'no_cry_detected': 'no_cry'
+        };
+
+        const detectedClass = result.class;
+        const confidence = result.probs[detectedClass] || 0;
+        
+        // Generate recommendations based on detected cry type
+        const recommendationsMap = {
+          'hunger_food': [
+            "Try offering solid food if baby is eating solids",
+            "Check if it's been 2-3 hours since last meal",
+            "Ensure baby is in comfortable position for feeding"
+          ],
+          'hunger_milk': [
+            "Try feeding if it's been more than 2 hours",
+            "Check if baby is showing hunger cues",
+            "Ensure proper latch if breastfeeding"
+          ],
+          'sleepiness': [
+            "Create a calm, dark environment",
+            "Try gentle rocking or swaddling",
+            "Check if it's nap time or bedtime"
+          ],
+          'diaper_urine': [
+            "Check and change diaper if wet",
+            "Clean baby gently and thoroughly",
+            "Apply diaper cream if needed"
+          ],
+          'diaper_bowel': [
+            "Check and change diaper immediately",
+            "Clean baby thoroughly with wipes",
+            "Allow some diaper-free time if possible"
+          ],
+          'internal_pain': [
+            "Check for signs of colic or gas",
+            "Try gentle tummy massage",
+            "Consider consulting pediatrician if persistent"
+          ],
+          'external_pain': [
+            "Check for any visible injuries or irritation",
+            "Look for tight clothing or hair wrapped around fingers/toes",
+            "Consult pediatrician if cause unknown"
+          ],
+          'physical_discomfort': [
+            "Check room temperature and clothing",
+            "Look for tags or rough fabric",
+            "Try changing baby's position"
+          ],
+          'no_cry_detected': [
+            "No cry was detected in this recording",
+            "Try recording again when baby is crying",
+            "Ensure microphone is close to baby"
+          ]
+        };
+
+        analysisResult = {
+          cryType: cryTypeMapping[detectedClass] || 'unknown',
+          confidence: confidence,
+          recommendations: recommendationsMap[detectedClass] || [
+            "Monitor baby's behavior",
+            "Try common comfort measures",
+            "Consult pediatrician if concerned"
+          ],
+          rawResult: result // Store raw AI response for reference
+        };
+
+      } catch (aiError) {
+        console.error("AI API Error:", aiError);
+        // Fallback to basic analysis if AI API fails
+        analysisResult = {
+          cryType: 'unknown',
+          confidence: 0,
+          recommendations: [
+            "AI analysis temporarily unavailable",
+            "Try common comfort measures",
+            "Monitor baby's behavior closely"
+          ],
+          error: aiError.message
+        };
+      }
 
       const recordingData = {
         filename: req.file.filename,
         duration: req.body.duration ? parseInt(req.body.duration) : null,
         babyProfileId: req.body.babyProfileId ? parseInt(req.body.babyProfileId) : null,
-        analysisResult: mockAnalysis,
+        analysisResult: analysisResult,
       };
 
       const validatedData = insertRecordingSchema.parse(recordingData);
       const recording = await storage.createRecording(userId, validatedData);
+      
+      // Clean up uploaded file
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error("File cleanup error:", cleanupError);
+      }
       
       res.status(201).json(recording);
     } catch (error) {
