@@ -610,6 +610,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get cry reason description
+  app.get('/api/cry-reasons/:className', async (req, res) => {
+    try {
+      const className = req.params.className;
+      const description = await storage.getCryReasonDescription(className);
+      
+      if (!description) {
+        return res.status(404).json({ message: "Cry reason description not found" });
+      }
+      
+      res.json(description);
+    } catch (error) {
+      console.error("Error fetching cry reason description:", error);
+      res.status(500).json({ message: "Failed to fetch cry reason description" });
+    }
+  });
+
   // Serve audio files
   app.get('/api/audio/:filename', isAuthenticated, (req, res) => {
     const filename = req.params.filename;

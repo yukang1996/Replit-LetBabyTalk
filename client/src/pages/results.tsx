@@ -1,17 +1,21 @@
 
 import { useEffect, useState } from "react";
-import { useLocation, useRoute } from "wouter";
+import { useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ThumbsUp, ThumbsDown, Heart, Clock } from "lucide-react";
-import BearMascot from "@/components/bear-mascot";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, ThumbsUp, ThumbsDown, Volume2 } from "lucide-react";
+import { Link } from "wouter";
+import Navigation from "@/components/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface Recording {
   id: number;
+  filename: string;
+  duration: number;
   analysisResult?: {
     cryType: string;
     confidence: number;
@@ -23,291 +27,273 @@ interface Recording {
     };
   };
   vote?: string;
-  duration?: number;
   recordedAt: string;
+}
+
+interface CryReasonDescription {
+  id: number;
+  className: string;
+  title: string;
+  description: string;
+  recommendations: string[];
 }
 
 export default function Results() {
   const [, params] = useRoute("/results/:id");
-  const [, navigate] = useLocation();
+  const recordingId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const recordingId = params?.id ? parseInt(params.id) : null;
+  const [audioUrl, setAudioUrl] = useState<string>("");
 
-  const { data: recording, isLoading } = useQuery<Recording>({
-    queryKey: ["/api/recordings", recordingId],
+  const { data: recording, isLoading } = useQuery({
+    queryKey: ["recording", recordingId],
     queryFn: async () => {
-      if (!recordingId) throw new Error("No recording ID");
-      return await apiRequest("GET", `/api/recordings/${recordingId}`);
+      const response = await apiRequest("GET", `/api/recordings/${recordingId}`);
+      return response as Recording;
     },
     enabled: !!recordingId,
   });
 
+  const { data: cryDescription } = useQuery({
+    queryKey: ["cry-description", recording?.analysisResult?.rawResult?.class],
+    queryFn: async () => {
+      const className = recording?.analysisResult?.rawResult?.class;
+      if (!className) return null;
+      const response = await apiRequest("GET", `/api/cry-reasons/${className}`);
+      return response as CryReasonDescription;
+    },
+    enabled: !!recording?.analysisResult?.rawResult?.class,
+  });
+
   const voteMutation = useMutation({
-    mutationFn: async (vote: string) => {
-      if (!recordingId) throw new Error("No recording ID");
+    mutationFn: async ({ vote }: { vote: string }) => {
       return await apiRequest("POST", `/api/recordings/${recordingId}/vote`, { vote });
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/recordings", recordingId] });
-      queryClient.setQueryData(["/api/recordings", recordingId], (oldData: Recording | undefined) => {
-        if (oldData) {
-          return { ...oldData, vote: data.vote };
-        }
-        return oldData;
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recording", recordingId] });
       toast({
-        title: "Feedback Recorded",
+        title: "Feedback Submitted",
         description: "Thank you for your feedback!",
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message || "Failed to record feedback",
+        description: "Failed to submit feedback",
         variant: "destructive",
       });
     },
   });
 
-  const handleVote = (vote: string) => {
-    voteMutation.mutate(vote);
-  };
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const getCryTypeDisplay = (cryType: string) => {
-    const typeMap: Record<string, { label: string; emoji: string; color: string }> = {
-      'hunger': { label: '饥饿', emoji: '🍼', color: 'bg-orange-100 text-orange-800' },
-      'tired': { label: '困倦', emoji: '😴', color: 'bg-blue-100 text-blue-800' },
-      'discomfort': { label: '不适', emoji: '😣', color: 'bg-yellow-100 text-yellow-800' },
-      'pain': { label: '疼痛', emoji: '😢', color: 'bg-red-100 text-red-800' },
-      'normal': { label: '正常', emoji: '😊', color: 'bg-green-100 text-green-800' },
-      'no_cry': { label: '未检测到哭声', emoji: '🤫', color: 'bg-gray-100 text-gray-800' },
-      'unknown': { label: '未知', emoji: '❓', color: 'bg-gray-100 text-gray-800' },
-    };
-    return typeMap[cryType] || typeMap['unknown'];
-  };
-
-  const getOtherProbabilities = () => {
-    if (!recording?.analysisResult?.rawResult?.probs) return [];
-    
-    const mainClass = recording.analysisResult.rawResult.class;
-    const probs = recording.analysisResult.rawResult.probs;
-    
-    return Object.entries(probs)
-      .filter(([key]) => key !== mainClass)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 3); // Show top 3 other probabilities
-  };
+  useEffect(() => {
+    if (recording?.filename) {
+      setAudioUrl(`/api/audio/${recording.filename}`);
+    }
+  }, [recording]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading analysis results...</p>
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading analysis results...</p>
+        </div>
       </div>
     );
   }
 
   if (!recording) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Recording not found</p>
-          <Button onClick={() => navigate("/")}>Go Home</Button>
-        </div>
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <Card className="w-full max-w-md glass-effect">
+          <CardContent className="text-center pt-6">
+            <h2 className="text-xl font-semibold mb-4">Recording Not Found</h2>
+            <Link href="/record">
+              <Button className="gradient-bg text-white">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Recording
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const mainCryType = getCryTypeDisplay(recording.analysisResult?.cryType || 'unknown');
-  const confidence = recording.analysisResult?.confidence || 0;
-  const otherProbs = getOtherProbabilities();
+  const analysisResult = recording.analysisResult;
+  const rawResult = analysisResult?.rawResult;
+  const topClass = rawResult?.class;
+  const confidence = rawResult?.probs?.[topClass || ""] || 0;
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const sortedProbs = rawResult?.probs 
+    ? Object.entries(rawResult.probs)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5) // Show top 5 predictions
+    : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-      {/* Header */}
-      <div className="gradient-bg p-4 flex items-center justify-between">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-white hover:bg-white/20"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <h1 className="text-white font-medium text-lg">Analysis Results</h1>
-        <div className="w-20"></div>
-      </div>
+    <div className="min-h-screen gradient-bg">
+      <div className="container mx-auto px-4 py-6 pb-20">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/record">
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-800">Analysis Results</h1>
+          <div></div>
+        </div>
 
-      {/* Main Content */}
-      <div className="p-4 pb-20 space-y-6">
-        {/* Bear Mascot and Main Result */}
-        <Card className="glass-effect text-center">
-          <CardContent className="p-6">
-            <div className="w-40 h-40 mx-auto mb-6 bg-white rounded-3xl border-4 border-blue-200 flex items-center justify-center shadow-lg">
-              <BearMascot className="w-32 h-32" />
-            </div>
-            
-            <div className="text-5xl font-bold text-gray-800 mb-3">
-              {Math.round(confidence * 100)}%
-            </div>
-            
-            <div className="flex items-center justify-center mb-4">
-              <span className="text-3xl mr-2">{mainCryType.emoji}</span>
-              <Badge className={`${mainCryType.color} text-xl px-6 py-2 rounded-full`}>
-                {mainCryType.label}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center justify-center text-sm text-gray-500">
-              <Clock className="w-4 h-4 mr-1" />
-              <span>Recorded at {formatTime(recording.recordedAt)}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Other Probabilities */}
-        {otherProbs.length > 0 && (
+        <div className="space-y-6">
+          {/* Recording Info */}
           <Card className="glass-effect">
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                {otherProbs.map(([key, prob]) => {
-                  const typeInfo = getCryTypeDisplay(key === 'hunger_food' ? 'hunger' : 
-                                                    key === 'sleepiness' ? 'tired' : 
-                                                    key.includes('pain') ? 'pain' : 'discomfort');
-                  return (
-                    <div key={key} className="flex items-center justify-between py-2">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-xl">{typeInfo.emoji}</span>
-                        <span className="text-gray-700 font-medium">{typeInfo.label}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-gray-600 font-bold text-lg">
-                          {Math.round(prob * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Recording Details</span>
+                {audioUrl && (
+                  <audio controls className="max-w-xs">
+                    <source src={audioUrl} type="audio/webm" />
+                    <source src={audioUrl} type="audio/wav" />
+                    <source src={audioUrl} type="audio/mp3" />
+                    Your browser does not support the audio element.
+                  </audio>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600">Duration:</span>
+                  <span className="ml-2 font-medium">
+                    {recording.duration ? formatTime(recording.duration) : "Unknown"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Recorded:</span>
+                  <span className="ml-2 font-medium">
+                    {formatDate(recording.recordedAt)}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Explanation */}
-        <Card className="glass-effect">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-800">解释</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 leading-relaxed">
-              {recording.analysisResult?.cryType === 'hunger' ? 
-                "宝宝可能感到饥饿。这种哭声通常有节奏且持续，表明宝宝需要进食。" :
-              recording.analysisResult?.cryType === 'tired' ?
-                "宝宝可能感到困倦。疲倦的哭声通常比较断断续续，宝宝需要休息。" :
-              recording.analysisResult?.cryType === 'discomfort' ?
-                "宝宝可能感到不适。这可能是由于尿布湿了、太热或太冷等原因引起的。" :
-              recording.analysisResult?.cryType === 'pain' ?
-                "宝宝可能感到疼痛。这种哭声通常比较尖锐和持续，需要及时关注。" :
-                "根据音频分析，我们检测到了宝宝的哭声模式，但需要更多信息来确定具体原因。"
-              }
-            </p>
-          </CardContent>
-        </Card>
+          {/* Main Analysis Result */}
+          {cryDescription && (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Primary Analysis</span>
+                  <Badge variant="secondary" className="bg-pink-100 text-pink-800">
+                    {Math.round(confidence * 100)}% confidence
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    {cryDescription.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {cryDescription.description}
+                  </p>
+                </div>
 
-        {/* Recommendations */}
-        <Card className="glass-effect">
-          <CardHeader>
-            <CardTitle className="text-lg text-gray-800">建议</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {recording.analysisResult?.recommendations?.map((rec, index) => (
-                <div key={index} className="flex items-start space-x-2">
-                  <span className="text-pink-500 mt-1">•</span>
-                  <span className="text-gray-600">{rec}</span>
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">
+                    Recommendations:
+                  </h4>
+                  <ul className="space-y-2">
+                    {cryDescription.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-pink-600 mr-2">•</span>
+                        <span className="text-gray-700">{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              )) || (
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-2">
-                    <span className="text-pink-500 mt-1">•</span>
-                    <span className="text-gray-600">保持冷静，仔细观察宝宝的其他信号</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <span className="text-pink-500 mt-1">•</span>
-                    <span className="text-gray-600">尝试常见的安抚方法，如拥抱或轻摇</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <span className="text-pink-500 mt-1">•</span>
-                    <span className="text-gray-600">如果持续哭闹，请咨询儿科医生</span>
-                  </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* All Predictions */}
+          {sortedProbs.length > 0 && (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle>All Predictions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {sortedProbs.map(([className, probability]) => (
+                    <div key={className} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="capitalize text-gray-700">
+                          {className.replace(/_/g, ' ')}
+                        </span>
+                        <span className="font-medium">
+                          {Math.round(probability * 100)}%
+                        </span>
+                      </div>
+                      <Progress 
+                        value={probability * 100} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Feedback */}
+          <Card className="glass-effect">
+            <CardHeader>
+              <CardTitle>Was this analysis helpful?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  variant={recording.vote === "good" ? "default" : "outline"}
+                  onClick={() => voteMutation.mutate({ vote: "good" })}
+                  disabled={voteMutation.isPending}
+                  className="flex-1"
+                >
+                  <ThumbsUp className="w-4 h-4 mr-2" />
+                  Helpful
+                </Button>
+                <Button
+                  variant={recording.vote === "bad" ? "default" : "outline"}
+                  onClick={() => voteMutation.mutate({ vote: "bad" })}
+                  disabled={voteMutation.isPending}
+                  className="flex-1"
+                >
+                  <ThumbsDown className="w-4 h-4 mr-2" />
+                  Not Helpful
+                </Button>
+              </div>
+              {recording.vote && (
+                <p className="text-center text-sm text-gray-600 mt-3">
+                  Thank you for your feedback!
+                </p>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Feedback Section */}
-        <Card className="glass-effect">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-medium text-gray-800 text-center mb-6">
-              评价预测准确度
-            </h3>
-            <div className="flex justify-center space-x-8">
-              <Button
-                variant={recording.vote === 'good' ? 'default' : 'outline'}
-                size="lg"
-                className={`rounded-full w-20 h-20 shadow-lg transition-all ${
-                  recording.vote === 'good' 
-                    ? 'bg-pink-500 hover:bg-pink-600 scale-105' 
-                    : 'border-2 border-pink-300 hover:bg-pink-50 hover:scale-105'
-                }`}
-                onClick={() => handleVote('good')}
-                disabled={voteMutation.isPending}
-              >
-                <ThumbsUp className={`w-8 h-8 ${
-                  recording.vote === 'good' ? 'text-white' : 'text-pink-500'
-                }`} />
-              </Button>
-              
-              <Button
-                variant={recording.vote === 'bad' ? 'default' : 'outline'}
-                size="lg"
-                className={`rounded-full w-20 h-20 shadow-lg transition-all ${
-                  recording.vote === 'bad' 
-                    ? 'bg-blue-500 hover:bg-blue-600 scale-105' 
-                    : 'border-2 border-blue-300 hover:bg-blue-50 hover:scale-105'
-                }`}
-                onClick={() => handleVote('bad')}
-                disabled={voteMutation.isPending}
-              >
-                <ThumbsDown className={`w-8 h-8 ${
-                  recording.vote === 'bad' ? 'text-white' : 'text-blue-500'
-                }`} />
-              </Button>
-            </div>
-            
-            {recording.vote && (
-              <p className="text-center text-sm text-gray-500 mt-4">
-                Thank you for your feedback!
-              </p>
-            )}
-            
-            {voteMutation.isPending && (
-              <p className="text-center text-sm text-gray-500 mt-4">
-                Recording your feedback...
-              </p>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      <Navigation />
     </div>
   );
 }

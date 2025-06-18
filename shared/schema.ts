@@ -84,3 +84,16 @@ export const insertRecordingSchema = createInsertSchema(recordings).omit({
 });
 export type InsertRecording = z.infer<typeof insertRecordingSchema>;
 export type Recording = typeof recordings.$inferSelect;
+
+// Cry reason descriptions table
+export const cryReasonDescriptions = pgTable("cry_reason_descriptions", {
+  id: serial("id").primaryKey(),
+  className: varchar("class_name").unique().notNull(),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  recommendations: jsonb("recommendations").notNull(), // Array of recommendation strings
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type CryReasonDescription = typeof cryReasonDescriptions.$inferSelect;

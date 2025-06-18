@@ -2,6 +2,7 @@ import {
   users,
   babyProfiles,
   recordings,
+  cryReasonDescriptions,
   type User,
   type UpsertUser,
   type BabyProfile,
@@ -25,13 +26,13 @@ export interface IStorage {
   updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined>;
   updateUserPassword(id: string, hashedPassword: string): Promise<User | undefined>;
   linkGuestAccount(guestId: string, userData: Partial<UpsertUser>): Promise<User | undefined>;
-  
+
   // Baby profile operations
   getBabyProfiles(userId: string): Promise<BabyProfile[]>;
   createBabyProfile(userId: string, profile: InsertBabyProfile): Promise<BabyProfile>;
   updateBabyProfile(id: number, userId: string, profile: Partial<InsertBabyProfile>): Promise<BabyProfile | undefined>;
   deleteBabyProfile(id: number, userId: string): Promise<boolean>;
-  
+
   // Recording operations
   getRecordings(userId: string): Promise<Recording[]>;
   createRecording(userId: string, recording: InsertRecording): Promise<Recording>;
@@ -191,9 +192,24 @@ export class DatabaseStorage implements IStorage {
     const [recording] = await db
       .update(recordings)
       .set({ vote })
-      .where(eq(recordings.id, id) && eq(recordings.userId, userId))
+      .where(and(eq(recordings.id, id), eq(recordings.userId, userId)))
       .returning();
     return recording;
+  }
+
+  async getCryReasonDescription(className: string) {
+    const [description] = await db
+      .select()
+      .from(cryReasonDescriptions)
+      .where(eq(cryReasonDescriptions.className, className))
+      .limit(1);
+    return description;
+  }
+
+  async getAllCryReasonDescriptions() {
+    return await db
+      .select()
+      .from(cryReasonDescriptions);
   }
 
   async linkGuestAccount(guestId: string, userData: Partial<UpsertUser>): Promise<User | undefined> {
