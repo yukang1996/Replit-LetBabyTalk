@@ -55,14 +55,13 @@ export default function Results() {
   });
 
   const { data: cryDescription } = useQuery({
-    queryKey: ["cry-description", recording?.analysisResult?.rawResult?.class],
+    queryKey: ["cry-description", topClass],
     queryFn: async () => {
-      const className = recording?.analysisResult?.rawResult?.class;
-      if (!className) return null;
-      const response = await apiRequest("GET", `/api/cry-reasons/${className}`);
+      if (!topClass) return null;
+      const response = await apiRequest("GET", `/api/cry-reasons/${topClass}`);
       return response as CryReasonDescription;
     },
-    enabled: !!recording?.analysisResult?.rawResult?.class,
+    enabled: !!topClass,
   });
 
   const voteMutation = useMutation({
@@ -122,8 +121,8 @@ export default function Results() {
 
   const analysisResult = recording.analysisResult;
   const rawResult = analysisResult?.rawResult;
-  const topClass = rawResult?.class;
-  const confidence = rawResult?.probs?.[topClass || ""] || 0;
+  const topClass = rawResult?.class || analysisResult?.cryType;
+  const confidence = rawResult?.probs?.[topClass || ""] || analysisResult?.confidence || 0;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

@@ -46,7 +46,7 @@ const cryReasons = [
   {
     className: "diaper_urine",
     title: "Wet Diaper",
-    description: "Your baby has a wet diaper and needs to be changed. Some babies are more sensitive to wetness than others.",
+    description: "Your baby has a wet diaper and needs to be changed. This discomfort can cause fussiness.",
     recommendations: [
       "Check and change diaper if wet",
       "Clean baby gently and thoroughly",
@@ -56,7 +56,7 @@ const cryReasons = [
   {
     className: "diaper_bowel",
     title: "Soiled Diaper",
-    description: "Your baby has a soiled diaper and needs immediate changing. This can cause discomfort and irritation.",
+    description: "Your baby has a soiled diaper that needs immediate attention.",
     recommendations: [
       "Check and change diaper immediately",
       "Clean baby thoroughly with wipes",
@@ -76,7 +76,7 @@ const cryReasons = [
   {
     className: "external_pain",
     title: "External Pain",
-    description: "Your baby may be experiencing external discomfort or pain from something in their environment.",
+    description: "Your baby may be experiencing external pain or discomfort from injuries or irritation.",
     recommendations: [
       "Check for any visible injuries or irritation",
       "Look for tight clothing or hair wrapped around fingers/toes",

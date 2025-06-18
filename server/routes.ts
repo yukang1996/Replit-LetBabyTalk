@@ -432,6 +432,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No audio file provided" });
       }
 
+      // Parse additional metadata from request
+      const { duration, babyProfileId, pressing = true } = req.body;
+      const timestamp = new Date().toISOString();
+      const audioFormat = req.file.mimetype || 'audio/webm';
+
       // Call external AI API
       let analysisResult;
       try {
@@ -441,18 +446,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const formData = new FormData.default();
         formData.append('audio', fs.createReadStream(req.file.path), {
           filename: req.file.originalname || 'recording.webm',
-          contentType: req.file.mimetype || 'audio/webm'
+          contentType: audioFormat
         });
 
-        // Prepare metadata
+        // Prepare metadata according to API specification
         const metadata = {
           user_id: userId,
-          timestamp: new Date().toISOString(),
-          audio_format: req.file.mimetype || 'audio/webm'
+          timestamp: timestamp,
+          audio_format: audioFormat,
+          pressing: pressing === 'true' || pressing === true
         };
 
         formData.append('metadata', JSON.stringify(metadata));
-        formData.append('pressing', 'true');
 
         const response = await fetch.default('https://api.letbabytalk.com/process_audio', {
           method: 'POST',
@@ -474,84 +479,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid response format from AI API');
         }
 
-        // Map AI response to our format
-        const cryTypeMapping = {
-          'hunger_food': 'hunger',
-          'hunger_milk': 'hunger', 
-          'sleepiness': 'tired',
-          'lack_of_security': 'discomfort',
-          'diaper_urine': 'discomfort',
-          'diaper_bowel': 'discomfort',
-          'internal_pain': 'pain',
-          'external_pain': 'pain',
-          'physical_discomfort': 'discomfort',
-          'unmet_needs': 'discomfort',
-          'breathing_difficulties': 'discomfort',
-          'normal': 'normal',
-          'no_cry_detected': 'no_cry'
-        };
-
-        const detectedClass = result.class;
-        const confidence = result.probs[detectedClass] || 0;
-
-        // Generate recommendations based on detected cry type
-        const recommendationsMap = {
-          'hunger_food': [
-            "Try offering solid food if baby is eating solids",
-            "Check if it's been 2-3 hours since last meal",
-            "Ensure baby is in comfortable position for feeding"
-          ],
-          'hunger_milk': [
-            "Try feeding if it's been more than 2 hours",
-            "Check if baby is showing hunger cues",
-            "Ensure proper latch if breastfeeding"
-          ],
-          'sleepiness': [
-            "Create a calm, dark environment",
-            "Try gentle rocking or swaddling",
-            "Check if it's nap time or bedtime"
-          ],
-          'diaper_urine': [
-            "Check and change diaper if wet",
-            "Clean baby gently and thoroughly",
-            "Apply diaper cream if needed"
-          ],
-          'diaper_bowel': [
-            "Check and change diaper immediately",
-            "Clean baby thoroughly with wipes",
-            "Allow some diaper-free time if possible"
-          ],
-          'internal_pain': [
-            "Check for signs of colic or gas",
-            "Try gentle tummy massage",
-            "Consider consulting pediatrician if persistent"
-          ],
-          'external_pain': [
-            "Check for any visible injuries or irritation",
-            "Look for tight clothing or hair wrapped around fingers/toes",
-            "Consult pediatrician if cause unknown"
-          ],
-          'physical_discomfort': [
-            "Check room temperature and clothing",
-            "Look for tags or rough fabric",
-            "Try changing baby's position"
-          ],
-          'no_cry_detected': [
-            "No cry was detected in this recording",
-            "Try recording again when baby is crying",
-            "Ensure microphone is close to baby"
-          ]
-        };
-
+        // Store the full AI response as per requirements
         analysisResult = {
-          cryType: cryTypeMapping[detectedClass] || 'unknown',
-          confidence: confidence,
-          recommendations: recommendationsMap[detectedClass] || [
-            "Monitor baby's behavior",
-            "Try common comfort measures",
-            "Consult pediatrician if concerned"
-          ],
-          rawResult: result // Store raw AI response for reference
+          cryType: result.class, // Store the exact class name
+          confidence: result.probs[result.class] || 0,
+          recommendations: [], // Will be fetched from database
+          rawResult: result // Store complete raw result including probs and show
         };
 
       } catch (aiError) {
@@ -569,10 +502,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }
 
+      // Save recording with metadata and analysis result
       const recordingData = {
         filename: req.file.filename,
-        duration: req.body.duration ? parseInt(req.body.duration) : null,
-        babyProfileId: req.body.babyProfileId ? parseInt(req.body.babyProfileId) : null,
+        duration: duration ? parseInt(duration) : null,
+        babyProfileId: babyProfileId ? parseInt(babyProfileId) : null,
         analysisResult: analysisResult,
       };
 
@@ -624,6 +558,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching cry reason description:", error);
       res.status(500).json({ message: "Failed to fetch cry reason description" });
+    }
+  });
+
+  // Initialize cry reasons if needed
+  app.post('/api/init-cry-reasons', async (req, res) => {
+    try {
+      const { seedCryReasons } = await import('./seed-cry-reasons');
+      await seedCryReasons();
+      res.json({ message: "Cry reasons initialized successfully" });
+    } catch (error) {
+      console.error("Error initializing cry reasons:", error);
+      res.status(500).json({ message: "Failed to initialize cry reasons" });
     }
   });
 

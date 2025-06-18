@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { seedCryReasons } from "./seed-cry-reasons";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -37,6 +38,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize cry reason descriptions
+  try {
+    await seedCryReasons();
+  } catch (error) {
+    console.error("Failed to seed cry reasons:", error);
+  }
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
