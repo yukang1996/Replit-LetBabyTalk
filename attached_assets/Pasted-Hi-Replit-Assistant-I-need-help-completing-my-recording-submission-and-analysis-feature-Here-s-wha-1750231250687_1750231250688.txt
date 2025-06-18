@@ -1,0 +1,73 @@
+Hi Replit Assistant, I need help completing my recording submission and analysis feature. Here's what I want to happen after the user clicks the "Submit for Analysis" button:
+
+The system should save the recorded audio along with important metadata (e.g., user ID, baby ID, timestamp, audio format, and pressing status) to the database.
+
+At the same time, it should send a POST request to this external API: /process_audio.
+
+Input to the API:
+
+audio (required, string): the uploaded audio file.
+
+metadata (required, object):
+
+user_id: string (required)
+
+timestamp: ISO 8601 formatted string (required)
+
+audio_format: e.g., "mp3" or "wav" (required)
+
+pressing: boolean (required): true = actively recording; false = recording ended or timed out (30 seconds).
+
+The system should wait for the response from /process_audio, which returns an object like this:
+
+json
+Copy
+Edit
+{
+  "data": {
+    "result": {
+      "class": "hunger_food",
+      "probs": {
+        "hunger_food": 0.961,
+        "hunger_milk": 0.02,
+        "sleepiness": 0.04,
+        "lack_of_security": 0.022,
+        "diaper_urine": 0.032,
+        "diaper_bowel": 0.03,
+        "internal_pain": 0.02,
+        "external_pain": 0.001,
+        "physical_discomfort": 0.01,
+        "unmet_needs": 0.003,
+        "breathing_difficulties": 0.001,
+        "normal": 0.09,
+        "no_cry_detected": 0.03
+      },
+      "show": true
+    }
+  }
+}
+After receiving the result, update the corresponding recording row in the database with:
+
+class (main crying reason),
+
+the full probs object (can be stored as JSON),
+
+and whether to show the result.
+
+Then, display the result to the user:
+
+the top crying reason,
+
+the probability of all crying reasons,
+
+an explanation of that crying reason,
+
+a recommendation (what parents should do),
+
+and optionally buttons like 👍 / 👎 to get feedback on the prediction.
+
+For the explanation and recommendation texts, please create a separate database table (e.g., cry_reason_descriptions) that maps each class (e.g., "hunger_food", "sleepiness", etc.) to its explanation and recommendation.
+
+The frontend should fetch the explanation/recommendation from that table based on the top crying reason returned by the API.
+
+Can you help me build this full flow?
