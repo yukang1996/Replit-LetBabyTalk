@@ -549,11 +549,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const className = req.params.className;
       const description = await storage.getCryReasonDescription(className);
-      
+
       if (!description) {
         return res.status(404).json({ message: "Cry reason description not found" });
       }
-      
+
       res.json(description);
     } catch (error) {
       console.error("Error fetching cry reason description:", error);
