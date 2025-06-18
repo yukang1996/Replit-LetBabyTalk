@@ -435,10 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Call external AI API
       let analysisResult;
       try {
-        const FormData = require('form-data');
-        const fs = require('fs');
+        const FormData = await import('form-data');
+        const fetch = await import('node-fetch');
 
-        const formData = new FormData();
+        const formData = new FormData.default();
         formData.append('audio', fs.createReadStream(req.file.path), {
           filename: req.file.originalname || 'recording.webm',
           contentType: req.file.mimetype || 'audio/webm'
@@ -454,8 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         formData.append('metadata', JSON.stringify(metadata));
         formData.append('pressing', 'true');
 
-        const fetch = require('node-fetch');
-        const response = await fetch('https://api.letbabytalk.com/process_audio', {
+        const response = await fetch.default('https://api.letbabytalk.com/process_audio', {
           method: 'POST',
           headers: {
             ...formData.getHeaders()
