@@ -21,19 +21,24 @@ export default function Account() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [firstName, setFirstName] = useState(user?.firstName || "");
-  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [userRole, setUserRole] = useState(user?.userRole || "parent");
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
 
+  const userRoles = [
+    { value: "parent", label: "Parent", icon: "👨‍👩‍👧‍👦" },
+    { value: "nanny", label: "Nanny", icon: "👩‍🍼" },
+    { value: "nurse", label: "Nurse", icon: "👩‍⚕️" },
+    { value: "doctor", label: "Doctor", icon: "👨‍⚕️" },
+  ];
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { firstName: string; lastName: string; profileImage?: File }) => {
+    mutationFn: async (data: { userRole: string; profileImage?: File }) => {
       const formData = new FormData();
-      formData.append('firstName', data.firstName);
-      formData.append('lastName', data.lastName);
+      formData.append('userRole', data.userRole);
       if (data.profileImage) {
         formData.append('profileImage', data.profileImage);
       }
@@ -105,8 +110,7 @@ export default function Account() {
 
   const handleProfileUpdate = () => {
     updateProfileMutation.mutate({
-      firstName,
-      lastName,
+      userRole,
       profileImage: profileImage || undefined,
     });
   };
@@ -189,32 +193,31 @@ export default function Account() {
           </CardContent>
         </Card>
 
-        {/* Personal Information */}
+        {/* User Status */}
         <Card className="glass-effect mb-6">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Personal Information</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-800">User Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-gray-700">First Name</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Enter your first name"
-                className="rounded-xl border-gray-200"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-gray-700">Last Name</Label>
-              <Input
-                id="lastName"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Enter your last name"
-                className="rounded-xl border-gray-200"
-              />
+              <Label className="text-gray-700">Select your role</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {userRoles.map((role) => (
+                  <button
+                    key={role.value}
+                    type="button"
+                    onClick={() => setUserRole(role.value)}
+                    className={`flex items-center space-x-3 p-3 rounded-xl border-2 transition-all ${
+                      userRole === role.value
+                        ? "border-pink-500 bg-pink-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-2xl">{role.icon}</span>
+                    <span className="font-medium text-gray-700">{role.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <Button
@@ -222,7 +225,7 @@ export default function Account() {
               disabled={updateProfileMutation.isPending}
               className="w-full gradient-bg text-white rounded-2xl py-3"
             >
-              {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
+              {updateProfileMutation.isPending ? "Updating..." : "Update Status"}
             </Button>
           </CardContent>
         </Card>

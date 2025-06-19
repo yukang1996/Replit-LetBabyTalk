@@ -341,6 +341,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.put('/api/auth/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { userRole } = req.body;
+      
+      let updatedUser = req.user;
+      
+      if (userRole) {
+        updatedUser = await storage.updateUserRole(userId, userRole);
+      }
+      
+      // Handle profile image upload if provided
+      // This would need additional implementation for file handling
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   // Baby profile routes
   app.get('/api/baby-profiles', isAuthenticated, async (req: any, res) => {
     try {

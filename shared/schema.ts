@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   password: varchar("password"), // For email/password auth
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
+  userRole: varchar("user_role").default("parent"), // parent, nanny, nurse, doctor
   profileImageUrl: varchar("profile_image_url"),
   isGuest: boolean("is_guest").default(false),
   language: varchar("language").default("en"), // en, zh, ar, id

@@ -163,6 +163,15 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async updateUserRole(id: string, userRole: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ userRole, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
   // Recording operations
   async getRecordings(userId: string): Promise<Recording[]> {
     return await db
