@@ -132,7 +132,7 @@ export default function Settings() {
     {
       icon: User,
       label: t('settings.account'),
-      onClick: () => console.log("Account settings"),
+      onClick: () => window.location.href = "/account",
     },
     {
       icon: Baby,
