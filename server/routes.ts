@@ -13,6 +13,18 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { createClient } from '@supabase/supabase-js';
+import {
+  users,
+  babyProfiles,
+  recordings,
+  cryReasonDescriptions,
+  legalDocuments,
+  insertBabyProfileSchema,
+  insertRecordingSchema,
+  type User,
+  type BabyProfile,
+  type Recording
+} from "@shared/schema";
 
 // Temporary in-memory storage for OTPs (use Redis or database in production)
 const otpStorage = new Map<string, { code: string; expiresAt: number; type: 'forgot-password' | 'signup' }>();
@@ -856,8 +868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         if (!response.ok) {
-          throw new Error(`AI API responded with status: ${response.status}`);
-        }
+          throw new Error(`AI API responded with status: ${response.status}`);        }
 
         const aiResponse = await response.json();
         const result = aiResponse.data?.result;
@@ -1173,18 +1184,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { type, locale } = req.params;
         const document = await storage.getActiveLegalDocument(type, locale);
-  
+
         if (!document) {
           return res.status(404).json({ message: "Legal document not found" });
         }
-  
+
         res.json(document);
       } catch (error) {
         console.error("Error fetching legal document:", error);
         res.status(500).json({ message: "Failed to fetch legal document" });
       }
     });
-  
+
     // Create new legal document
     app.post('/api/legal-documents', async (req, res) => {
       try {
@@ -1203,7 +1214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Failed to create legal document" });
       }
     });
-  
+
     // Update existing legal document
     app.put('/api/legal-documents/:id', async (req, res) => {
       try {
@@ -1226,7 +1237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Failed to update legal document" });
       }
     });
-  
+
     // Delete legal document
     app.delete('/api/legal-documents/:id', async (req, res) => {
       try {

@@ -157,7 +157,7 @@ export default function Settings() {
     {
       icon: FileText,
       label: t('settings.terms'),
-      onClick: () => console.log("Terms and conditions"),
+      onClick: () => window.location.href = "/terms",
     },
     {
       icon: Shield,

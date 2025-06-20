@@ -12,6 +12,7 @@ import BabySelection from "@/pages/baby-selection";
 import Home from "@/pages/home";
 import BabyProfile from "@/pages/baby-profile";
 import Settings from "@/pages/settings";
+import Terms from "@/pages/terms";
 import Account from "@/pages/account";
 import History from "@/pages/history";
 import Advisor from "@/pages/advisor";
@@ -128,11 +129,8 @@ function Router() {
           <Route path="/baby-profile" component={BabyProfile} />
           <Route path="/baby-selection" component={BabySelection} />
           <Route path="/settings" component={Settings} />
-          <Route path="/account" component={Account} />
-          <Route path="/history" component={History} />
-          <Route path="/advisor" component={Advisor} />
-          <Route path="/chatbot" component={Chatbot} />
-          <Route path="/results/:id" component={Results} />
+          <Route path="/terms" component={Terms} />
+          <Route component={NotFound} />
         </>
       )}
     </Switch>
