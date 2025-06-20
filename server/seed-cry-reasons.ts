@@ -139,6 +139,13 @@ async function seedCryReasons() {
   try {
     console.log("Seeding cry reason descriptions...");
     
+    // Check if data already exists
+    const existingCount = await db.select().from(cryReasonDescriptions);
+    if (existingCount.length >= cryReasons.length) {
+      console.log("Cry reason descriptions already seeded!");
+      return;
+    }
+    
     for (const reason of cryReasons) {
       await db.insert(cryReasonDescriptions)
         .values(reason)
@@ -156,6 +163,9 @@ async function seedCryReasons() {
     console.log("Cry reason descriptions seeded successfully!");
   } catch (error) {
     console.error("Error seeding cry reason descriptions:", error);
+  } finally {
+    // Don't close the connection as it's shared with the main app
+    // The connection will be managed by the main application
   }
 }
 

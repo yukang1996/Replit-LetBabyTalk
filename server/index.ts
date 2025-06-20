@@ -38,12 +38,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize cry reason descriptions
-  try {
-    await seedCryReasons();
-  } catch (error) {
+  // Initialize cry reason descriptions (non-blocking)
+  seedCryReasons().catch(error => {
     console.error("Failed to seed cry reasons:", error);
-  }
+  });
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
