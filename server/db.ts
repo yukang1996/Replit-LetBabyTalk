@@ -12,9 +12,11 @@ if (!databaseUrl) {
 
 export const pool = new Pool({ 
   connectionString: databaseUrl,
-  ssl: databaseUrl.includes('supabase.co') ? { rejectUnauthorized: false } : false,
+  ssl: databaseUrl.includes('supabase.co') || databaseUrl.includes('neon.tech') ? { rejectUnauthorized: false } : false,
   connectionTimeoutMillis: 30000,
   idleTimeoutMillis: 30000,
-  max: 10
+  max: 10,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 0
 });
 export const db = drizzle(pool, { schema });

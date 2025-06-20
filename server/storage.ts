@@ -180,20 +180,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserRole(userId: string, userRole: string): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({ userRole, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    return user;
-  }
-
   async updateUserProfileImage(userId: string, profileImageUrl: string): Promise<User> {
     const [user] = await db
       .update(users)
