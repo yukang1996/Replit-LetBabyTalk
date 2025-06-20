@@ -51,7 +51,7 @@ export default function Account() {
       // Always use FormData to handle both cases consistently
       const formData = new FormData();
       formData.append('userRole', data.userRole);
-      
+
       if (data.profileImage) {
         formData.append('profileImage', data.profileImage);
       }
@@ -109,7 +109,7 @@ export default function Account() {
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setProfileImage(file);
@@ -118,6 +118,16 @@ export default function Account() {
         setProfileImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+
+      // Directly update profile image after selecting
+      const formData = new FormData();
+      formData.append('userRole', userRole === "other" ? `other: ${customRole}` : userRole);
+      formData.append('profileImage', file);
+
+      updateProfileMutation.mutate({
+        userRole: userRole === "other" ? `other: ${customRole}` : userRole,
+        profileImage: file,
+      });
     }
   };
 
@@ -200,9 +210,20 @@ export default function Account() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              <p className="text-sm text-gray-600 text-center">
-                Click the camera icon to change your profile picture
-              </p>
+              {/*<Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="w-full max-w-xs rounded-xl border-gray-200 hover:bg-gray-50"
+                disabled={updateProfileMutation.isPending}
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                {updateProfileMutation.isPending ? "Uploading..." : "Update Profile Picture"}
+              </Button>*/}
+              {profileImagePreview && (
+                <p className="text-sm text-green-600 text-center">
+                  Profile picture updated successfully!
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
