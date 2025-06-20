@@ -222,23 +222,31 @@ export default function BabySelection() {
       };
       reader.readAsDataURL(file);
 
-      // Upload to Supabase storage
+      // Create FormData with baby profile image
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      // Submit form data to baby profile endpoint
       try {
-        const formData = new FormData();
-        formData.append('photo', file);
-        formData.append('type', 'baby-profile');
+        let photoUrl = `/uploads/baby-profiles/${file.name}`;
 
         const response = await fetch('/api/upload-photo', {
           method: 'POST',
           body: formData,
         });
 
-        if (!response.ok) {
+        if (response.ok) {
+          const { photoUrl: uploadedUrl } = await response.json();
+          photoUrl = uploadedUrl;
+          form.setValue("photoUrl", photoUrl);
+          
+          toast({
+            title: "Photo Updated",
+            description: "Baby profile picture updated successfully!",
+          });
+        } else {
           throw new Error('Upload failed');
         }
-
-        const { photoUrl } = await response.json();
-        form.setValue("photoUrl", photoUrl);
       } catch (error) {
         console.error('Photo upload failed:', error);
         toast({
@@ -246,7 +254,7 @@ export default function BabySelection() {
           description: "Failed to upload photo. Please try again.",
           variant: "destructive",
         });
-        // Fall back to base64 for now
+        // Fall back to base64
         const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result as string;
@@ -362,6 +370,19 @@ export default function BabySelection() {
                 {/* Baby Photo Upload */}
                 <div className="flex justify-center">
                   <div className="relative">
+                    <div className="w-24 h-24 bg-white rounded-full overflow-hidden border-4 border-white shadow-lg">
+                      {photoPreview ? (
+                        <img 
+                          src={photoPreview} 
+                          alt="Baby Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-r from-pink-300 to-purple-300 flex items-center justify-center">
+                          <Camera className="w-8 h-8 text-white" />
+                        </div>
+                      )}
+                    </div>
                     <input
                       type="file"
                       accept="image/*"
@@ -369,30 +390,20 @@ export default function BabySelection() {
                       className="hidden"
                       id="photo-upload"
                     />
-                    <label
-                      htmlFor="photo-upload"
-                      className="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-pink-200 transition-colors border-2 border-dashed border-pink-300 relative overflow-hidden"
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-pink-500 hover:bg-pink-600"
+                      onClick={() => document.getElementById('photo-upload')?.click()}
                     >
-                      {photoPreview ? (
-                        <>
-                          <img 
-                            src={photoPreview} 
-                            alt="Baby preview"
-                            className="w-24 h-24 rounded-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Camera className="w-8 h-8 text-pink-400 opacity-0 hover:opacity-70 transition-opacity" />
-                          </div>
-                        </>
-                      ) : (
-                        <Camera className="w-8 h-8 text-pink-400" />
-                      )}
-                    </label>
+                      <Camera className="w-4 h-4" />
+                    </Button>
                   </div>
+                  {photoPreview && (
+                    <p className="text-sm text-green-600 text-center mt-2">
+                      Profile picture updated successfully!
+                    </p>
+                  )}
                 </div>
 
                 {/* Name Field */}
