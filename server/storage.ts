@@ -159,6 +159,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ hasCompletedOnboarding: completed, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
   async updateUserRole(userId: string, userRole: string): Promise<User> {
     const [user] = await db
       .update(users)
