@@ -145,32 +145,33 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserLanguage(id: string, language: string): Promise<User | undefined> {
-    const [updated] = await db
+  async updateUserLanguage(userId: string, language: string): Promise<User> {
+    const [user] = await db
       .update(users)
       .set({ language, updatedAt: new Date() })
-      .where(eq(users.id, id))
+      .where(eq(users.id, userId))
       .returning();
-    return updated;
-  }
 
-  async updateUserOnboarding(id: string, completed: boolean): Promise<User | undefined> {
-    const [updated] = await db
-      .update(users)
-      .set({ hasCompletedOnboarding: completed, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return updated;
-  }
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-  async updateUserRole(id: string, userRole: string): Promise<User | undefined> {
-    const [updated] = await db
+    return user;
+  },
+
+  async updateUserRole(userId: string, userRole: string): Promise<User> {
+    const [user] = await db
       .update(users)
       .set({ userRole, updatedAt: new Date() })
-      .where(eq(users.id, id))
+      .where(eq(users.id, userId))
       .returning();
-    return updated;
-  }
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return user;
+  },
 
   // Recording operations
   async getRecordings(userId: string): Promise<Recording[]> {

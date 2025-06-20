@@ -345,17 +345,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/auth/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const { userRole } = req.body;
+      console.log('Profile update request:', req.body);
       
       let updatedUser = req.user;
       
-      if (userRole) {
-        updatedUser = await storage.updateUserRole(userId, userRole);
+      // Check if userRole is provided in the request body
+      if (req.body.userRole !== undefined) {
+        console.log('Updating user role to:', req.body.userRole);
+        updatedUser = await storage.updateUserRole(userId, req.body.userRole);
       }
       
       // Handle profile image upload if provided
       // This would need additional implementation for file handling
       
+      console.log('Updated user:', updatedUser);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating profile:", error);
