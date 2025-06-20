@@ -389,6 +389,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (supabase) {
           try {
             console.log('Uploading to Supabase storage...');
+            console.log('Supabase URL configured:', !!supabaseUrl);
+            console.log('Supabase Service Key configured:', !!supabaseServiceKey);
+            
+            // First, check if the bucket exists and create it if it doesn't
+            const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+            console.log('Available buckets:', buckets?.map(b => b.name));
+            
+            if (listError) {
+              console.error('Error listing buckets:', listError);
+            }
+            
+            const bucketExists = buckets?.some(bucket => bucket.name === 'user-profile-images');
+            if (!bucketExists) {
+              console.log('Creating user-profile-images bucket...');
+              const { data: newBucket, error: createError } = await supabase.storage.createBucket('user-profile-images', {
+                public: false,
+                allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
+                fileSizeLimit: 5242880 // 5MB
+              });
+              
+              if (createError) {
+                console.error('Error creating bucket:', createError);
+                throw new Error('Failed to create storage bucket');
+              } else {
+                console.log('Bucket created successfully:', newBucket);
+              }
+            }
             
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
@@ -398,6 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Read file data
             const fileData = fs.readFileSync(req.file.path);
             console.log('File size:', fileData.length, 'bytes');
+            console.log('File mime type:', req.file.mimetype);
 
             // Upload to Supabase storage
             const { data, error } = await supabase.storage
@@ -408,7 +436,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
 
             if (error) {
-              console.error('Supabase upload error:', error);
+              console.error('Supabase upload error details:', {
+                message: error.message,
+                statusCode: error.cause,
+                error: error
+              });
               // Fall back to local storage
             } else {
               console.log('Successfully uploaded to Supabase:', data);
@@ -692,6 +724,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(filepath);
     } else {
       res.status(404).json({ message: "Audio file not found" });
+    }
+  });
+
+  // Test Supabase connection
+  app.get('/api/test-supabase', async (req, res) => {
+    try {
+      if (!supabase) {
+        return res.json({ 
+          status: 'error', 
+          message: 'Supabase not configured',
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseServiceKey
+        });
+      }
+
+      // Test connection by listing buckets
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+      
+      if (error) {
+        return res.json({ 
+          status: 'error', 
+          message: 'Supabase connection failed',
+          error: error.message,
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseServiceKey
+        });
+      }
+
+      res.json({ 
+        status: 'success', 
+        message: 'Supabase connected successfully',
+        buckets: buckets?.map(b => b.name) || [],
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseServiceKey
+      });
+    } catch (error) {
+      res.json({ 
+        status: 'error', 
+        message: 'Supabase test failed',
+        error: error.message,
+        hasUrl: !!supabaseUrl,
+        hasKey: !!supabaseServiceKey
+      });
     }
   });
 
