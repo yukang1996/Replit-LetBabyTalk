@@ -8,6 +8,13 @@
       "when": 1750432048154,
       "tag": "0000_curious_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750434908439,
+      "tag": "0001_pink_white_queen",
+      "breakpoints": true
     }
   ]
 }
