@@ -121,7 +121,7 @@ function Router() {
           <Route path="/verification" component={Verification} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/" component={() => <Welcome onLoginRedirect={handleLoginRedirect} onGuestComplete={handleGuestComplete} />} />
-          <Route component={NotFound} />
+          <Route path="*" component={NotFound} />
         </>
       ) : (
         <>
@@ -132,7 +132,7 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/terms" component={Terms} />
           <Route path="/privacy" component={Privacy} />
-          <Route component={NotFound} />
+          <Route path="*" component={NotFound} />
         </>
       )}
     </Switch>
