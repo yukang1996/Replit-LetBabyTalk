@@ -185,6 +185,13 @@ export default function Account() {
                     </div>
                   )}
                 </div>
+                <Button
+                  size="sm"
+                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-pink-500 hover:bg-pink-600"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
               </div>
               <input
                 ref={fileInputRef}
@@ -193,19 +200,9 @@ export default function Account() {
                 onChange={handleImageChange}
                 className="hidden"
               />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                className="w-full max-w-xs rounded-xl border-gray-200 hover:bg-gray-50"
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                Update Profile Picture
-              </Button>
-              {profileImagePreview && (
-                <p className="text-sm text-green-600 text-center">
-                  New picture selected. Click "Update Status" to save changes.
-                </p>
-              )}
+              <p className="text-sm text-gray-600 text-center">
+                Click the camera icon to change your profile picture
+              </p>
             </div>
           </CardContent>
         </Card>
