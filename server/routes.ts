@@ -388,12 +388,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (supabase) {
           try {
+            console.log('Uploading to Supabase storage...');
+            
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
             const fileName = `profile_${userId}_${Date.now()}${fileExtension}`;
+            console.log('Generated filename:', fileName);
 
             // Read file data
             const fileData = fs.readFileSync(req.file.path);
+            console.log('File size:', fileData.length, 'bytes');
 
             // Upload to Supabase storage
             const { data, error } = await supabase.storage
@@ -407,6 +411,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error('Supabase upload error:', error);
               // Fall back to local storage
             } else {
+              console.log('Successfully uploaded to Supabase:', data);
+              
               // Create signed URL that expires in 1 year (private access)
               const { data: urlData, error: urlError } = await supabase.storage
                 .from('user-profile-images')
@@ -416,6 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.error('Error creating signed URL:', urlError);
                 // Fall back to local storage
               } else {
+                console.log('Created signed URL successfully');
                 profileImageUrl = urlData.signedUrl;
               }
             }
