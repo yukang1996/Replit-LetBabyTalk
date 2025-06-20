@@ -20,8 +20,18 @@ export default function Account() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [userRole, setUserRole] = useState(user?.userRole || "parent");
-  const [customRole, setCustomRole] = useState("");
+  // Parse user role to handle "other: xxxxx" format
+  const parseUserRole = (role: string | undefined) => {
+    if (!role) return { type: "parent", custom: "" };
+    if (role.startsWith("other:")) {
+      return { type: "other", custom: role.substring(6).trim() };
+    }
+    return { type: role, custom: "" };
+  };
+
+  const parsedRole = parseUserRole(user?.userRole);
+  const [userRole, setUserRole] = useState(parsedRole.type);
+  const [customRole, setCustomRole] = useState(parsedRole.custom);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -126,7 +136,7 @@ export default function Account() {
   };
 
   const handleProfileUpdate = () => {
-    const roleToSubmit = userRole === "other" ? customRole : userRole;
+    const roleToSubmit = userRole === "other" ? `other: ${customRole}` : userRole;
     updateProfileMutation.mutate({
       userRole: roleToSubmit,
       profileImage: profileImage || undefined,
