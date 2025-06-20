@@ -38,10 +38,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Skip seeding until Supabase connection is fixed
-  // seedCryReasons().catch(error => {
-  //   console.error("Failed to seed cry reasons:", error);
-  // });
+  // Initialize cry reason descriptions
+  seedCryReasons().catch(error => {
+    console.error("Failed to seed cry reasons:", error);
+  });
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
