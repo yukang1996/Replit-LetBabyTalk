@@ -992,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Photo upload endpoint for baby profiles
-  app.post('/api/upload-photo', isAuthenticated, upload.single('photo'), async (req: any, res) => {
+  app.post('/api/upload-photo', isAuthenticated, babyProfileUpload.single('photo'), async (req: any, res) => {
     try {
       const userId = req.user.id;
       const uploadType = req.body.type; // 'baby-profile' or 'user-profile'
