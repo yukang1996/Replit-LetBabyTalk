@@ -157,7 +157,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     return user;
-  },
+  }
 
   async updateUserRole(userId: string, userRole: string): Promise<User> {
     const [user] = await db
@@ -171,7 +171,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     return user;
-  },
+  }
 
   // Recording operations
   async getRecordings(userId: string): Promise<Recording[]> {
