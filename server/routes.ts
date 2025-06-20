@@ -373,57 +373,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       console.log('Profile update request:', req.body);
       console.log('Profile image file:', req.file);
-      
+
       let updatedUser = req.user;
-      
+
       // Check if userRole is provided in the request body
       if (req.body.userRole !== undefined) {
         console.log('Updating user role to:', req.body.userRole);
         updatedUser = await storage.updateUserRole(userId, req.body.userRole);
       }
-      
+
       // Handle profile image upload if provided
       if (req.file) {
         let profileImageUrl = `/api/images/${req.file.filename}`;
-        
+
         if (supabase) {
           try {
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
             const fileName = `profile_${userId}_${Date.now()}${fileExtension}`;
-            
+
             // Read file data
             const fileData = fs.readFileSync(req.file.path);
-            
+
             // Upload to Supabase storage
             const { data, error } = await supabase.storage
-              .from('profile-images')
+              .from('user-profile-images')
               .upload(fileName, fileData, {
                 contentType: req.file.mimetype,
                 upsert: true
               });
-              
+
             if (error) {
               console.error('Supabase upload error:', error);
               // Fall back to local storage
             } else {
-              // Get public URL
-              const { data: urlData } = supabase.storage
-                .from('profile-images')
-                .getPublicUrl(fileName);
-              
-              profileImageUrl = urlData.publicUrl;
-              console.log('Image uploaded to Supabase:', profileImageUrl);
+              // Create signed URL that expires in 1 year (private access)
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from('user-profile-images')
+                .createSignedUrl(fileName, 31536000); // 1 year in seconds
+
+              if (urlError) {
+                console.error('Error creating signed URL:', urlError);
+                // Fall back to local storage
+              } else {
+                profileImageUrl = urlData.signedUrl;
+              }
             }
           } catch (supabaseError) {
             console.error('Supabase storage error:', supabaseError);
             // Fall back to local storage
           }
         }
-        
+
         console.log('Updating profile image to:', profileImageUrl);
         updatedUser = await storage.updateUserProfileImage(userId, profileImageUrl);
-        
+
         // Clean up local file
         try {
           fs.unlinkSync(req.file.path);
@@ -431,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("File cleanup error:", cleanupError);
         }
       }
-      
+
       console.log('Updated user:', updatedUser);
       res.json(updatedUser);
     } catch (error) {
