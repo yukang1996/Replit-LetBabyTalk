@@ -27,17 +27,18 @@ export const sessions = pgTable(
 // User storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
-  phone: varchar("phone").unique(),
-  password: varchar("password"), // For email/password auth
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  userRole: varchar("user_role").default("parent"), // parent, nanny, nurse, doctor
-  profileImageUrl: varchar("profile_image_url"),
+  id: text("id").primaryKey(),
+  email: text("email").unique(),
+  phone: text("phone").unique(),
+  password: text("password"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  userRole: text("user_role"),
+  profileImageUrl: text("profile_image_url"),
   isGuest: boolean("is_guest").default(false),
-  language: varchar("language").default("en"), // en, zh, ar, id
+  language: text("language").default("en"),
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
+  deactivated: boolean("deactivated").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

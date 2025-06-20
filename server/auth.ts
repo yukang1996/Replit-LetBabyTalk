@@ -58,6 +58,11 @@ export async function setupAuth(app: Express) {
           return done(null, false, { message: 'Invalid email or password' });
         }
 
+        // Check if account is deactivated
+        if (user.deactivated) {
+          return done(null, false, { message: 'Account deactivated. Please contact support at support@letbabytalk.com to reactivate your account.' });
+        }
+
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
           return done(null, false, { message: 'Invalid email or password' });

@@ -256,6 +256,34 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return user;
   }
+
+  // Update user onboarding status
+  async updateUserOnboarding(userId: string, completed: boolean) {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        hasCompletedOnboarding: completed,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updatedUser;
+  }
+
+  // Deactivate user account
+  async deactivateUser(userId: string) {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        deactivated: true,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updatedUser;
+  }
 }
 
 export const storage = new DatabaseStorage();

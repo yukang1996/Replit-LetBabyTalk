@@ -86,14 +86,13 @@ export default function Account() {
   // Deactivate account mutation
   const deactivateAccountMutation = useMutation({
     mutationFn: async () => {
-      // Placeholder API call - replace with actual endpoint
       const response = await apiRequest("DELETE", "/api/auth/account");
       return response;
     },
     onSuccess: () => {
       toast({
         title: "Account Deactivated",
-        description: "Your account has been permanently deleted.",
+        description: "Your account has been deactivated. Contact support@letbabytalk.com to reactivate.",
       });
       // Clear all local storage and redirect to signin
       localStorage.clear();

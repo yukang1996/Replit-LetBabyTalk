@@ -770,6 +770,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Deactivate account
+  app.delete('/api/auth/account', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Deactivate the user account instead of deleting
+      await storage.deactivateUser(userId);
+      
+      // Logout the user
+      req.logout((err) => {
+        if (err) {
+          console.error("Logout error during deactivation:", err);
+        }
+      });
+
+      res.json({ message: "Account deactivated successfully" });
+    } catch (error) {
+      console.error("Account deactivation error:", error);
+      res.status(500).json({ message: "Failed to deactivate account" });
+    }
+  });
+
   // Test Supabase connection
   app.get('/api/test-supabase', async (req, res) => {
     try {

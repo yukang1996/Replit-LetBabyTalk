@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, Mail, Lock, Facebook, Apple } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Eye, EyeOff, Mail, Lock, Facebook, Apple, AlertCircle } from "lucide-react";
 import { FaGoogle, FaWeixin } from "react-icons/fa";
 import { Link } from "wouter";
 import { z } from "zod";
@@ -45,6 +46,7 @@ interface LoginProps {
 export default function Login({ onLoginSuccess }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [authType, setAuthType] = useState<"email" | "phone">("email");
+  const [showDeactivatedDialog, setShowDeactivatedDialog] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -71,11 +73,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       onLoginSuccess();
     },
     onError: (error: any) => {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid email or password",
-        variant: "destructive",
-      });
+      // Check if the error message indicates a deactivated account
+      if (error.message && error.message.includes("Account deactivated")) {
+        setShowDeactivatedDialog(true);
+      } else {
+        toast({
+          title: "Login Failed",
+          description: error.message || "Invalid email or password",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -321,6 +328,37 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Deactivated Account Dialog */}
+      <Dialog open={showDeactivatedDialog} onOpenChange={setShowDeactivatedDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-orange-600">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              Account Deactivated
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Your account has been deactivated. To reactivate your account and regain access, 
+              please contact our support team at{" "}
+              <a 
+                href="mailto:support@letbabytalk.com" 
+                className="text-blue-600 hover:underline"
+              >
+                support@letbabytalk.com
+              </a>
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowDeactivatedDialog(false)}
+              className="w-full rounded-xl"
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
