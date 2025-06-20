@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -44,16 +43,16 @@ export default function Account() {
       if (data.profileImage) {
         formData.append('profileImage', data.profileImage);
       }
-      
+
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update profile');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -221,7 +220,7 @@ export default function Account() {
                   </button>
                 ))}
               </div>
-              
+
               {userRole === "other" && (
                 <div className="mt-3">
                   <Label htmlFor="customRole" className="text-gray-700">
@@ -264,7 +263,7 @@ export default function Account() {
                 </div>
               </div>
             )}
-            
+
             {user?.phone && (
               <div className="flex items-center space-x-3 p-3 bg-gray-100 rounded-xl">
                 <Phone className="w-5 h-5 text-gray-500" />
@@ -312,7 +311,7 @@ export default function Account() {
               Your account and all associated data will be permanently deleted. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="confirm" className="text-gray-700">
