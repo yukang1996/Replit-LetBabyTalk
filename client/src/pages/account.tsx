@@ -38,22 +38,38 @@ export default function Account() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { userRole: string; profileImage?: File }) => {
-      const formData = new FormData();
-      formData.append('userRole', data.userRole);
       if (data.profileImage) {
+        // If there's a profile image, use FormData
+        const formData = new FormData();
+        formData.append('userRole', data.userRole);
         formData.append('profileImage', data.profileImage);
+
+        const response = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update profile');
+        }
+
+        return response.json();
+      } else {
+        // If no image, send JSON data
+        const response = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userRole: data.userRole }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update profile');
+        }
+
+        return response.json();
       }
-
-      const response = await fetch('/api/auth/profile', {
-        method: 'PUT',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       toast({
