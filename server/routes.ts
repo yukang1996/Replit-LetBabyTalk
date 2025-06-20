@@ -388,21 +388,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         if (supabase) {
           try {
-            console.log('Uploading to Supabase storage...');
-            console.log('Supabase URL configured:', !!supabaseUrl);
-            console.log('Supabase Service Key configured:', !!supabaseServiceKey);
+            console.log('\n=== SUPABASE UPLOAD DEBUG ===');
+            console.log('Supabase URL:', supabaseUrl);
+            console.log('Supabase Service Key (first 20 chars):', supabaseServiceKey?.substring(0, 20) + '...');
+            console.log('User ID:', userId);
+            console.log('Original file name:', req.file.originalname);
+            console.log('File path:', req.file.path);
+            console.log('File mime type:', req.file.mimetype);
             
             // First, check if the bucket exists and create it if it doesn't
+            console.log('Step 1: Listing existing buckets...');
             const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-            console.log('Available buckets:', buckets?.map(b => b.name));
             
             if (listError) {
-              console.error('Error listing buckets:', listError);
+              console.error('❌ Error listing buckets:', listError);
+              throw listError;
             }
             
+            console.log('✅ Available buckets:', buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })));
+            
             const bucketExists = buckets?.some(bucket => bucket.name === 'user-profile-images');
+            console.log('Bucket exists:', bucketExists);
+            
             if (!bucketExists) {
-              console.log('Creating user-profile-images bucket...');
+              console.log('Step 2: Creating user-profile-images bucket...');
               const { data: newBucket, error: createError } = await supabase.storage.createBucket('user-profile-images', {
                 public: false,
                 allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
@@ -410,58 +419,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
               
               if (createError) {
-                console.error('Error creating bucket:', createError);
-                throw new Error('Failed to create storage bucket');
+                console.error('❌ Error creating bucket:', createError);
+                throw new Error(`Failed to create storage bucket: ${createError.message}`);
               } else {
-                console.log('Bucket created successfully:', newBucket);
+                console.log('✅ Bucket created successfully:', newBucket);
               }
+            } else {
+              console.log('✅ Bucket already exists, skipping creation');
             }
             
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
             const fileName = `profile_${userId}_${Date.now()}${fileExtension}`;
-            console.log('Generated filename:', fileName);
+            console.log('Step 3: Generated filename:', fileName);
 
             // Read file data
             const fileData = fs.readFileSync(req.file.path);
+            console.log('Step 4: File read successfully');
             console.log('File size:', fileData.length, 'bytes');
-            console.log('File mime type:', req.file.mimetype);
+            console.log('File buffer type:', typeof fileData);
 
             // Upload to Supabase storage
-            const { data, error } = await supabase.storage
+            console.log('Step 5: Uploading to Supabase storage...');
+            console.log('Upload parameters:', {
+              bucket: 'user-profile-images',
+              fileName: fileName,
+              contentType: req.file.mimetype,
+              fileSize: fileData.length
+            });
+
+            const uploadResult = await supabase.storage
               .from('user-profile-images')
               .upload(fileName, fileData, {
                 contentType: req.file.mimetype,
                 upsert: true
               });
 
-            if (error) {
-              console.error('Supabase upload error details:', {
-                message: error.message,
-                statusCode: error.cause,
-                error: error
-              });
-              // Fall back to local storage
+            console.log('Upload result:', {
+              data: uploadResult.data,
+              error: uploadResult.error
+            });
+
+            if (uploadResult.error) {
+              console.error('❌ Supabase upload error:', uploadResult.error);
+              console.error('Error details:', JSON.stringify(uploadResult.error, null, 2));
+              throw uploadResult.error;
             } else {
-              console.log('Successfully uploaded to Supabase:', data);
+              console.log('✅ Successfully uploaded to Supabase!');
+              console.log('Upload data:', uploadResult.data);
+              
+              // Verify the file was uploaded by listing files in bucket
+              console.log('Step 6: Verifying upload by listing bucket contents...');
+              const { data: files, error: listFilesError } = await supabase.storage
+                .from('user-profile-images')
+                .list();
+              
+              if (listFilesError) {
+                console.error('❌ Error listing files:', listFilesError);
+              } else {
+                console.log('✅ Files in bucket:', files?.map(f => ({ name: f.name, size: f.metadata?.size })));
+              }
               
               // Create signed URL that expires in 1 year (private access)
+              console.log('Step 7: Creating signed URL...');
               const { data: urlData, error: urlError } = await supabase.storage
                 .from('user-profile-images')
                 .createSignedUrl(fileName, 31536000); // 1 year in seconds
 
               if (urlError) {
-                console.error('Error creating signed URL:', urlError);
-                // Fall back to local storage
+                console.error('❌ Error creating signed URL:', urlError);
+                throw urlError;
               } else {
-                console.log('Created signed URL successfully');
+                console.log('✅ Created signed URL successfully');
+                console.log('Signed URL (first 50 chars):', urlData.signedUrl.substring(0, 50) + '...');
                 profileImageUrl = urlData.signedUrl;
               }
             }
+            
+            console.log('=== SUPABASE UPLOAD COMPLETE ===\n');
           } catch (supabaseError) {
-            console.error('Supabase storage error:', supabaseError);
+            console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
+            console.error('Error stack:', supabaseError.stack);
+            console.log('Falling back to local storage...\n');
             // Fall back to local storage
           }
+        } else {
+          console.log('❌ Supabase client not initialized - missing credentials');
         }
 
         console.log('Updating profile image to:', profileImageUrl);
