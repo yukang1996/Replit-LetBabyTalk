@@ -9,9 +9,20 @@ import { insertBabyProfileSchema, insertRecordingSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { createClient } from '@supabase/supabase-js';
 
 // Temporary in-memory storage for OTPs (use Redis or database in production)
 const otpStorage = new Map<string, { code: string; expiresAt: number; type: 'forgot-password' | 'signup' }>();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.warn('Supabase credentials not found. Profile image upload will fall back to local storage.');
+}
+
+const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 // Generate 6-digit OTP
 function generateOTP(): string {
@@ -373,9 +384,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle profile image upload if provided
       if (req.file) {
-        const profileImageUrl = `/api/images/${req.file.filename}`;
+        let profileImageUrl = `/api/images/${req.file.filename}`;
+        
+        if (supabase) {
+          try {
+            // Generate unique filename
+            const fileExtension = path.extname(req.file.originalname || '');
+            const fileName = `profile_${userId}_${Date.now()}${fileExtension}`;
+            
+            // Read file data
+            const fileData = fs.readFileSync(req.file.path);
+            
+            // Upload to Supabase storage
+            const { data, error } = await supabase.storage
+              .from('profile-images')
+              .upload(fileName, fileData, {
+                contentType: req.file.mimetype,
+                upsert: true
+              });
+              
+            if (error) {
+              console.error('Supabase upload error:', error);
+              // Fall back to local storage
+            } else {
+              // Get public URL
+              const { data: urlData } = supabase.storage
+                .from('profile-images')
+                .getPublicUrl(fileName);
+              
+              profileImageUrl = urlData.publicUrl;
+              console.log('Image uploaded to Supabase:', profileImageUrl);
+            }
+          } catch (supabaseError) {
+            console.error('Supabase storage error:', supabaseError);
+            // Fall back to local storage
+          }
+        }
+        
         console.log('Updating profile image to:', profileImageUrl);
         updatedUser = await storage.updateUserProfileImage(userId, profileImageUrl);
+        
+        // Clean up local file
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error("File cleanup error:", cleanupError);
+        }
       }
       
       console.log('Updated user:', updatedUser);
