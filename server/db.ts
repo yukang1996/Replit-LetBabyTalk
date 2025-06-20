@@ -2,11 +2,11 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-const databaseUrl = process.env.SUPABASE_DATABASE_URL;
+const databaseUrl = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error(
-    "SUPABASE_DATABASE_URL must be set. Please provide your Supabase database connection string.",
+    "SUPABASE_DATABASE_URL or DATABASE_URL must be set. Please provide your database connection string.",
   );
 }
 
