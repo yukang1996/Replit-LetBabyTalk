@@ -23,8 +23,8 @@ export default function Account() {
   // Parse user role to handle "other: xxxxx" format
   const parseUserRole = (role: string | undefined) => {
     if (!role) return { type: "parent", custom: "" };
-    if (role.startsWith("other:")) {
-      return { type: "other", custom: role.substring(6).trim() };
+    if (role.startsWith("other: ")) {
+      return { type: "other", custom: role.substring(7).trim() };
     }
     return { type: role, custom: "" };
   };
