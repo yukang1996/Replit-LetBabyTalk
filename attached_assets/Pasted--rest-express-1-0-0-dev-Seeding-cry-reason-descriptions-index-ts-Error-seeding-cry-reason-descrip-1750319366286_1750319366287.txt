@@ -1,0 +1,80 @@
+> rest-express@1.0.0 dev
+Seeding cry reason descriptions...index.ts
+Error seeding cry reason descriptions: error: relation "cry_reason_descriptions" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async seedCryReasons (/home/runner/workspace/server/seed-cry-reasons.ts:143:7)
+    at async <anonymous> (/home/runner/workspace/server/index.ts:43:5) {
+  length: 122,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '13',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+7:47:46 AM [express] serving on port 5000
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
+error: column "user_role" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getUser (/home/runner/workspace/server/storage.ts:48:20)
+    at async <anonymous> (/home/runner/workspace/server/auth.ts:79:20)
