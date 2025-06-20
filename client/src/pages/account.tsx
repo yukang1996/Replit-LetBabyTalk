@@ -22,6 +22,7 @@ export default function Account() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [userRole, setUserRole] = useState(user?.userRole || "parent");
+  const [customRole, setCustomRole] = useState("");
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -32,6 +33,7 @@ export default function Account() {
     { value: "nanny", label: "Nanny", icon: "👩‍🍼" },
     { value: "nurse", label: "Nurse", icon: "👩‍⚕️" },
     { value: "doctor", label: "Doctor", icon: "👨‍⚕️" },
+    { value: "other", label: "Other", icon: "👤" },
   ];
 
   // Update profile mutation
@@ -109,8 +111,9 @@ export default function Account() {
   };
 
   const handleProfileUpdate = () => {
+    const roleToSubmit = userRole === "other" ? customRole : userRole;
     updateProfileMutation.mutate({
-      userRole,
+      userRole: roleToSubmit,
       profileImage: profileImage || undefined,
     });
   };
@@ -218,6 +221,22 @@ export default function Account() {
                   </button>
                 ))}
               </div>
+              
+              {userRole === "other" && (
+                <div className="mt-3">
+                  <Label htmlFor="customRole" className="text-gray-700">
+                    Specify your role
+                  </Label>
+                  <Input
+                    id="customRole"
+                    type="text"
+                    placeholder="Enter your role"
+                    value={customRole}
+                    onChange={(e) => setCustomRole(e.target.value)}
+                    className="rounded-xl border-gray-200 mt-2"
+                  />
+                </div>
+              )}
             </div>
 
             <Button
