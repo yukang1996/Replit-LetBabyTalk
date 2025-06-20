@@ -20,7 +20,7 @@ export const translations = {
     'onboarding.languageSelection': 'Select Language',
     'onboarding.next': 'Next',
     'onboarding.ok': 'OK',
-    
+
     // Navigation
     'nav.chatbot': 'Chatbot',
     'nav.advisor': 'Advisor',
@@ -28,7 +28,7 @@ export const translations = {
     'nav.record': 'Record',
     'nav.history': 'History',
     'nav.settings': 'Settings',
-    
+
     // Home
     'home.enterBabyInfo': 'Enter your baby\'s info',
     'home.premium': 'Premium',
@@ -36,7 +36,7 @@ export const translations = {
     'home.recording': 'Recording...',
     'home.tapToStop': 'Tap again to stop recording',
     'home.recordMore': 'Record more than 8 seconds to get better results',
-    
+
     // Baby Profile
     'babyProfile.title': 'Baby Profile',
     'babyProfile.add': 'Add Baby Profile',
@@ -49,7 +49,7 @@ export const translations = {
     'babyProfile.cancel': 'Cancel',
     'babyProfile.noProfiles': 'No baby profiles yet. Add your first one!',
     'babyProfile.enterName': 'Enter baby\'s name',
-    
+
     // Settings
     'settings.account': 'Account',
     'settings.babyProfile': 'Baby Profile',
@@ -60,7 +60,7 @@ export const translations = {
     'settings.privacy': 'Privacy Policy',
     'settings.contact': 'Contact Us',
     'settings.signOut': 'Sign Out',
-    
+
     // History
     'history.title': 'History',
     'history.noRecordings': 'No recordings yet',
@@ -68,7 +68,7 @@ export const translations = {
     'history.makeFirst': 'Make First Recording',
     'history.recommendations': 'Recommendations:',
     'history.confidence': 'confidence',
-    
+
     // Common
     'common.loading': 'Loading...',
     'common.analyzing': 'Analyzing...',
@@ -79,19 +79,22 @@ export const translations = {
     'common.delete': 'Delete',
     'common.error': 'Error',
     'common.success': 'Success',
-    
+
     // Errors
     'error.unauthorized': 'You are logged out. Logging in again...',
     'error.failedToCreate': 'Failed to create baby profile',
     'error.failedToDelete': 'Failed to delete baby profile',
     'error.uploadFailed': 'Failed to analyze recording. Please try again.',
-    
+
     // Success messages
     'success.profileCreated': 'Baby profile created successfully!',
     'success.profileDeleted': 'Baby profile deleted successfully!',
     'success.analysisComplete': 'Analysis Complete!',
+
+    'settings.termsDesc': 'Review our terms of service',
+    'settings.privacyDesc': 'Learn how we protect your data',
   },
-  
+
   zh: {
     // Onboarding
     'onboarding.welcome': '欢迎来到LetBabyTalk',
@@ -104,14 +107,14 @@ export const translations = {
     'onboarding.languageSelection': '选择语言',
     'onboarding.next': '下一步',
     'onboarding.ok': '确定',
-    
+
     // Navigation
     'nav.chatbot': '聊天机器人',
     'nav.advisor': '顾问',
     'nav.home': '首页',
     'nav.history': '历史',
     'nav.settings': '设置',
-    
+
     // Home
     'home.enterBabyInfo': '输入您宝宝的信息',
     'home.premium': '高级版',
@@ -119,7 +122,7 @@ export const translations = {
     'home.recording': '录音中...',
     'home.tapToStop': '再次点击停止录音',
     'home.recordMore': '录音超过8秒以获得更好的结果',
-    
+
     // Baby Profile
     'babyProfile.title': '宝宝档案',
     'babyProfile.add': '添加宝宝档案',
@@ -132,7 +135,7 @@ export const translations = {
     'babyProfile.cancel': '取消',
     'babyProfile.noProfiles': '还没有宝宝档案。添加第一个吧！',
     'babyProfile.enterName': '输入宝宝的名字',
-    
+
     // Settings
     'settings.account': '账户',
     'settings.babyProfile': '宝宝档案',
@@ -143,7 +146,7 @@ export const translations = {
     'settings.privacy': '隐私政策',
     'settings.contact': '联系我们',
     'settings.signOut': '退出登录',
-    
+
     // History
     'history.title': '历史记录',
     'history.noRecordings': '还没有录音',
@@ -151,7 +154,7 @@ export const translations = {
     'history.makeFirst': '进行第一次录音',
     'history.recommendations': '建议：',
     'history.confidence': '置信度',
-    
+
     // Common
     'common.loading': '加载中...',
     'common.analyzing': '分析中...',
@@ -162,19 +165,22 @@ export const translations = {
     'common.delete': '删除',
     'common.error': '错误',
     'common.success': '成功',
-    
+
     // Errors
     'error.unauthorized': '您已退出登录。正在重新登录...',
     'error.failedToCreate': '创建宝宝档案失败',
     'error.failedToDelete': '删除宝宝档案失败',
     'error.uploadFailed': '分析录音失败。请重试。',
-    
+
     // Success messages
     'success.profileCreated': '宝宝档案创建成功！',
     'success.profileDeleted': '宝宝档案删除成功！',
     'success.analysisComplete': '分析完成！',
+
+    'settings.termsDesc': 'Review our terms of service',
+    'settings.privacyDesc': 'Learn how we protect your data',
   },
-  
+
   ar: {
     // Onboarding
     'onboarding.welcome': 'مرحباً بك في LetBabyTalk',
@@ -187,14 +193,14 @@ export const translations = {
     'onboarding.languageSelection': 'اختر اللغة',
     'onboarding.next': 'التالي',
     'onboarding.ok': 'موافق',
-    
+
     // Navigation
     'nav.chatbot': 'المحادثة',
     'nav.advisor': 'المستشار',
     'nav.home': 'الرئيسية',
     'nav.history': 'التاريخ',
     'nav.settings': 'الإعدادات',
-    
+
     // Home
     'home.enterBabyInfo': 'أدخل معلومات طفلك',
     'home.premium': 'مميز',
@@ -202,7 +208,7 @@ export const translations = {
     'home.recording': 'جاري التسجيل...',
     'home.tapToStop': 'اضغط مرة أخرى لإيقاف التسجيل',
     'home.recordMore': 'سجل أكثر من 8 ثوانٍ للحصول على نتائج أفضل',
-    
+
     // Baby Profile
     'babyProfile.title': 'ملف الطفل',
     'babyProfile.add': 'إضافة ملف طفل',
@@ -215,7 +221,7 @@ export const translations = {
     'babyProfile.cancel': 'إلغاء',
     'babyProfile.noProfiles': 'لا توجد ملفات أطفال بعد. أضف الأول!',
     'babyProfile.enterName': 'أدخل اسم الطفل',
-    
+
     // Settings
     'settings.account': 'الحساب',
     'settings.babyProfile': 'ملف الطفل',
@@ -226,7 +232,7 @@ export const translations = {
     'settings.privacy': 'سياسة الخصوصية',
     'settings.contact': 'اتصل بنا',
     'settings.signOut': 'تسجيل الخروج',
-    
+
     // History
     'history.title': 'التاريخ',
     'history.noRecordings': 'لا توجد تسجيلات بعد',
@@ -234,7 +240,7 @@ export const translations = {
     'history.makeFirst': 'قم بالتسجيل الأول',
     'history.recommendations': 'التوصيات:',
     'history.confidence': 'الثقة',
-    
+
     // Common
     'common.loading': 'جاري التحميل...',
     'common.analyzing': 'جاري التحليل...',
@@ -245,19 +251,22 @@ export const translations = {
     'common.delete': 'حذف',
     'common.error': 'خطأ',
     'common.success': 'نجح',
-    
+
     // Errors
     'error.unauthorized': 'تم تسجيل خروجك. جاري تسجيل الدخول مرة أخرى...',
     'error.failedToCreate': 'فشل في إنشاء ملف الطفل',
     'error.failedToDelete': 'فشل في حذف ملف الطفل',
     'error.uploadFailed': 'فشل في تحليل التسجيل. يرجى المحاولة مرة أخرى.',
-    
+
     // Success messages
     'success.profileCreated': 'تم إنشاء ملف الطفل بنجاح!',
     'success.profileDeleted': 'تم حذف ملف الطفل بنجاح!',
     'success.analysisComplete': 'اكتمل التحليل!',
+
+    'settings.termsDesc': 'Review our terms of service',
+    'settings.privacyDesc': 'Learn how we protect your data',
   },
-  
+
   id: {
     // Onboarding
     'onboarding.welcome': 'Selamat datang di LetBabyTalk',
@@ -270,14 +279,14 @@ export const translations = {
     'onboarding.languageSelection': 'Pilih Bahasa',
     'onboarding.next': 'Selanjutnya',
     'onboarding.ok': 'OK',
-    
+
     // Navigation
     'nav.chatbot': 'Chatbot',
     'nav.advisor': 'Penasihat',
     'nav.home': 'Beranda',
     'nav.history': 'Riwayat',
     'nav.settings': 'Pengaturan',
-    
+
     // Home
     'home.enterBabyInfo': 'Masukkan info bayi Anda',
     'home.premium': 'Premium',
@@ -285,7 +294,7 @@ export const translations = {
     'home.recording': 'Merekam...',
     'home.tapToStop': 'Ketuk lagi untuk berhenti merekam',
     'home.recordMore': 'Rekam lebih dari 8 detik untuk hasil yang lebih baik',
-    
+
     // Baby Profile
     'babyProfile.title': 'Profil Bayi',
     'babyProfile.add': 'Tambah Profil Bayi',
@@ -298,7 +307,7 @@ export const translations = {
     'babyProfile.cancel': 'Batal',
     'babyProfile.noProfiles': 'Belum ada profil bayi. Tambahkan yang pertama!',
     'babyProfile.enterName': 'Masukkan nama bayi',
-    
+
     // Settings
     'settings.account': 'Akun',
     'settings.babyProfile': 'Profil Bayi',
@@ -309,7 +318,7 @@ export const translations = {
     'settings.privacy': 'Kebijakan Privasi',
     'settings.contact': 'Hubungi Kami',
     'settings.signOut': 'Keluar',
-    
+
     // History
     'history.title': 'Riwayat',
     'history.noRecordings': 'Belum ada rekaman',
@@ -317,7 +326,7 @@ export const translations = {
     'history.makeFirst': 'Buat Rekaman Pertama',
     'history.recommendations': 'Rekomendasi:',
     'history.confidence': 'kepercayaan',
-    
+
     // Common
     'common.loading': 'Memuat...',
     'common.analyzing': 'Menganalisis...',
@@ -328,28 +337,31 @@ export const translations = {
     'common.delete': 'Hapus',
     'common.error': 'Error',
     'common.success': 'Berhasil',
-    
+
     // Errors
     'error.unauthorized': 'Anda telah logout. Masuk lagi...',
     'error.failedToCreate': 'Gagal membuat profil bayi',
     'error.failedToDelete': 'Gagal menghapus profil bayi',
     'error.uploadFailed': 'Gagal menganalisis rekaman. Silakan coba lagi.',
-    
+
     // Success messages
     'success.profileCreated': 'Profil bayi berhasil dibuat!',
     'success.profileDeleted': 'Profil bayi berhasil dihapus!',
     'success.analysisComplete': 'Analisis Selesai!',
+
+    'settings.termsDesc': 'Tinjau ketentuan layanan kami',
+    'settings.privacyDesc': 'Pelajari cara kami melindungi data Anda',
   },
 };
 
 export function getTranslation(language: Language, key: string): string {
   const keys = key.split('.');
   let value: any = translations[language];
-  
+
   for (const k of keys) {
     value = value?.[k];
   }
-  
+
   return value || translations.en[key as keyof typeof translations.en] || key;
 }
 

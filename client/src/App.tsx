@@ -24,6 +24,7 @@ import Verification from "@/pages/verification";
 import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import Results from "./pages/results";
+import Privacy from "@/pages/privacy"; // Assuming Privacy Policy page is in privacy.tsx
 
 function Router() {
   const { isAuthenticated, isLoading, refetch } = useAuth();
@@ -130,6 +131,7 @@ function Router() {
           <Route path="/baby-selection" component={BabySelection} />
           <Route path="/settings" component={Settings} />
           <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
           <Route component={NotFound} />
         </>
       )}

@@ -47,13 +47,13 @@ export default function Settings() {
     try {
       // Clear session on server
       await fetch('/api/auth/logout', { method: 'POST' });
-      
+
       // Clear all local storage
       localStorage.clear();
-      
+
       // Invalidate all queries
       queryClient.clear();
-      
+
       // Redirect to signin page
       window.location.href = "/signin";
     } catch (error) {
@@ -80,7 +80,7 @@ export default function Settings() {
 
   if (showLanguageSelection) {
     const languages: Language[] = ['en', 'zh', 'ar', 'id'];
-    
+
     return (
       <div className="min-h-screen">
         {/* Header */}
@@ -162,7 +162,7 @@ export default function Settings() {
     {
       icon: Shield,
       label: t('settings.privacy'),
-      onClick: () => console.log("Privacy policy"),
+      onClick: () => window.location.href = "/privacy",
     },
     {
       icon: Phone,
