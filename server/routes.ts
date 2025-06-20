@@ -33,6 +33,21 @@ const upload = multer({
   },
 });
 
+// Configure multer for profile image uploads
+const profileUpload = multer({
+  dest: 'uploads/profiles/',
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit for images
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
+
 const registerSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
@@ -342,10 +357,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.put('/api/auth/profile', isAuthenticated, async (req: any, res) => {
+  app.put('/api/auth/profile', isAuthenticated, profileUpload.single('profileImage'), async (req: any, res) => {
     try {
       const userId = req.user.id;
       console.log('Profile update request:', req.body);
+      console.log('Profile image file:', req.file);
       
       let updatedUser = req.user;
       
@@ -356,7 +372,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Handle profile image upload if provided
-      // This would need additional implementation for file handling
+      if (req.file) {
+        const profileImageUrl = `/api/images/${req.file.filename}`;
+        console.log('Updating profile image to:', profileImageUrl);
+        updatedUser = await storage.updateUserProfileImage(userId, profileImageUrl);
+      }
       
       console.log('Updated user:', updatedUser);
       res.json(updatedUser);
@@ -607,6 +627,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(filepath);
     } else {
       res.status(404).json({ message: "Audio file not found" });
+    }
+  });
+
+  // Serve profile images
+  app.get('/api/images/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join(process.cwd(), 'uploads', 'profiles', filename);
+
+    if (fs.existsSync(filepath)) {
+      res.sendFile(filepath);
+    } else {
+      res.status(404).json({ message: "Image file not found" });
     }
   });
 
