@@ -234,7 +234,12 @@ export default function Account() {
                   <button
                     key={role.value}
                     type="button"
-                    onClick={() => setUserRole(role.value)}
+                    onClick={() => {
+                      setUserRole(role.value);
+                      if (role.value !== "other") {
+                        setCustomRole("");
+                      }
+                    }}
                     className={`flex items-center space-x-3 p-3 rounded-xl border-2 transition-all ${
                       userRole === role.value
                         ? "border-pink-500 bg-pink-50"
