@@ -224,6 +224,7 @@ export default function BabySelection() {
       // Create FormData with baby profile image
       const formData = new FormData();
       formData.append('photo', file);
+      formData.append('type', 'baby-profile'); // Add the upload type
 
       // Submit form data to baby profile endpoint
       try {
@@ -320,21 +321,31 @@ export default function BabySelection() {
 
     if (profile.photoUrl) {
       return (
-        <img 
-          src={profile.photoUrl} 
-          alt={profile.name}
-          className={`${sizeClasses} rounded-full object-cover border-2 border-white shadow-md`}
-          onError={(e) => {
-            // Fallback to initial if image fails to load
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            target.parentElement?.querySelector('.fallback-avatar')?.classList.remove('hidden');
-          }}
-        />
+        <div className={`${sizeClasses} rounded-full border-2 border-white shadow-md overflow-hidden relative`}>
+          <img 
+            src={profile.photoUrl} 
+            alt={profile.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback to initial if image fails to load
+              const target = e.target as HTMLImageElement;
+              const container = target.parentElement;
+              if (container) {
+                container.innerHTML = `
+                  <div class="w-full h-full bg-gradient-to-r from-pink-300 to-purple-300 flex items-center justify-center">
+                    <span class="text-white font-medium ${size === "lg" ? "text-2xl" : "text-lg"}">
+                      ${profile.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                `;
+              }
+            }}
+          />
+        </div>
       );
     }
     return (
-      <div className={`${sizeClasses} bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center border-2 border-white shadow-md fallback-avatar`}>
+      <div className={`${sizeClasses} bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center border-2 border-white shadow-md`}>
         <span className="text-white font-medium">
           {profile.name.charAt(0).toUpperCase()}
         </span>

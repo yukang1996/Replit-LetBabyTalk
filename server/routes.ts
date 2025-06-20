@@ -995,7 +995,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/upload-photo', isAuthenticated, babyProfileUpload.single('photo'), async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const uploadType = req.body.type; // 'baby-profile' or 'user-profile'
+      const uploadType = req.body.type || 'baby-profile'; // 'baby-profile' or 'user-profile', default to baby-profile
       
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
