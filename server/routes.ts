@@ -1009,18 +1009,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mimetype: req.file.mimetype
       });
 
-      let photoUrl = `/uploads/profiles/${req.file.filename}`;
+      let photoUrl = `/uploads/baby-profiles/${req.file.filename}`;
 
       // Upload to Supabase if available
       if (supabase) {
         try {
           const bucketName = uploadType === 'baby-profile' ? 'baby-profile-images' : 'user-profile-images';
-          const fileName = `${userId}_${Date.now()}_${req.file.originalname}`;
           
+          // Generate unique filename
+          const fileExtension = path.extname(req.file.originalname || '');
+          const fileName = `${uploadType}_${userId}_${Date.now()}${fileExtension}`;
+          
+          console.log(`\n=== SUPABASE ${uploadType.toUpperCase()} UPLOAD DEBUG ===`);
           console.log(`Uploading to Supabase bucket: ${bucketName}`);
+          console.log('Generated filename:', fileName);
           
           // Read file data
           const fileData = fs.readFileSync(req.file.path);
+          console.log('File read successfully, size:', fileData.length, 'bytes');
           
           // Check if bucket exists, create if it doesn't
           const { data: buckets, error: listError } = await supabase.storage.listBuckets();
@@ -1031,22 +1037,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+          console.log(`Bucket ${bucketName} exists:`, bucketExists);
           
           if (!bucketExists) {
             console.log(`Creating ${bucketName} bucket...`);
             const { error: createError } = await supabase.storage.createBucket(bucketName, {
               public: false,
-              allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+              allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'],
               fileSizeLimit: 5 * 1024 * 1024 // 5MB
             });
             
             if (createError) {
               console.error(`Error creating ${bucketName} bucket:`, createError);
               throw createError;
+            } else {
+              console.log(`✅ Bucket ${bucketName} created successfully`);
             }
           }
 
           // Upload file to Supabase storage
+          console.log('Uploading to Supabase storage...');
           const uploadResult = await supabase.storage
             .from(bucketName)
             .upload(fileName, fileData, {
@@ -1057,9 +1067,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (uploadResult.error) {
             console.error('Supabase upload error:', uploadResult.error);
             throw uploadResult.error;
+          } else {
+            console.log('✅ Successfully uploaded to Supabase!');
           }
 
           // Create signed URL that expires in 1 year
+          console.log('Creating signed URL...');
           const { data: urlData, error: urlError } = await supabase.storage
             .from(bucketName)
             .createSignedUrl(fileName, 31536000); // 1 year
@@ -1067,16 +1080,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (urlError) {
             console.error('Error creating signed URL:', urlError);
             throw urlError;
+          } else {
+            console.log('✅ Created signed URL successfully');
+            photoUrl = urlData.signedUrl;
           }
-
-          photoUrl = urlData.signedUrl;
-          console.log('Successfully uploaded to Supabase and created signed URL');
+          
+          console.log(`=== SUPABASE ${uploadType.toUpperCase()} UPLOAD COMPLETE ===\n`);
           
         } catch (supabaseError) {
-          console.error('Supabase storage error:', supabaseError);
-          console.log('Falling back to local storage...');
+          console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
+          console.log('Falling back to local storage...\n');
           // Continue with local storage as fallback
         }
+      } else {
+        console.log('❌ Supabase client not initialized - missing credentials');
       }
 
       // Clean up local file

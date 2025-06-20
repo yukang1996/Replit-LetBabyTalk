@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -162,10 +161,10 @@ export default function BabySelection() {
           setSelectedBabyId(null);
         }
       }
-      
+
       // Invalidate queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ["/api/baby-profiles"] });
-      
+
       toast({
         title: t('common.success'),
         description: t('success.profileDeleted'),
@@ -233,25 +232,27 @@ export default function BabySelection() {
         const response = await fetch('/api/upload-photo', {
           method: 'POST',
           body: formData,
+          credentials: 'include', // Include cookies for authentication
         });
 
-        if (response.ok) {
-          const { photoUrl: uploadedUrl } = await response.json();
-          photoUrl = uploadedUrl;
-          form.setValue("photoUrl", photoUrl);
-          
-          toast({
-            title: "Photo Updated",
-            description: "Baby profile picture updated successfully!",
-          });
-        } else {
-          throw new Error('Upload failed');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Upload failed');
         }
+
+        const { photoUrl: uploadedUrl } = await response.json();
+        photoUrl = uploadedUrl;
+        form.setValue("photoUrl", photoUrl);
+
+        toast({
+          title: "Photo Updated",
+          description: "Baby profile picture updated successfully!",
+        });
       } catch (error) {
         console.error('Photo upload failed:', error);
         toast({
           title: "Upload Error",
-          description: "Failed to upload photo. Please try again.",
+          description: error instanceof Error ? error.message : "Failed to upload photo. Please try again.",
           variant: "destructive",
         });
         // Fall back to base64
@@ -299,7 +300,7 @@ export default function BabySelection() {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - birth.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 7) {
       return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
     } else if (diffDays < 30) {
@@ -316,7 +317,7 @@ export default function BabySelection() {
 
   const getBabyAvatar = (profile: any, size: "sm" | "lg" = "sm") => {
     const sizeClasses = size === "lg" ? "w-20 h-20 text-2xl" : "w-12 h-12 text-lg";
-    
+
     if (profile.photoUrl) {
       return (
         <img 
@@ -558,7 +559,7 @@ export default function BabySelection() {
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Action Buttons */}
                       <div className="flex flex-col space-y-2">
                         {/* Edit Button */}
