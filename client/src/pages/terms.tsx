@@ -35,7 +35,7 @@ export default function Terms() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/legal-documents/terms?locale=${language}`);
+      const response = await fetch(`/api/legal-documents/terms/${language}`);
       
       if (!response.ok) {
         if (response.status === 404) {

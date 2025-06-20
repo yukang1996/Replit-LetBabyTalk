@@ -285,6 +285,44 @@ export class DatabaseStorage implements IStorage {
 
     return updatedUser;
   }
+
+  // Legal document operations
+  async getActiveLegalDocument(type: string, locale: string) {
+    const [document] = await db
+      .select()
+      .from(legalDocuments)
+      .where(and(
+        eq(legalDocuments.type, type),
+        eq(legalDocuments.locale, locale),
+        eq(legalDocuments.isActive, true)
+      ))
+      .limit(1);
+    return document;
+  }
+
+  async createLegalDocument(document: any) {
+    const [newDocument] = await db
+      .insert(legalDocuments)
+      .values(document)
+      .returning();
+    return newDocument;
+  }
+
+  async updateLegalDocument(id: string, updates: any) {
+    const [updatedDocument] = await db
+      .update(legalDocuments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(legalDocuments.id, id))
+      .returning();
+    return updatedDocument;
+  }
+
+  async deleteLegalDocument(id: string) {
+    const result = await db
+      .delete(legalDocuments)
+      .where(eq(legalDocuments.id, id));
+    return (result.rowCount || 0) > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
