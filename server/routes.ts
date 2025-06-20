@@ -59,6 +59,21 @@ const profileUpload = multer({
   },
 });
 
+// Configure multer specifically for baby profile images
+const babyProfileUpload = multer({
+  dest: 'uploads/baby-profiles/',
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit for images
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed for baby profiles'));
+    }
+  },
+});
+
 const registerSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
@@ -538,14 +553,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/baby-profiles', isAuthenticated, async (req: any, res) => {
+  app.post('/api/baby-profiles', isAuthenticated, babyProfileUpload.single('photo'), async (req: any, res) => {
     try {
       const userId = req.user.id;
+      console.log('Baby profile creation request:', req.body);
+      console.log('Baby profile image file:', req.file);
+      
       // Convert dateOfBirth string to Date object before validation
       const requestData = {
         ...req.body,
         dateOfBirth: new Date(req.body.dateOfBirth)
       };
+
+      let photoUrl = null;
+
+      // Handle photo upload if provided
+      if (req.file) {
+        photoUrl = `/api/images/${req.file.filename}`;
+
+        if (supabase) {
+          try {
+            console.log('\n=== SUPABASE BABY PROFILE UPLOAD DEBUG ===');
+            console.log('User ID:', userId);
+            console.log('Original file name:', req.file.originalname);
+            console.log('File path:', req.file.path);
+            console.log('File mime type:', req.file.mimetype);
+            
+            // Check if baby-profile-images bucket exists and create it if it doesn't
+            console.log('Step 1: Listing existing buckets...');
+            const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+            
+            if (listError) {
+              console.error('❌ Error listing buckets:', listError);
+              throw listError;
+            }
+            
+            console.log('✅ Available buckets:', buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })));
+            
+            const bucketExists = buckets?.some(bucket => bucket.name === 'baby-profile-images');
+            console.log('Baby profile bucket exists:', bucketExists);
+            
+            if (!bucketExists) {
+              console.log('Step 2: Creating baby-profile-images bucket...');
+              const { data: newBucket, error: createError } = await supabase.storage.createBucket('baby-profile-images', {
+                public: false,
+                allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
+                fileSizeLimit: 5242880 // 5MB
+              });
+              
+              if (createError) {
+                console.error('❌ Error creating bucket:', createError);
+                throw new Error(`Failed to create storage bucket: ${createError.message}`);
+              } else {
+                console.log('✅ Bucket created successfully:', newBucket);
+              }
+            } else {
+              console.log('✅ Bucket already exists, skipping creation');
+            }
+            
+            // Generate unique filename
+            const fileExtension = path.extname(req.file.originalname || '');
+            const fileName = `baby_profile_${userId}_${Date.now()}${fileExtension}`;
+            console.log('Step 3: Generated filename:', fileName);
+
+            // Read file data
+            const fileData = fs.readFileSync(req.file.path);
+            console.log('Step 4: File read successfully');
+            console.log('File size:', fileData.length, 'bytes');
+
+            // Upload to Supabase storage
+            console.log('Step 5: Uploading to Supabase storage...');
+            const uploadResult = await supabase.storage
+              .from('baby-profile-images')
+              .upload(fileName, fileData, {
+                contentType: req.file.mimetype,
+                upsert: true
+              });
+
+            console.log('Upload result:', {
+              data: uploadResult.data,
+              error: uploadResult.error
+            });
+
+            if (uploadResult.error) {
+              console.error('❌ Supabase upload error:', uploadResult.error);
+              throw uploadResult.error;
+            } else {
+              console.log('✅ Successfully uploaded to Supabase!');
+              
+              // Create signed URL that expires in 1 year (private access)
+              console.log('Step 6: Creating signed URL...');
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from('baby-profile-images')
+                .createSignedUrl(fileName, 31536000); // 1 year in seconds
+
+              if (urlError) {
+                console.error('❌ Error creating signed URL:', urlError);
+                throw urlError;
+              } else {
+                console.log('✅ Created signed URL successfully');
+                photoUrl = urlData.signedUrl;
+              }
+            }
+            
+            console.log('=== SUPABASE BABY PROFILE UPLOAD COMPLETE ===\n');
+          } catch (supabaseError) {
+            console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
+            console.log('Falling back to local storage...\n');
+            // Fall back to local storage
+          }
+        }
+
+        // Clean up local file
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error("File cleanup error:", cleanupError);
+        }
+      }
+
+      // Add photo URL to request data
+      if (photoUrl) {
+        requestData.photoUrl = photoUrl;
+      }
+
       const validatedData = insertBabyProfileSchema.parse(requestData);
       const profile = await storage.createBabyProfile(userId, validatedData);
       res.status(201).json(profile);
@@ -555,16 +686,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/baby-profiles/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/baby-profiles/:id', isAuthenticated, babyProfileUpload.single('photo'), async (req: any, res) => {
     try {
       const userId = req.user.id;
       const profileId = parseInt(req.params.id);
+      console.log('Baby profile update request:', req.body);
+      console.log('Baby profile image file:', req.file);
 
       // Convert dateOfBirth string to Date object before validation
       const requestData = {
         ...req.body,
         ...(req.body.dateOfBirth && { dateOfBirth: new Date(req.body.dateOfBirth) })
       };
+
+      // Handle photo upload if provided
+      if (req.file) {
+        let photoUrl = `/api/images/${req.file.filename}`;
+
+        if (supabase) {
+          try {
+            console.log('\n=== SUPABASE BABY PROFILE UPDATE UPLOAD DEBUG ===');
+            console.log('User ID:', userId);
+            console.log('Profile ID:', profileId);
+            console.log('Original file name:', req.file.originalname);
+            
+            // Generate unique filename
+            const fileExtension = path.extname(req.file.originalname || '');
+            const fileName = `baby_profile_${userId}_${profileId}_${Date.now()}${fileExtension}`;
+            console.log('Generated filename:', fileName);
+
+            // Read file data
+            const fileData = fs.readFileSync(req.file.path);
+            console.log('File read successfully, size:', fileData.length, 'bytes');
+
+            // Upload to Supabase storage
+            const uploadResult = await supabase.storage
+              .from('baby-profile-images')
+              .upload(fileName, fileData, {
+                contentType: req.file.mimetype,
+                upsert: true
+              });
+
+            if (uploadResult.error) {
+              console.error('❌ Supabase upload error:', uploadResult.error);
+              throw uploadResult.error;
+            } else {
+              console.log('✅ Successfully uploaded to Supabase!');
+              
+              // Create signed URL
+              const { data: urlData, error: urlError } = await supabase.storage
+                .from('baby-profile-images')
+                .createSignedUrl(fileName, 31536000); // 1 year in seconds
+
+              if (urlError) {
+                console.error('❌ Error creating signed URL:', urlError);
+                throw urlError;
+              } else {
+                console.log('✅ Created signed URL successfully');
+                photoUrl = urlData.signedUrl;
+              }
+            }
+            
+            console.log('=== SUPABASE BABY PROFILE UPDATE UPLOAD COMPLETE ===\n');
+          } catch (supabaseError) {
+            console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
+            console.log('Falling back to local storage...\n');
+          }
+        }
+
+        // Add photo URL to request data
+        requestData.photoUrl = photoUrl;
+
+        // Clean up local file
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error("File cleanup error:", cleanupError);
+        }
+      }
 
       const validatedData = insertBabyProfileSchema.partial().parse(requestData);
       const profile = await storage.updateBabyProfile(profileId, userId, validatedData);
