@@ -1,6 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { seedCryReasons } from "./seed-cry-reasons";
+import { seedLegalDocuments } from "./seed-legal-documents";
+import { eq, and } from "drizzle-orm";
 import { setupAuth, isAuthenticated, hashPassword } from "./auth";
 import passport from "passport";
 import { z } from "zod";
@@ -410,21 +413,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Original file name:', req.file.originalname);
             console.log('File path:', req.file.path);
             console.log('File mime type:', req.file.mimetype);
-            
+
             // First, check if the bucket exists and create it if it doesn't
             console.log('Step 1: Listing existing buckets...');
             const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-            
+
             if (listError) {
               console.error('❌ Error listing buckets:', listError);
               throw listError;
             }
-            
+
             console.log('✅ Available buckets:', buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })));
-            
+
             const bucketExists = buckets?.some(bucket => bucket.name === 'user-profile-images');
             console.log('Bucket exists:', bucketExists);
-            
+
             if (!bucketExists) {
               console.log('Step 2: Creating user-profile-images bucket...');
               const { data: newBucket, error: createError } = await supabase.storage.createBucket('user-profile-images', {
@@ -432,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
                 fileSizeLimit: 5242880 // 5MB
               });
-              
+
               if (createError) {
                 console.error('❌ Error creating bucket:', createError);
                 throw new Error(`Failed to create storage bucket: ${createError.message}`);
@@ -442,7 +445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               console.log('✅ Bucket already exists, skipping creation');
             }
-            
+
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
             const fileName = `profile_${userId}_${Date.now()}${fileExtension}`;
@@ -482,19 +485,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               console.log('✅ Successfully uploaded to Supabase!');
               console.log('Upload data:', uploadResult.data);
-              
+
               // Verify the file was uploaded by listing files in bucket
               console.log('Step 6: Verifying upload by listing bucket contents...');
               const { data: files, error: listFilesError } = await supabase.storage
                 .from('user-profile-images')
                 .list();
-              
+
               if (listFilesError) {
                 console.error('❌ Error listing files:', listFilesError);
               } else {
                 console.log('✅ Files in bucket:', files?.map(f => ({ name: f.name, size: f.metadata?.size })));
               }
-              
+
               // Create signed URL that expires in 1 year (private access)
               console.log('Step 7: Creating signed URL...');
               const { data: urlData, error: urlError } = await supabase.storage
@@ -510,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 profileImageUrl = urlData.signedUrl;
               }
             }
-            
+
             console.log('=== SUPABASE UPLOAD COMPLETE ===\n');
           } catch (supabaseError) {
             console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
@@ -558,7 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       console.log('Baby profile creation request:', req.body);
       console.log('Baby profile image file:', req.file);
-      
+
       // Convert dateOfBirth string to Date object before validation
       const requestData = {
         ...req.body,
@@ -578,21 +581,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Original file name:', req.file.originalname);
             console.log('File path:', req.file.path);
             console.log('File mime type:', req.file.mimetype);
-            
+
             // Check if baby-profile-images bucket exists and create it if it doesn't
             console.log('Step 1: Listing existing buckets...');
             const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-            
+
             if (listError) {
               console.error('❌ Error listing buckets:', listError);
               throw listError;
             }
-            
+
             console.log('✅ Available buckets:', buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })));
-            
+
             const bucketExists = buckets?.some(bucket => bucket.name === 'baby-profile-images');
             console.log('Baby profile bucket exists:', bucketExists);
-            
+
             if (!bucketExists) {
               console.log('Step 2: Creating baby-profile-images bucket...');
               const { data: newBucket, error: createError } = await supabase.storage.createBucket('baby-profile-images', {
@@ -600,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
                 fileSizeLimit: 5242880 // 5MB
               });
-              
+
               if (createError) {
                 console.error('❌ Error creating bucket:', createError);
                 throw new Error(`Failed to create storage bucket: ${createError.message}`);
@@ -610,7 +613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               console.log('✅ Bucket already exists, skipping creation');
             }
-            
+
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
             const fileName = `baby_profile_${userId}_${Date.now()}${fileExtension}`;
@@ -640,7 +643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               throw uploadResult.error;
             } else {
               console.log('✅ Successfully uploaded to Supabase!');
-              
+
               // Create signed URL that expires in 1 year (private access)
               console.log('Step 6: Creating signed URL...');
               const { data: urlData, error: urlError } = await supabase.storage
@@ -655,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 photoUrl = urlData.signedUrl;
               }
             }
-            
+
             console.log('=== SUPABASE BABY PROFILE UPLOAD COMPLETE ===\n');
           } catch (supabaseError) {
             console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
@@ -709,7 +712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('User ID:', userId);
             console.log('Profile ID:', profileId);
             console.log('Original file name:', req.file.originalname);
-            
+
             // Generate unique filename
             const fileExtension = path.extname(req.file.originalname || '');
             const fileName = `baby_profile_${userId}_${profileId}_${Date.now()}${fileExtension}`;
@@ -732,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               throw uploadResult.error;
             } else {
               console.log('✅ Successfully uploaded to Supabase!');
-              
+
               // Create signed URL
               const { data: urlData, error: urlError } = await supabase.storage
                 .from('baby-profile-images')
@@ -746,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 photoUrl = urlData.signedUrl;
               }
             }
-            
+
             console.log('=== SUPABASE BABY PROFILE UPDATE UPLOAD COMPLETE ===\n');
           } catch (supabaseError) {
             console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
@@ -863,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid response format from AI API');
         }
 
-        // Store the full AI response as per requirements
+        // Store the full AIresponse as per requirements
         analysisResult = {
           cryType: result.class, // Store the exact class name
           confidence: result.probs[result.class] || 0,
@@ -957,6 +960,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+    // Initialize legal documents
+    app.post('/api/init-legal-documents', async (req, res) => {
+      try {
+        await seedLegalDocuments();
+        res.json({ message: "Legal documents initialized successfully" });
+      } catch (error) {
+        console.error("Error initializing legal documents:", error);
+        res.status(500).json({ message: "Failed to initialize legal documents" });
+      }
+    });
+
   // Serve audio files
   app.get('/api/audio/:filename', isAuthenticated, (req, res) => {
     const filename = req.params.filename;
@@ -973,10 +987,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/auth/account', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      
+
       // Deactivate the user account instead of deleting
       await storage.deactivateUser(userId);
-      
+
       // Logout the user
       req.logout((err) => {
         if (err) {
@@ -996,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const uploadType = req.body.type || 'baby-profile'; // 'baby-profile' or 'user-profile', default to baby-profile
-      
+
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
@@ -1015,30 +1029,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (supabase) {
         try {
           const bucketName = uploadType === 'baby-profile' ? 'baby-profile-images' : 'user-profile-images';
-          
+
           // Generate unique filename
           const fileExtension = path.extname(req.file.originalname || '');
           const fileName = `${uploadType}_${userId}_${Date.now()}${fileExtension}`;
-          
+
           console.log(`\n=== SUPABASE ${uploadType.toUpperCase()} UPLOAD DEBUG ===`);
           console.log(`Uploading to Supabase bucket: ${bucketName}`);
           console.log('Generated filename:', fileName);
-          
+
           // Read file data
           const fileData = fs.readFileSync(req.file.path);
           console.log('File read successfully, size:', fileData.length, 'bytes');
-          
+
           // Check if bucket exists, create if it doesn't
           const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-          
+
           if (listError) {
             console.error('Error listing buckets:', listError);
             throw listError;
           }
-          
+
           const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
           console.log(`Bucket ${bucketName} exists:`, bucketExists);
-          
+
           if (!bucketExists) {
             console.log(`Creating ${bucketName} bucket...`);
             const { error: createError } = await supabase.storage.createBucket(bucketName, {
@@ -1046,7 +1060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'],
               fileSizeLimit: 5 * 1024 * 1024 // 5MB
             });
-            
+
             if (createError) {
               console.error(`Error creating ${bucketName} bucket:`, createError);
               throw createError;
@@ -1084,9 +1098,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('✅ Created signed URL successfully');
             photoUrl = urlData.signedUrl;
           }
-          
+
           console.log(`=== SUPABASE ${uploadType.toUpperCase()} UPLOAD COMPLETE ===\n`);
-          
+
         } catch (supabaseError) {
           console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
           console.log('Falling back to local storage...\n');
@@ -1104,7 +1118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ photoUrl });
-      
+
     } catch (error) {
       console.error("Photo upload error:", error);
       res.status(500).json({ message: "Failed to upload photo" });
@@ -1125,7 +1139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Test connection by listing buckets
       const { data: buckets, error } = await supabase.storage.listBuckets();
-      
+
       if (error) {
         return res.json({ 
           status: 'error', 
@@ -1153,6 +1167,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+    // Get legal document by type and locale
+    app.get('/api/legal-documents/:type/:locale', async (req, res) => {
+      try {
+        const { type, locale } = req.params;
+        const document = await storage.getActiveLegalDocument(type, locale);
+  
+        if (!document) {
+          return res.status(404).json({ message: "Legal document not found" });
+        }
+  
+        res.json(document);
+      } catch (error) {
+        console.error("Error fetching legal document:", error);
+        res.status(500).json({ message: "Failed to fetch legal document" });
+      }
+    });
+  
+    // Create new legal document
+    app.post('/api/legal-documents', async (req, res) => {
+      try {
+        const { type, locale, title, content, is_active, version } = req.body;
+        const newDocument = await storage.createLegalDocument({
+          type,
+          locale,
+          title,
+          content,
+          is_active,
+          version
+        });
+        res.status(201).json(newDocument);
+      } catch (error) {
+        console.error("Error creating legal document:", error);
+        res.status(500).json({ message: "Failed to create legal document" });
+      }
+    });
+  
+    // Update existing legal document
+    app.put('/api/legal-documents/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const { type, locale, title, content, is_active, version } = req.body;
+        const updatedDocument = await storage.updateLegalDocument(id, {
+          type,
+          locale,
+          title,
+          content,
+          is_active,
+          version
+        });
+        if (!updatedDocument) {
+          return res.status(404).json({ message: "Legal document not found" });
+        }
+        res.json(updatedDocument);
+      } catch (error) {
+        console.error("Error updating legal document:", error);
+        res.status(500).json({ message: "Failed to update legal document" });
+      }
+    });
+  
+    // Delete legal document
+    app.delete('/api/legal-documents/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const deleted = await storage.deleteLegalDocument(id);
+        if (!deleted) {
+          return res.status(404).json({ message: "Legal document not found" });
+        }
+        res.status(204).send();
+      } catch (error) {
+        console.error("Error deleting legal document:", error);
+        res.status(500).json({ message: "Failed to delete legal document" });
+      }
+    });
 
   // Serve profile images
   app.get('/api/images/:filename', (req, res) => {

@@ -9,6 +9,7 @@ import {
   integer,
   boolean,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -99,3 +100,27 @@ export const cryReasonDescriptions = pgTable("cry_reason_descriptions", {
 });
 
 export type CryReasonDescription = typeof cryReasonDescriptions.$inferSelect;
+
+// Legal documents table
+export const legalDocuments = pgTable("legal_documents", {
+  id: text("id").primaryKey().default(sql`uuid_generate_v4()`),
+  type: text("type").notNull(), // 'terms', 'privacy', etc.
+  locale: text("locale").notNull().default("en"), // 'en', 'id', 'zh', etc.
+  title: text("title").notNull(),
+  content: text("content").notNull(), // HTML or markdown content
+  isActive: boolean("is_active").default(false).notNull(),
+  version: text("version"), // optional version tag like 'v1.0'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_legal_documents_type_locale").on(table.type, table.locale),
+  index("idx_legal_documents_active").on(table.isActive),
+]);
+
+export const insertLegalDocumentSchema = createInsertSchema(legalDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertLegalDocument = z.infer<typeof insertLegalDocumentSchema>;
+export type LegalDocument = typeof legalDocuments.$inferSelect;

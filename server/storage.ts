@@ -3,6 +3,7 @@ import {
   babyProfiles,
   recordings,
   cryReasonDescriptions,
+  legalDocuments,
   type User,
   type UpsertUser,
   type BabyProfile,
