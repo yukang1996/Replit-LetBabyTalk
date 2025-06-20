@@ -211,16 +211,49 @@ export default function BabySelection() {
     }
   }, [typedProfiles, selectedBabyId]);
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Show preview immediately
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setPhotoPreview(result);
-        form.setValue("photoUrl", result);
       };
       reader.readAsDataURL(file);
+
+      // Upload to Supabase storage
+      try {
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('type', 'baby-profile');
+
+        const response = await fetch('/api/upload-photo', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const { photoUrl } = await response.json();
+        form.setValue("photoUrl", photoUrl);
+      } catch (error) {
+        console.error('Photo upload failed:', error);
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload photo. Please try again.",
+          variant: "destructive",
+        });
+        // Fall back to base64 for now
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          form.setValue("photoUrl", result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -282,11 +315,17 @@ export default function BabySelection() {
           src={profile.photoUrl} 
           alt={profile.name}
           className={`${sizeClasses} rounded-full object-cover border-2 border-white shadow-md`}
+          onError={(e) => {
+            // Fallback to initial if image fails to load
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            target.parentElement?.querySelector('.fallback-avatar')?.classList.remove('hidden');
+          }}
         />
       );
     }
     return (
-      <div className={`${sizeClasses} bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center border-2 border-white shadow-md`}>
+      <div className={`${sizeClasses} bg-gradient-to-r from-pink-300 to-purple-300 rounded-full flex items-center justify-center border-2 border-white shadow-md fallback-avatar`}>
         <span className="text-white font-medium">
           {profile.name.charAt(0).toUpperCase()}
         </span>
@@ -332,14 +371,23 @@ export default function BabySelection() {
                     />
                     <label
                       htmlFor="photo-upload"
-                      className="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-pink-200 transition-colors border-2 border-dashed border-pink-300"
+                      className="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-pink-200 transition-colors border-2 border-dashed border-pink-300 relative overflow-hidden"
                     >
                       {photoPreview ? (
-                        <img 
-                          src={photoPreview} 
-                          alt="Baby preview"
-                          className="w-24 h-24 rounded-full object-cover"
-                        />
+                        <>
+                          <img 
+                            src={photoPreview} 
+                            alt="Baby preview"
+                            className="w-24 h-24 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Camera className="w-8 h-8 text-pink-400 opacity-0 hover:opacity-70 transition-opacity" />
+                          </div>
+                        </>
                       ) : (
                         <Camera className="w-8 h-8 text-pink-400" />
                       )}

@@ -792,6 +792,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Photo upload endpoint for baby profiles
+  app.post('/api/upload-photo', isAuthenticated, upload.single('photo'), async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const uploadType = req.body.type; // 'baby-profile' or 'user-profile'
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      console.log('Photo upload request:', {
+        userId,
+        uploadType,
+        filename: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype
+      });
+
+      let photoUrl = `/uploads/profiles/${req.file.filename}`;
+
+      // Upload to Supabase if available
+      if (supabase) {
+        try {
+          const bucketName = uploadType === 'baby-profile' ? 'baby-profile-images' : 'user-profile-images';
+          const fileName = `${userId}_${Date.now()}_${req.file.originalname}`;
+          
+          console.log(`Uploading to Supabase bucket: ${bucketName}`);
+          
+          // Read file data
+          const fileData = fs.readFileSync(req.file.path);
+          
+          // Check if bucket exists, create if it doesn't
+          const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+          
+          if (listError) {
+            console.error('Error listing buckets:', listError);
+            throw listError;
+          }
+          
+          const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
+          
+          if (!bucketExists) {
+            console.log(`Creating ${bucketName} bucket...`);
+            const { error: createError } = await supabase.storage.createBucket(bucketName, {
+              public: false,
+              allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+              fileSizeLimit: 5 * 1024 * 1024 // 5MB
+            });
+            
+            if (createError) {
+              console.error(`Error creating ${bucketName} bucket:`, createError);
+              throw createError;
+            }
+          }
+
+          // Upload file to Supabase storage
+          const uploadResult = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, fileData, {
+              contentType: req.file.mimetype,
+              upsert: true
+            });
+
+          if (uploadResult.error) {
+            console.error('Supabase upload error:', uploadResult.error);
+            throw uploadResult.error;
+          }
+
+          // Create signed URL that expires in 1 year
+          const { data: urlData, error: urlError } = await supabase.storage
+            .from(bucketName)
+            .createSignedUrl(fileName, 31536000); // 1 year
+
+          if (urlError) {
+            console.error('Error creating signed URL:', urlError);
+            throw urlError;
+          }
+
+          photoUrl = urlData.signedUrl;
+          console.log('Successfully uploaded to Supabase and created signed URL');
+          
+        } catch (supabaseError) {
+          console.error('Supabase storage error:', supabaseError);
+          console.log('Falling back to local storage...');
+          // Continue with local storage as fallback
+        }
+      }
+
+      // Clean up local file
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error("File cleanup error:", cleanupError);
+      }
+
+      res.json({ photoUrl });
+      
+    } catch (error) {
+      console.error("Photo upload error:", error);
+      res.status(500).json({ message: "Failed to upload photo" });
+    }
+  });
+
   // Test Supabase connection
   app.get('/api/test-supabase', async (req, res) => {
     try {
