@@ -62,19 +62,19 @@ export default function Contact() {
     {
       name: "Instagram",
       url: "https://www.instagram.com/cradleai_uae/",
-      icon: "📷",
+      icon: "/attached_assets/instagram-128_1750673149844.png",
       color: "bg-gradient-to-r from-purple-400 to-pink-400",
     },
     {
       name: "Facebook",
       url: "https://www.facebook.com/profile.php?id=61563085472789",
-      icon: "📘",
+      icon: "/attached_assets/facebook-128_1750673149845.png",
       color: "bg-blue-500",
     },
     {
       name: "LinkedIn",
       url: "https://www.linkedin.com/company/cradleai",
-      icon: "💼",
+      icon: "/attached_assets/linkedin-128_1750673149835.png",
       color: "bg-blue-600",
     },
   ];
@@ -172,9 +172,13 @@ export default function Contact() {
                     className="flex flex-col items-center space-y-2 group"
                   >
                     <div
-                      className={`w-12 h-12 ${social.color} rounded-full flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-200`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200 overflow-hidden`}
                     >
-                      {social.icon}
+                      <img 
+                        src={social.icon} 
+                        alt={social.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <span className="text-xs text-gray-600 group-hover:text-gray-800">
                       {social.name}
