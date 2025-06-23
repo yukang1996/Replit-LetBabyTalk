@@ -172,12 +172,17 @@ export default function Contact() {
                     className="flex flex-col items-center space-y-2 group"
                   >
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200 overflow-hidden`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200 overflow-hidden ${social.color}`}
                     >
                       <img 
                         src={social.icon} 
                         alt={social.name}
-                        className="w-full h-full object-cover"
+                        className="w-8 h-8 object-contain filter brightness-0 invert"
+                        onError={(e) => {
+                          // Fallback: show colored background if image fails
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
                       />
                     </div>
                     <span className="text-xs text-gray-600 group-hover:text-gray-800">
