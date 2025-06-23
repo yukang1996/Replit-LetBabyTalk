@@ -4,12 +4,18 @@ import {
   recordings,
   cryReasonDescriptions,
   legalDocuments,
-  type User,
+  feedback,
   type UpsertUser,
-  type BabyProfile,
+  type User,
   type InsertBabyProfile,
-  type Recording,
+  type BabyProfile,
   type InsertRecording,
+  type Recording,
+  type CryReasonDescription,
+  type InsertLegalDocument,
+  type LegalDocument,
+  type InsertFeedback,
+  type Feedback,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -284,6 +290,23 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return updatedUser;
+  }
+
+  // Feedback methods
+  async createFeedback(userId: string, data: InsertFeedback): Promise<Feedback> {
+    const [feedback] = await db
+      .insert(feedback)
+      .values({ ...data, userId })
+      .returning();
+    return feedback;
+  }
+
+  async getUserFeedback(userId: string): Promise<Feedback[]> {
+    return await db
+      .select()
+      .from(feedback)
+      .where(eq(feedback.userId, userId))
+      .orderBy(desc(feedback.createdAt));
   }
 
   // Legal document operations

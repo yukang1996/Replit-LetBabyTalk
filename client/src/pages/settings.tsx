@@ -167,7 +167,7 @@ export default function Settings() {
     {
       icon: Phone,
       label: t('settings.contact'),
-      onClick: () => console.log("Contact us"),
+      onClick: () => window.location.href = "/contact",
     },
   ];
 

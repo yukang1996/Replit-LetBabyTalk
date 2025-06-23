@@ -124,3 +124,20 @@ export const insertLegalDocumentSchema = createInsertSchema(legalDocuments).omit
 });
 export type InsertLegalDocument = z.infer<typeof insertLegalDocumentSchema>;
 export type LegalDocument = typeof legalDocuments.$inferSelect;
+
+// Feedback table
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
+  message: text("message"), // Optional feedback text
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+});
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type Feedback = typeof feedback.$inferSelect;

@@ -19,11 +19,14 @@ import {
   recordings,
   cryReasonDescriptions,
   legalDocuments,
+  feedback,
   insertBabyProfileSchema,
   insertRecordingSchema,
+  insertFeedbackSchema,
   type User,
   type BabyProfile,
-  type Recording
+  type Recording,
+  type InsertFeedback
 } from "@shared/schema";
 
 // Temporary in-memory storage for OTPs (use Redis or database in production)
@@ -1252,6 +1255,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Failed to delete legal document" });
       }
     });
+
+  // Feedback routes
+  app.post('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { rating, feedback: feedbackMessage } = req.body;
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Rating must be between 1 and 5" });
+      }
+
+      const feedbackData = {
+        rating: parseInt(rating),
+        message: feedbackMessage || null,
+      };
+
+      const validatedData = insertFeedbackSchema.parse(feedbackData);
+      const newFeedback = await storage.createFeedback(userId, validatedData);
+
+      res.status(201).json(newFeedback);
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+
+  app.get('/api/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const userFeedback = await storage.getUserFeedback(userId);
+      res.json(userFeedback);
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
 
   // Serve profile images
   app.get('/api/images/:filename', (req, res) => {
