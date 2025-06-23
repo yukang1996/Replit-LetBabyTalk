@@ -89,6 +89,9 @@ export const insertRecordingSchema = createInsertSchema(recordings, {
   babyProfileId: z.number().optional(),
   analysisResult: z.any().optional(),
   vote: z.string().optional(),
+}).omit({
+  id: true,
+  recordedAt: true,
 });
 export type InsertRecording = z.infer<typeof insertRecordingSchema>;
 export type Recording = typeof recordings.$inferSelect;

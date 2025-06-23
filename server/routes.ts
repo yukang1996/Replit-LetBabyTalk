@@ -1003,10 +1003,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save recording with metadata, analysis result, and audio URL
       const recordingData = {
+        userId: userId, // Add userId to the recording data
         filename: req.file.filename,
         audioUrl: audioUrl, // Store the Supabase URL or local URL
-        duration: duration ? parseInt(duration) : null,
-        babyProfileId: babyProfileId ? parseInt(babyProfileId) : null,
+        duration: duration ? parseInt(duration) : undefined,
+        babyProfileId: babyProfileId ? parseInt(babyProfileId) : undefined,
         analysisResult: analysisResult,
       };
 
