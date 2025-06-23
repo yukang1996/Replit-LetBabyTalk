@@ -59,13 +59,14 @@ export const babyProfiles = pgTable("baby_profiles", {
 // Audio recordings table
 export const recordings = pgTable("recordings", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").notNull().references(() => users.id),
+  filename: text("filename").notNull(),
+  audioUrl: text("audio_url"), // Supabase storage URL or local URL
+  duration: integer("duration"),
   babyProfileId: integer("baby_profile_id").references(() => babyProfiles.id),
-  filename: varchar("filename").notNull(),
-  duration: integer("duration"), // in seconds
-  analysisResult: jsonb("analysis_result"), // AI analysis results
-  vote: varchar("vote"), // 'good' or 'bad' for user feedback
-  recordedAt: timestamp("recorded_at").defaultNow(),
+  analysisResult: jsonb("analysis_result"),
+  vote: text("vote"), // 'good' or 'bad'
+  recordedAt: timestamp("recorded_at").defaultNow().notNull(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
@@ -80,10 +81,14 @@ export const insertBabyProfileSchema = createInsertSchema(babyProfiles).omit({
 export type InsertBabyProfile = z.infer<typeof insertBabyProfileSchema>;
 export type BabyProfile = typeof babyProfiles.$inferSelect;
 
-export const insertRecordingSchema = createInsertSchema(recordings).omit({
-  id: true,
-  userId: true,
-  recordedAt: true,
+export const insertRecordingSchema = createInsertSchema(recordings, {
+  userId: z.string(),
+  filename: z.string(),
+  audioUrl: z.string().optional(),
+  duration: z.number().optional(),
+  babyProfileId: z.number().optional(),
+  analysisResult: z.any().optional(),
+  vote: z.string().optional(),
 });
 export type InsertRecording = z.infer<typeof insertRecordingSchema>;
 export type Recording = typeof recordings.$inferSelect;

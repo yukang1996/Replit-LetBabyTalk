@@ -839,6 +839,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = new Date().toISOString();
       const audioFormat = req.file.mimetype || 'audio/webm';
 
+      let audioUrl = `/api/audio/${req.file.filename}`; // Default to local storage
+
+      // Upload audio to Supabase storage if available
+      if (supabase) {
+        try {
+          console.log('\n=== SUPABASE AUDIO RECORDING UPLOAD DEBUG ===');
+          console.log('User ID:', userId);
+          console.log('Original file name:', req.file.originalname);
+          console.log('File path:', req.file.path);
+          console.log('File mime type:', req.file.mimetype);
+
+          // Check if audio-recordings bucket exists and create it if it doesn't
+          console.log('Step 1: Listing existing buckets...');
+          const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+
+          if (listError) {
+            console.error('❌ Error listing buckets:', listError);
+            throw listError;
+          }
+
+          console.log('✅ Available buckets:', buckets?.map(b => ({ name: b.name, id: b.id, public: b.public })));
+
+          const bucketExists = buckets?.some(bucket => bucket.name === 'audio-recordings');
+          console.log('Audio recordings bucket exists:', bucketExists);
+
+          if (!bucketExists) {
+            console.log('Step 2: Creating audio-recordings bucket...');
+            const { data: newBucket, error: createError } = await supabase.storage.createBucket('audio-recordings', {
+              public: false,
+              allowedMimeTypes: ['audio/webm', 'audio/wav', 'audio/mp3', 'audio/mp4', 'audio/mpeg', 'audio/ogg'],
+              fileSizeLimit: 10485760 // 10MB
+            });
+
+            if (createError) {
+              console.error('❌ Error creating bucket:', createError);
+              throw new Error(`Failed to create storage bucket: ${createError.message}`);
+            } else {
+              console.log('✅ Bucket created successfully:', newBucket);
+            }
+          } else {
+            console.log('✅ Bucket already exists, skipping creation');
+          }
+
+          // Generate unique filename for audio recording
+          const fileExtension = path.extname(req.file.originalname || '.webm');
+          const fileName = `recording_${userId}_${Date.now()}${fileExtension}`;
+          console.log('Step 3: Generated filename:', fileName);
+
+          // Read file data
+          const fileData = fs.readFileSync(req.file.path);
+          console.log('Step 4: File read successfully');
+          console.log('File size:', fileData.length, 'bytes');
+
+          // Upload to Supabase storage
+          console.log('Step 5: Uploading to Supabase storage...');
+          const uploadResult = await supabase.storage
+            .from('audio-recordings')
+            .upload(fileName, fileData, {
+              contentType: req.file.mimetype,
+              upsert: true
+            });
+
+          console.log('Upload result:', {
+            data: uploadResult.data,
+            error: uploadResult.error
+          });
+
+          if (uploadResult.error) {
+            console.error('❌ Supabase upload error:', uploadResult.error);
+            throw uploadResult.error;
+          } else {
+            console.log('✅ Successfully uploaded to Supabase!');
+
+            // Create signed URL that expires in 1 year (private access)
+            console.log('Step 6: Creating signed URL...');
+            const { data: urlData, error: urlError } = await supabase.storage
+              .from('audio-recordings')
+              .createSignedUrl(fileName, 31536000); // 1 year in seconds
+
+            if (urlError) {
+              console.error('❌ Error creating signed URL:', urlError);
+              throw urlError;
+            } else {
+              console.log('✅ Created signed URL successfully');
+              audioUrl = urlData.signedUrl;
+            }
+          }
+
+          console.log('=== SUPABASE AUDIO RECORDING UPLOAD COMPLETE ===\n');
+        } catch (supabaseError) {
+          console.error('\n❌ SUPABASE STORAGE ERROR:', supabaseError);
+          console.log('Falling back to local storage...\n');
+          // Continue with local storage as fallback
+        }
+      } else {
+        console.log('❌ Supabase client not initialized - using local storage');
+      }
+
       // Call external AI API
       let analysisResult;
       try {
@@ -903,9 +1001,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       }
 
-      // Save recording with metadata and analysis result
+      // Save recording with metadata, analysis result, and audio URL
       const recordingData = {
         filename: req.file.filename,
+        audioUrl: audioUrl, // Store the Supabase URL or local URL
         duration: duration ? parseInt(duration) : null,
         babyProfileId: babyProfileId ? parseInt(babyProfileId) : null,
         analysisResult: analysisResult,
@@ -986,8 +1085,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
   // Serve audio files
-  app.get('/api/audio/:filename', isAuthenticated, (req, res) => {
+  app.get('/api/audio/:filename', isAuthenticated, async (req, res) => {
     const filename = req.params.filename;
+    
+    // First try to find the recording in database to get the audioUrl
+    try {
+      const userId = req.user.id;
+      const recordings = await storage.getRecordings(userId);
+      const recording = recordings.find(r => r.filename === filename);
+      
+      if (recording && recording.audioUrl && recording.audioUrl.includes('supabase')) {
+        // If it's a Supabase URL, redirect to it
+        return res.redirect(recording.audioUrl);
+      }
+    } catch (error) {
+      console.error("Error checking recording audioUrl:", error);
+    }
+    
+    // Fall back to local file serving
     const filepath = path.join(process.cwd(), 'uploads', filename);
 
     if (fs.existsSync(filepath)) {
