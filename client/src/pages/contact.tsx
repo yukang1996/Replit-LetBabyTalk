@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
@@ -17,15 +16,15 @@ export default function Contact() {
 
   const submitFeedbackMutation = useMutation({
     mutationFn: async (data: { rating: number; feedback: string }) => {
-      const response = await fetch('/api/feedback', {
-        method: 'POST',
+      const response = await fetch("/api/feedback", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to submit feedback');
+        throw new Error("Failed to submit feedback");
       }
       return response.json();
     },
@@ -55,29 +54,29 @@ export default function Contact() {
       });
       return;
     }
-    
+
     submitFeedbackMutation.mutate({ rating, feedback });
   };
 
   const socialLinks = [
     {
       name: "Instagram",
-      url: "https://instagram.com/letbabytalk",
+      url: "https://www.instagram.com/cradleai_uae/",
       icon: "📷",
-      color: "bg-gradient-to-r from-purple-400 to-pink-400"
+      color: "bg-gradient-to-r from-purple-400 to-pink-400",
     },
     {
       name: "Facebook",
-      url: "https://facebook.com/letbabytalk",
+      url: "https://www.facebook.com/profile.php?id=61563085472789",
       icon: "📘",
-      color: "bg-blue-500"
+      color: "bg-blue-500",
     },
     {
       name: "LinkedIn",
-      url: "https://linkedin.com/company/letbabytalk",
+      url: "https://www.linkedin.com/company/cradleai",
       icon: "💼",
-      color: "bg-blue-600"
-    }
+      color: "bg-blue-600",
+    },
   ];
 
   return (
@@ -85,17 +84,15 @@ export default function Contact() {
       {/* Header */}
       <div className="gradient-bg p-4 flex items-center">
         <Link href="/settings">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-white hover:bg-white/20 mr-3"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
-        <span className="text-white font-medium text-lg">
-          Contact Us
-        </span>
+        <span className="text-white font-medium text-lg">Contact Us</span>
       </div>
 
       {/* Main Content */}
@@ -107,7 +104,7 @@ export default function Contact() {
               <p className="text-gray-600 text-sm">
                 If you have any questions, please contact us at
               </p>
-              <a 
+              <a
                 href="mailto:lettingbabytalk@gmail.com"
                 className="text-pink-500 font-medium text-sm hover:underline"
               >
@@ -158,7 +155,9 @@ export default function Contact() {
               disabled={submitFeedbackMutation.isPending || rating === 0}
               className="w-full gradient-bg text-white rounded-2xl py-3 font-medium"
             >
-              {submitFeedbackMutation.isPending ? "Submitting..." : "Submit Feedback"}
+              {submitFeedbackMutation.isPending
+                ? "Submitting..."
+                : "Submit Feedback"}
             </Button>
 
             {/* Social Media Links */}
@@ -172,7 +171,9 @@ export default function Contact() {
                     rel="noopener noreferrer"
                     className="flex flex-col items-center space-y-2 group"
                   >
-                    <div className={`w-12 h-12 ${social.color} rounded-full flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-200`}>
+                    <div
+                      className={`w-12 h-12 ${social.color} rounded-full flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-200`}
+                    >
                       {social.icon}
                     </div>
                     <span className="text-xs text-gray-600 group-hover:text-gray-800">
