@@ -31,14 +31,18 @@ function Router() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [, navigate] = useLocation();
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState<string>("");
-  const [showForgotPasswordVerification, setShowForgotPasswordVerification] = useState(false);
+  const [showForgotPasswordVerification, setShowForgotPasswordVerification] =
+    useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       const onboardingCompleted = localStorage.getItem("onboardingCompleted");
       // Only show onboarding for completely new users, not after logout
-      if (onboardingCompleted !== "true" && !window.location.pathname.includes('/signin')) {
+      if (
+        onboardingCompleted !== "true" &&
+        !window.location.pathname.includes("/signin")
+      ) {
         setShowOnboarding(true);
       }
     }
@@ -52,24 +56,24 @@ function Router() {
   const handleLoginSuccess = async () => {
     console.log("Login success, refetching auth...");
     await refetch();
-    navigate('/');
+    navigate("/");
   };
 
   const handleSignupSuccess = async () => {
     console.log("Signup success, refetching auth...");
     await refetch();
-    navigate('/');
+    navigate("/");
   };
 
   const handleGuestComplete = async () => {
     console.log("Guest complete, refetching auth...");
     await refetch();
-    navigate('/');
+    navigate("/");
   };
 
   const handleLoginRedirect = () => {
     console.log("Navigating to signin...");
-    navigate('/signin');
+    navigate("/signin");
   };
 
   // Show onboarding flow for new users
@@ -77,50 +81,73 @@ function Router() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
+  // 2. Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <Switch>
       {/* Protected routes */}
-      {isLoading ? (
-        <Route path="*" component={() => <div className="min-h-screen flex items-center justify-center">Loading...</div>} />
-      ) : !isAuthenticated ? (
+      {!isAuthenticated ? (
         <>
-          <Route path="/signin" component={() => <Login onLoginSuccess={handleLoginSuccess} />} />
-          <Route path="/signup" component={() => <Signup onSignupSuccess={handleSignupSuccess} />} />
+          <Route
+            path="/signin"
+            component={() => <Login onLoginSuccess={handleLoginSuccess} />}
+          />
+          <Route
+            path="/signup"
+            component={() => <Signup onSignupSuccess={handleSignupSuccess} />}
+          />
           <Route path="/forgot-password">
-          {showForgotPasswordVerification ? (
-            <Verification
-              type="forgot-password"
-              email={forgotPasswordEmail}
-              onVerificationSuccess={() => {
-                setShowForgotPasswordVerification(false);
-                setShowResetPassword(true);
-              }}
-              onBackToForgotPassword={() => {
-                setShowForgotPasswordVerification(false);
-                setForgotPasswordEmail("");
-              }}
-            />
-          ) : showResetPassword ? (
-            <ResetPassword
-              email={forgotPasswordEmail}
-              onResetSuccess={() => {
-                setShowResetPassword(false);
-                setForgotPasswordEmail("");
-                // Navigate back to login
-                navigate("/signin");
-              }}
-            />
-          ) : (
-            <ForgotPassword onSubmitSuccess={(email) => {
-              console.log('Forgot password submitted for:', email);
-              setForgotPasswordEmail(email);
-              setShowForgotPasswordVerification(true);
-            }} />
-          )}
-        </Route>
+            {showForgotPasswordVerification ? (
+              <Verification
+                type="forgot-password"
+                email={forgotPasswordEmail}
+                onVerificationSuccess={() => {
+                  setShowForgotPasswordVerification(false);
+                  setShowResetPassword(true);
+                }}
+                onBackToForgotPassword={() => {
+                  setShowForgotPasswordVerification(false);
+                  setForgotPasswordEmail("");
+                }}
+              />
+            ) : showResetPassword ? (
+              <ResetPassword
+                email={forgotPasswordEmail}
+                onResetSuccess={() => {
+                  setShowResetPassword(false);
+                  setForgotPasswordEmail("");
+                  // Navigate back to login
+                  navigate("/signin");
+                }}
+              />
+            ) : (
+              <ForgotPassword
+                onSubmitSuccess={(email) => {
+                  console.log("Forgot password submitted for:", email);
+                  setForgotPasswordEmail(email);
+                  setShowForgotPasswordVerification(true);
+                }}
+              />
+            )}
+          </Route>
           <Route path="/verification" component={Verification} />
           <Route path="/reset-password" component={ResetPassword} />
-          <Route path="/" component={() => <Welcome onLoginRedirect={handleLoginRedirect} onGuestComplete={handleGuestComplete} />} />
+          <Route
+            path="/"
+            component={() => (
+              <Welcome
+                onLoginRedirect={handleLoginRedirect}
+                onGuestComplete={handleGuestComplete}
+              />
+            )}
+          />
           <Route path="*" component={NotFound} />
         </>
       ) : (
@@ -132,7 +159,14 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/terms" component={Terms} />
           <Route path="/privacy" component={Privacy} />
-          <Route path="*" component={NotFound} />
+          <Route path="/account" component={Account} />
+          <Route path="/history" component={History} />
+          <Route path="/advisor" component={Advisor} />
+          <Route path="/chatbot" component={Chatbot} />
+          <Route path="/results" component={Results} />
+          {({ match }) => match === null && <NotFound />}
+
+          {/* <Route path="*" component={NotFound} /> */}
         </>
       )}
     </Switch>
