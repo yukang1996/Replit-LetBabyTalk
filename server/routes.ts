@@ -9,7 +9,12 @@ import { db } from './db.js';
 import { recordings, babyProfiles, cryReasonDescriptions } from '../shared/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
 import { isAuthenticated } from './auth.js';
-import { supabase } from './storage.js';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client if credentials are available
+const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
+  : null;
 
 const router = express.Router();
 
