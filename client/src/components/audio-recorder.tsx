@@ -53,27 +53,71 @@ export default function AudioRecorder() {
 
   const uploadMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.mp4');
-      formData.append('duration', Math.floor(recordingTime).toString());
-      
-      // Add baby profile ID if available
-      if (selectedBaby?.id) {
-        formData.append('babyProfileId', selectedBaby.id.toString());
+      // Create timeout controller for fetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
+
+      try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.mp4');
+        
+        // Prepare metadata for direct API call
+        const metadata = {
+          user_id: user?.id || 'guest',
+          timestamp: new Date().toISOString(),
+          audio_format: 'audio/mp4',
+          pressing: true
+        };
+        
+        formData.append('metadata', JSON.stringify(metadata));
+
+        // Call the external API directly
+        const response = await fetch('https://api.letbabytalk.com/process_audio', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+          // Don't set Content-Type header - let browser handle it for FormData
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`AI API responded with status: ${response.status} - ${text}`);
+        }
+
+        const result = await response.json();
+        
+        // Now save the recording to our backend with the analysis result
+        const recordingFormData = new FormData();
+        recordingFormData.append('audio', audioBlob, 'recording.mp4');
+        recordingFormData.append('duration', Math.floor(recordingTime).toString());
+        recordingFormData.append('analysisResult', JSON.stringify(result));
+        
+        // Add baby profile ID if available
+        if (selectedBaby?.id) {
+          recordingFormData.append('babyProfileId', selectedBaby.id.toString());
+        }
+
+        const saveResponse = await fetch('/api/recordings', {
+          method: 'POST',
+          body: recordingFormData,
+          credentials: 'include',
+        });
+
+        if (!saveResponse.ok) {
+          const text = await saveResponse.text();
+          throw new Error(`${saveResponse.status}: ${text || saveResponse.statusText}`);
+        }
+
+        return saveResponse.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out after 30 seconds');
+        }
+        throw error;
       }
-
-      const response = await fetch('/api/recordings', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`${response.status}: ${text || response.statusText}`);
-      }
-
-      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/recordings"] });
