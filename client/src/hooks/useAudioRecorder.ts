@@ -42,8 +42,18 @@ export function useAudioRecorder() {
         }
       });
 
+      // Check for WAV support, fallback to webm then mp4
+      let mimeType = 'audio/wav';
+      if (!MediaRecorder.isTypeSupported('audio/wav')) {
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        }
+      }
+
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/mp4'
+        mimeType: mimeType
       });
 
       audioChunksRef.current = [];
@@ -56,7 +66,7 @@ export function useAudioRecorder() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/mp4' 
+          type: mimeType 
         });
         setAudioBlob(audioBlob);
         setIsRecording(false);

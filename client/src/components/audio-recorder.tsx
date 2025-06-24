@@ -95,7 +95,7 @@ export default function AudioRecorder() {
 
         // Now save the recording to our backend with the analysis result
         const recordingFormData = new FormData();
-        recordingFormData.append("audio", audioBlob, "recording.mp4");
+        recordingFormData.append("audio", audioBlob, "recording.wav");
         recordingFormData.append(
           "duration",
           Math.floor(recordingTime).toString(),
