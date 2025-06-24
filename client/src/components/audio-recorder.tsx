@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 
 export default function AudioRecorder() {
   const { toast } = useToast();
@@ -53,87 +53,33 @@ export default function AudioRecorder() {
 
   const uploadMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
-      // Create timeout controller for fetch
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
-
-      try {
-        const formData = new FormData();
-        formData.append("audio", audioBlob, "recording.wav");
-
-        // Prepare metadata for direct API call
-        const metadata = {
-          user_id: user?.id || "guest",
-          timestamp: new Date().toISOString(),
-          audio_format: "audio/wav",
-          pressing: true,
-        };
-
-        formData.append("metadata", JSON.stringify(metadata));
-
-        // Call the external API directly
-        const response = await fetch(
-          "https://api.letbabytalk.com/process_audio",
-          {
-            method: "POST",
-            body: formData,
-            signal: controller.signal,
-            // Don't set Content-Type header - let browser handle it for FormData
-          },
-        );
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(
-            `AI API responded with status: ${response.status} - ${text}`,
-          );
-        }
-
-        const result = await response.json();
-
-        // Now save the recording to our backend with the analysis result
-        const recordingFormData = new FormData();
-        recordingFormData.append("audio", audioBlob, "recording.wav");
-        recordingFormData.append(
-          "duration",
-          Math.floor(recordingTime).toString(),
-        );
-        recordingFormData.append("analysisResult", JSON.stringify(result));
-
-        // Add baby profile ID if available
-        if (selectedBaby?.id) {
-          recordingFormData.append("babyProfileId", selectedBaby.id.toString());
-        }
-
-        const saveResponse = await fetch("/api/recordings", {
-          method: "POST",
-          body: recordingFormData,
-          credentials: "include",
-        });
-
-        if (!saveResponse.ok) {
-          const text = await saveResponse.text();
-          throw new Error(
-            `${saveResponse.status}: ${text || saveResponse.statusText}`,
-          );
-        }
-
-        return saveResponse.json();
-      } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === "AbortError") {
-          throw new Error("Request timed out after 30 seconds");
-        }
-        throw error;
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('duration', Math.floor(recordingTime).toString());
+      
+      // Add baby profile ID if available
+      if (selectedBaby?.id) {
+        formData.append('babyProfileId', selectedBaby.id.toString());
       }
+
+      const response = await fetch('/api/recordings', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`${response.status}: ${text || response.statusText}`);
+      }
+
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/recordings"] });
       toast({
         title: "Analysis Complete!",
-        description: `Detected: ${data.analysisResult?.cryType || "Unknown cry type"}`,
+        description: `Detected: ${data.analysisResult?.cryType || 'Unknown cry type'}`,
       });
       // Navigate to results page
       //navigate(`/results/${data.id}`);
@@ -163,7 +109,7 @@ export default function AudioRecorder() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleRecordingToggle = () => {
@@ -182,26 +128,19 @@ export default function AudioRecorder() {
 
   const [isDragging, setIsDragging] = useState(false);
 
-  const calculateSeekTime = useCallback(
-    (
-      e: React.MouseEvent<HTMLDivElement> | MouseEvent,
-      element: HTMLDivElement,
-    ) => {
-      const effectiveDuration =
-        audioDuration && !isNaN(audioDuration) ? audioDuration : recordingTime;
-      if (effectiveDuration > 0) {
-        const rect = element.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-        const seekTime = percentage * effectiveDuration;
-        if (!isNaN(seekTime) && isFinite(seekTime)) {
-          return seekTime;
-        }
+  const calculateSeekTime = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent, element: HTMLDivElement) => {
+    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+    if (effectiveDuration > 0) {
+      const rect = element.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+      const seekTime = percentage * effectiveDuration;
+      if (!isNaN(seekTime) && isFinite(seekTime)) {
+        return seekTime;
       }
-      return null;
-    },
-    [audioDuration, recordingTime],
-  );
+    }
+    return null;
+  }, [audioDuration, recordingTime]);
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const seekTime = calculateSeekTime(e, e.currentTarget);
@@ -218,22 +157,17 @@ export default function AudioRecorder() {
     }
   };
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging) return;
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
 
-      const progressBar = document.querySelector(
-        ".progress-bar",
-      ) as HTMLDivElement;
-      if (progressBar) {
-        const seekTime = calculateSeekTime(e, progressBar);
-        if (seekTime !== null) {
-          seekTo(seekTime);
-        }
+    const progressBar = document.querySelector('.progress-bar') as HTMLDivElement;
+    if (progressBar) {
+      const seekTime = calculateSeekTime(e, progressBar);
+      if (seekTime !== null) {
+        seekTo(seekTime);
       }
-    },
-    [isDragging, calculateSeekTime, seekTo],
-  );
+    }
+  }, [isDragging, calculateSeekTime, seekTo]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -242,12 +176,12 @@ export default function AudioRecorder() {
   // Add global mouse event listeners for dragging
   React.useEffect(() => {
     if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
 
       return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
@@ -274,10 +208,8 @@ export default function AudioRecorder() {
                 <div className="w-40 h-40 border-4 border-pink-300 rounded-full animate-ping opacity-75" />
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="w-44 h-44 border-2 border-purple-200 rounded-full animate-pulse opacity-50"
-                  style={{ animationDelay: "0.5s" }}
-                />
+                <div className="w-44 h-44 border-2 border-purple-200 rounded-full animate-pulse opacity-50" 
+                     style={{ animationDelay: '0.5s' }} />
               </div>
             </>
           )}
@@ -287,7 +219,7 @@ export default function AudioRecorder() {
             disabled={uploadMutation.isPending}
             className={cn(
               "w-32 h-32 rounded-full transition-all duration-300 relative z-10",
-              "gradient-bg hover:opacity-90",
+              "gradient-bg hover:opacity-90"
             )}
           >
             {isRecording ? (
@@ -301,16 +233,13 @@ export default function AudioRecorder() {
         {/* Instructions */}
         <div>
           <h3 className="text-xl font-medium text-gray-800 mb-2">
-            {isRecording
-              ? isPaused
-                ? "Recording Paused"
-                : "Recording..."
-              : "Tap to start recording"}
+            {isRecording ? (isPaused ? "Recording Paused" : "Recording...") : "Tap to start recording"}
           </h3>
           <p className="text-sm text-gray-600">
-            {isRecording
-              ? "Tap again to stop recording"
-              : "Record 8-30 seconds to get the best results"}
+            {isRecording 
+              ? "Tap again to stop recording" 
+              : "Record 8-30 seconds to get the best results"
+            }
           </p>
         </div>
 
@@ -324,7 +253,7 @@ export default function AudioRecorder() {
         )}
 
         {/* Results Dialog */}
-        <ResultsDialog
+        <ResultsDialog 
           isOpen={showResultsDialog}
           onClose={handleCloseResultsDialog}
           recordingId={currentRecordingId}
@@ -348,53 +277,41 @@ export default function AudioRecorder() {
             {/* Time displays */}
             <div className="flex justify-between text-sm text-gray-600">
               <span>{formatTime(currentPlaybackTime || 0)}</span>
-              <span>
-                {formatTime(
-                  audioDuration && !isNaN(audioDuration)
-                    ? audioDuration
-                    : recordingTime,
-                )}
-              </span>
+              <span>{formatTime((audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime)}</span>
             </div>
 
             {/* Progress bar */}
-            <div
+            <div 
               className="relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
               onMouseDown={handleMouseDown}
               onClick={!isDragging ? handleSeek : undefined}
             >
-              <div
+              <div 
                 className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
-                style={{
+                style={{ 
                   width: (() => {
-                    const effectiveDuration =
-                      audioDuration && !isNaN(audioDuration)
-                        ? audioDuration
-                        : recordingTime;
+                    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
                     const effectiveTime = currentPlaybackTime || 0;
-                    return effectiveDuration > 0 && !isNaN(effectiveTime)
-                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%`
-                      : "0%";
-                  })(),
+                    return effectiveDuration > 0 && !isNaN(effectiveTime) 
+                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                      : '0%';
+                  })()
                 }}
               />
               {/* Scrubber */}
-              <div
+              <div 
                 className={cn(
                   "absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150",
-                  isDragging ? "scale-125" : "group-hover:scale-110",
+                  isDragging ? "scale-125" : "group-hover:scale-110"
                 )}
-                style={{
+                style={{ 
                   left: (() => {
-                    const effectiveDuration =
-                      audioDuration && !isNaN(audioDuration)
-                        ? audioDuration
-                        : recordingTime;
+                    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
                     const effectiveTime = currentPlaybackTime || 0;
                     return effectiveDuration > 0 && !isNaN(effectiveTime)
-                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%`
-                      : "0%";
-                  })(),
+                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                      : '0%';
+                  })()
                 }}
               />
             </div>
@@ -407,11 +324,7 @@ export default function AudioRecorder() {
               onClick={isPlaying ? pausePlayback : playRecording}
               className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
             >
-              {isPlaying ? (
-                <Pause className="w-6 h-6" />
-              ) : (
-                <Play className="w-6 h-6" />
-              )}
+              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
             </Button>
 
             {/* Delete Button */}
@@ -437,7 +350,7 @@ export default function AudioRecorder() {
       </div>
 
       {/* Results Dialog */}
-      <ResultsDialog
+      <ResultsDialog 
         isOpen={showResultsDialog}
         onClose={handleCloseResultsDialog}
         recordingId={currentRecordingId}

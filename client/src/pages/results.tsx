@@ -163,7 +163,7 @@ export default function Results() {
                 <span>Recording Details</span>
                 {audioUrl && (
                   <audio controls className="max-w-xs">
-                    <source src={audioUrl} type="audio/mp4" />
+                    <source src={audioUrl} type="audio/webm" />
                     <source src={audioUrl} type="audio/wav" />
                     <source src={audioUrl} type="audio/mp3" />
                     Your browser does not support the audio element.
