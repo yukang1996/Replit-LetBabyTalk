@@ -43,11 +43,24 @@ export default function AudioRecorder() {
     deleteRecording,
   } = useAudioRecorder();
 
+  // Get baby profiles to find the selected one
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["/api/baby-profiles"],
+  });
+
+  // Get the first/selected baby profile (you can modify this logic as needed)
+  const selectedBaby = profiles.length > 0 ? profiles[0] : null;
+
   const uploadMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('duration', Math.floor(recordingTime).toString());
+      
+      // Add baby profile ID if available
+      if (selectedBaby?.id) {
+        formData.append('babyProfileId', selectedBaby.id.toString());
+      }
 
       const response = await fetch('/api/recordings', {
         method: 'POST',
