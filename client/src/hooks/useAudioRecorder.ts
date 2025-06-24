@@ -34,6 +34,17 @@ export function useAudioRecorder() {
 
   const startRecording = useCallback(async () => {
     try {
+      // Check if MediaDevices API is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('MediaDevices API not supported in this browser');
+      }
+
+      // Check if MediaRecorder is supported
+      if (!window.MediaRecorder) {
+        throw new Error('MediaRecorder API not supported in this browser');
+      }
+
+      console.log('Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -42,9 +53,22 @@ export function useAudioRecorder() {
         }
       });
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/wav'
-      });
+      console.log('Microphone access granted, stream:', stream);
+
+      // Check if WAV is supported, fallback to webm
+      let mimeType = 'audio/wav';
+      if (!MediaRecorder.isTypeSupported('audio/wav')) {
+        console.warn('audio/wav not supported, trying audio/webm');
+        mimeType = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+          console.warn('audio/webm not supported, using default');
+          mimeType = '';
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, 
+        mimeType ? { mimeType } : undefined
+      );
 
       audioChunksRef.current = [];
       
@@ -56,7 +80,7 @@ export function useAudioRecorder() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/wav' 
+          type: mimeType || 'audio/wav' 
         });
         setAudioBlob(audioBlob);
         setIsRecording(false);
@@ -94,6 +118,24 @@ export function useAudioRecorder() {
       
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      
+      // Provide specific error messages
+      if (error.name === 'NotAllowedError') {
+        console.error('Microphone access denied by user');
+        alert('Please allow microphone access to record audio. Check your browser permissions.');
+      } else if (error.name === 'NotFoundError') {
+        console.error('No microphone found');
+        alert('No microphone detected. Please check your microphone connection.');
+      } else if (error.name === 'NotSupportedError') {
+        console.error('Microphone not supported');
+        alert('Your browser does not support microphone recording.');
+      } else if (error.name === 'OverconstrainedError') {
+        console.error('Microphone constraints not satisfied');
+        alert('Microphone settings are not supported by your device.');
+      } else {
+        console.error('Unknown microphone error:', error.message);
+        alert(`Microphone error: ${error.message || 'Unknown error'}`);
+      }
     }
   }, [startTimer]);
 
