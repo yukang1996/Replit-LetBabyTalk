@@ -55,15 +55,29 @@ export function useAudioRecorder() {
 
       console.log('Microphone access granted, stream:', stream);
 
-      // Check if WAV is supported, fallback to webm
-      let mimeType = 'audio/wav';
-      if (!MediaRecorder.isTypeSupported('audio/wav')) {
-        console.warn('audio/wav not supported, trying audio/webm');
+      // Check for WAV support, with proper fallbacks
+      let mimeType = '';
+      let fileExtension = '.wav';
+      
+      if (MediaRecorder.isTypeSupported('audio/wav')) {
+        mimeType = 'audio/wav';
+        fileExtension = '.wav';
+        console.log('Using audio/wav format');
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+        fileExtension = '.webm';
+        console.log('Using audio/webm;codecs=opus format');
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
         mimeType = 'audio/webm';
-        if (!MediaRecorder.isTypeSupported('audio/webm')) {
-          console.warn('audio/webm not supported, using default');
-          mimeType = '';
-        }
+        fileExtension = '.webm';
+        console.log('Using audio/webm format');
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+        fileExtension = '.mp4';
+        console.log('Using audio/mp4 format');
+      } else {
+        console.warn('No supported audio format found, using browser default');
+        fileExtension = '.wav'; // Default assumption
       }
 
       const mediaRecorder = new MediaRecorder(stream, 
@@ -82,6 +96,8 @@ export function useAudioRecorder() {
         const audioBlob = new Blob(audioChunksRef.current, { 
           type: mimeType || 'audio/wav' 
         });
+        // Add file extension metadata to the blob for proper handling
+        audioBlob.fileExtension = fileExtension;
         setAudioBlob(audioBlob);
         setIsRecording(false);
         setIsPaused(false);

@@ -54,7 +54,18 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/') || file.mimetype === 'audio/wav') {
+    // Accept various audio formats but prefer WAV
+    const allowedMimeTypes = [
+      'audio/wav',
+      'audio/wave', 
+      'audio/x-wav',
+      'audio/webm',
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/ogg'
+    ];
+    
+    if (allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('audio/')) {
       cb(null, true);
     } else {
       cb(new Error('Only audio files are allowed'));
@@ -837,7 +848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse additional metadata from request
       const { duration, babyProfileId, pressing = true } = req.body;
       const timestamp = new Date().toISOString();
-      const audioFormat = req.file.mimetype || 'audio/mp4';
+      const audioFormat = req.file.mimetype || 'audio/wav';
 
       let audioUrl = `/api/audio/${req.file.filename}`; // Default to local storage
 
@@ -868,7 +879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Step 2: Creating audio-recordings bucket...');
             const { data: newBucket, error: createError } = await supabase.storage.createBucket('audio-recordings', {
               public: false,
-              allowedMimeTypes: ['audio/wav', 'audio/mp3', 'audio/webm', 'audio/mpeg', 'audio/ogg'],
+              allowedMimeTypes: ['audio/wav', 'audio/wave', 'audio/x-wav', 'audio/webm', 'audio/mp4', 'audio/mp3', 'audio/mpeg', 'audio/ogg'],
               fileSizeLimit: 10485760 // 10MB
             });
 
@@ -882,8 +893,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('✅ Bucket already exists, skipping creation');
           }
 
-          // Generate unique filename for audio recording
-          const fileExtension = path.extname(req.file.originalname || '.wav');
+          // Generate unique filename for audio recording with proper extension
+          let fileExtension = path.extname(req.file.originalname || '');
+          
+          // If no extension or if we want to ensure WAV format
+          if (!fileExtension || req.file.mimetype === 'audio/wav') {
+            fileExtension = '.wav';
+          } else if (req.file.mimetype === 'audio/webm') {
+            fileExtension = '.webm';
+          } else if (req.file.mimetype === 'audio/mp4') {
+            fileExtension = '.mp4';
+          }
+          
           const fileName = `recording_${userId}_${Date.now()}${fileExtension}`;
           console.log('Step 3: Generated filename:', fileName);
 
