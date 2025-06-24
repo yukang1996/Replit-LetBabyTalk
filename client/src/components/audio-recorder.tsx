@@ -59,9 +59,8 @@ export default function AudioRecorder() {
 
       try {
         const formData = new FormData();
-        // Use the file extension from the blob or default to .wav
-        const fileExtension = audioBlob.fileExtension || '.wav';
-        const fileName = `recording${fileExtension}`;
+        // Force WAV format
+        const fileName = 'recording.wav';
         formData.append('audio', audioBlob, fileName);
         
         // Prepare metadata for direct API call
