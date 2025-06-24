@@ -55,17 +55,34 @@ export function useAudioRecorder() {
 
       console.log('Microphone access granted, stream:', stream);
 
-      // Force WAV format only
-      const mimeType = 'audio/wav';
-      const fileExtension = '.wav';
+      // Check for WAV support, with proper fallbacks
+      let mimeType = '';
+      let fileExtension = '.wav';
       
-      if (!MediaRecorder.isTypeSupported('audio/wav')) {
-        throw new Error('WAV format is not supported by this browser. Please use a different browser.');
+      if (MediaRecorder.isTypeSupported('audio/wav')) {
+        mimeType = 'audio/wav';
+        fileExtension = '.wav';
+        console.log('Using audio/wav format');
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+        fileExtension = '.webm';
+        console.log('Using audio/webm;codecs=opus format');
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+        fileExtension = '.webm';
+        console.log('Using audio/webm format');
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+        fileExtension = '.mp4';
+        console.log('Using audio/mp4 format');
+      } else {
+        console.warn('No supported audio format found, using browser default');
+        fileExtension = '.wav'; // Default assumption
       }
-      
-      console.log('Using audio/wav format (forced)');
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      const mediaRecorder = new MediaRecorder(stream, 
+        mimeType ? { mimeType } : undefined
+      );
 
       audioChunksRef.current = [];
       
@@ -77,10 +94,10 @@ export function useAudioRecorder() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/wav' 
+          type: mimeType || 'audio/wav' 
         });
         // Add file extension metadata to the blob for proper handling
-        audioBlob.fileExtension = '.wav';
+        audioBlob.fileExtension = fileExtension;
         setAudioBlob(audioBlob);
         setIsRecording(false);
         setIsPaused(false);
