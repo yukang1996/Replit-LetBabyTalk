@@ -43,7 +43,7 @@ export function useAudioRecorder() {
       });
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/mp4'
+        mimeType: 'audio/wav'
       });
 
       audioChunksRef.current = [];
@@ -56,7 +56,7 @@ export function useAudioRecorder() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/mp4' 
+          type: 'audio/wav' 
         });
         setAudioBlob(audioBlob);
         setIsRecording(false);

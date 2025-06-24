@@ -59,13 +59,13 @@ export default function AudioRecorder() {
 
       try {
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.mp4');
+        formData.append('audio', audioBlob, 'recording.wav');
         
         // Prepare metadata for direct API call
         const metadata = {
           user_id: user?.id || 'guest',
           timestamp: new Date().toISOString(),
-          audio_format: 'audio/mp4',
+          audio_format: 'audio/wav',
           pressing: true
         };
         
@@ -90,7 +90,7 @@ export default function AudioRecorder() {
         
         // Now save the recording to our backend with the analysis result
         const recordingFormData = new FormData();
-        recordingFormData.append('audio', audioBlob, 'recording.mp4');
+        recordingFormData.append('audio', audioBlob, 'recording.wav');
         recordingFormData.append('duration', Math.floor(recordingTime).toString());
         recordingFormData.append('analysisResult', JSON.stringify(result));
         
