@@ -63,7 +63,7 @@ export default function AudioRecorder() {
         const fileExtension = audioBlob.fileExtension || '.wav';
         const fileName = `recording${fileExtension}`;
         formData.append('audio', audioBlob, fileName);
-        
+
         // Prepare metadata for direct API call
         const metadata = {
           user_id: user?.id || 'guest',
@@ -71,7 +71,7 @@ export default function AudioRecorder() {
           audio_format: 'audio/wav',
           pressing: true
         };
-        
+
         formData.append('metadata', JSON.stringify(metadata));
 
         // Call the external API directly
@@ -90,13 +90,13 @@ export default function AudioRecorder() {
         }
 
         const result = await response.json();
-        
+
         // Now save the recording to our backend with the analysis result
         const recordingFormData = new FormData();
         recordingFormData.append('audio', audioBlob, 'recording.wav');
         recordingFormData.append('duration', Math.floor(recordingTime).toString());
         recordingFormData.append('analysisResult', JSON.stringify(result));
-        
+
         // Add baby profile ID if available
         if (selectedBaby?.id) {
           recordingFormData.append('babyProfileId', selectedBaby.id.toString());
