@@ -54,7 +54,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/')) {
+    if (file.mimetype.startsWith('audio/') || file.mimetype === 'audio/mp4') {
       cb(null, true);
     } else {
       cb(new Error('Only audio files are allowed'));
@@ -837,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse additional metadata from request
       const { duration, babyProfileId, pressing = true } = req.body;
       const timestamp = new Date().toISOString();
-      const audioFormat = req.file.mimetype || 'audio/webm';
+      const audioFormat = req.file.mimetype || 'audio/mp4';
 
       let audioUrl = `/api/audio/${req.file.filename}`; // Default to local storage
 
@@ -868,7 +868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Step 2: Creating audio-recordings bucket...');
             const { data: newBucket, error: createError } = await supabase.storage.createBucket('audio-recordings', {
               public: false,
-              allowedMimeTypes: ['audio/webm', 'audio/wav', 'audio/mp3', 'audio/mp4', 'audio/mpeg', 'audio/ogg'],
+              allowedMimeTypes: ['audio/mp4', 'audio/wav', 'audio/mp3', 'audio/webm', 'audio/mpeg', 'audio/ogg'],
               fileSizeLimit: 10485760 // 10MB
             });
 
@@ -883,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Generate unique filename for audio recording
-          const fileExtension = path.extname(req.file.originalname || '.webm');
+          const fileExtension = path.extname(req.file.originalname || '.mp4');
           const fileName = `recording_${userId}_${Date.now()}${fileExtension}`;
           console.log('Step 3: Generated filename:', fileName);
 
@@ -945,7 +945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const formData = new FormData.default();
         formData.append('audio', fs.createReadStream(req.file.path), {
-          filename: req.file.originalname || 'recording.webm',
+          filename: req.file.originalname || 'recording.mp4',
           contentType: audioFormat
         });
 

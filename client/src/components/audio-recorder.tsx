@@ -54,7 +54,7 @@ export default function AudioRecorder() {
   const uploadMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('audio', audioBlob, 'recording.mp4');
       formData.append('duration', Math.floor(recordingTime).toString());
       
       // Add baby profile ID if available

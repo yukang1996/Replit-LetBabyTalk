@@ -43,7 +43,7 @@ export function useAudioRecorder() {
       });
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: 'audio/mp4'
       });
 
       audioChunksRef.current = [];
@@ -56,7 +56,7 @@ export function useAudioRecorder() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/webm;codecs=opus' 
+          type: 'audio/mp4' 
         });
         setAudioBlob(audioBlob);
         setIsRecording(false);
