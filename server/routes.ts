@@ -999,6 +999,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { duration, babyProfileId, pressing = true } = req.body;
         const timestamp = new Date().toISOString();
         const audioFormat = req.file.mimetype || "audio/webm";
+        
+        console.log('Audio format metadata:', {
+          originalName: req.file.originalname,
+          detectedMimeType: req.file.mimetype,
+          audioFormat: audioFormat,
+          fileSize: req.file.size
+        });
 
         let audioUrl = `/api/audio/${req.file.filename}`; // Default to local storage
 
@@ -1064,10 +1071,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log("✅ Bucket already exists, skipping creation");
             }
 
-            // Generate unique filename for audio recording
-            const fileExtension = path.extname(
-              req.file.originalname || ".webm",
-            );
+            // Generate unique filename for audio recording based on actual MIME type
+            let fileExtension = path.extname(req.file.originalname || "");
+            if (!fileExtension) {
+              // Determine extension based on MIME type
+              if (audioFormat.includes('mp4')) {
+                fileExtension = '.mp4';
+              } else if (audioFormat.includes('webm')) {
+                fileExtension = '.webm';
+              } else if (audioFormat.includes('wav')) {
+                fileExtension = '.wav';
+              } else if (audioFormat.includes('ogg')) {
+                fileExtension = '.ogg';
+              } else {
+                fileExtension = '.webm'; // fallback
+              }
+            }
             const fileName = `recording_${userId}_${Date.now()}${fileExtension}`;
             console.log("Step 3: Generated filename:", fileName);
 

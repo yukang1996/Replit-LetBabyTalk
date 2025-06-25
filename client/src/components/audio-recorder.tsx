@@ -54,7 +54,18 @@ export default function AudioRecorder() {
   const uploadMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      
+      // Determine correct file extension based on blob type
+      let filename = 'recording.webm'; // default
+      if (audioBlob.type.includes('mp4')) {
+        filename = 'recording.mp4';
+      } else if (audioBlob.type.includes('wav')) {
+        filename = 'recording.wav';
+      } else if (audioBlob.type.includes('ogg')) {
+        filename = 'recording.ogg';
+      }
+      
+      formData.append('audio', audioBlob, filename);
       formData.append('duration', Math.floor(recordingTime).toString());
       
       // Add baby profile ID if available
