@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback } from "react";
 
 export function useAudioRecorder() {
@@ -33,17 +34,6 @@ export function useAudioRecorder() {
 
   const startRecording = useCallback(async () => {
     try {
-      // Check if MediaDevices API is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('MediaDevices API not supported in this browser');
-      }
-
-      // Check if MediaRecorder is supported
-      if (!window.MediaRecorder) {
-        throw new Error('MediaRecorder API not supported in this browser');
-      }
-
-      console.log('Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -52,34 +42,12 @@ export function useAudioRecorder() {
         }
       });
 
-      console.log('Microphone access granted, stream:', stream);
-
-      // Try WAV first, fallback to MP3
-      let mimeType = '';
-      let fileExtension = '';
-
-      if (MediaRecorder.isTypeSupported('audio/wav')) {
-        mimeType = 'audio/wav';
-        fileExtension = '.wav';
-        console.log('Using audio/wav format');
-      } else if (MediaRecorder.isTypeSupported('audio/mp3')) {
-        mimeType = 'audio/mp3';
-        fileExtension = '.mp3';
-        console.log('WAV not supported, using audio/mp3 format');
-      } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
-        mimeType = 'audio/mpeg';
-        fileExtension = '.mp3';
-        console.log('WAV not supported, using audio/mpeg format');
-      } else {
-        throw new Error('Neither WAV nor MP3 format is supported by this browser. Please use a different browser.');
-      }
-
-      const mediaRecorder = new MediaRecorder(stream, 
-        mimeType ? { mimeType } : undefined
-      );
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/mp4'
+      });
 
       audioChunksRef.current = [];
-
+      
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -88,17 +56,15 @@ export function useAudioRecorder() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { 
-          type: mimeType 
+          type: 'audio/mp4' 
         });
-        // Add file extension metadata to the blob for proper handling
-        audioBlob.fileExtension = fileExtension;
         setAudioBlob(audioBlob);
         setIsRecording(false);
         setIsPaused(false);
-
+        
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
-
+        
         // Clear timers
         if (timerRef.current) {
           clearInterval(timerRef.current);
@@ -112,47 +78,29 @@ export function useAudioRecorder() {
 
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start(1000); // Collect data every second
-
+      
       setIsRecording(true);
       setIsPaused(false);
       setRecordingTime(0);
       setAudioBlob(null);
       startTimer();
-
+      
       // Auto-stop after 30 seconds
       autoStopRef.current = setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
       }, 30000);
-
+      
     } catch (error) {
       console.error('Error accessing microphone:', error);
-
-      // Provide specific error messages
-      if (error.name === 'NotAllowedError') {
-        console.error('Microphone access denied by user');
-        alert('Please allow microphone access to record audio. Check your browser permissions.');
-      } else if (error.name === 'NotFoundError') {
-        console.error('No microphone found');
-        alert('No microphone detected. Please check your microphone connection.');
-      } else if (error.name === 'NotSupportedError') {
-        console.error('Microphone not supported');
-        alert('Your browser does not support microphone recording.');
-      } else if (error.name === 'OverconstrainedError') {
-        console.error('Microphone constraints not satisfied');
-        alert('Microphone settings are not supported by your device.');
-      } else {
-        console.error('Unknown microphone error:', error.message);
-        alert(`Microphone error: ${error.message || 'Unknown error'}`);
-      }
     }
   }, [startTimer]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && (mediaRecorderRef.current.state === 'recording' || mediaRecorderRef.current.state === 'paused')) {
       mediaRecorderRef.current.stop();
-
+      
       // Clear auto-stop timer if manually stopped
       if (autoStopRef.current) {
         clearTimeout(autoStopRef.current);
@@ -166,7 +114,7 @@ export function useAudioRecorder() {
       mediaRecorderRef.current.pause();
       setIsPaused(true);
       stopTimer();
-
+      
       // Pause auto-stop timer
       if (autoStopRef.current) {
         clearTimeout(autoStopRef.current);
@@ -180,7 +128,7 @@ export function useAudioRecorder() {
       mediaRecorderRef.current.resume();
       setIsPaused(false);
       startTimer();
-
+      
       // Resume auto-stop timer with remaining time
       const remainingTime = 30000 - (recordingTime * 1000);
       if (remainingTime > 0) {
@@ -201,7 +149,7 @@ export function useAudioRecorder() {
           console.error('Audio resume failed:', error);
         });
         setIsPlaying(true);
-
+        
         // Restart tracking playback time
         playbackTimerRef.current = setInterval(() => {
           if (audioRef.current && !isNaN(audioRef.current.currentTime)) {
@@ -215,7 +163,7 @@ export function useAudioRecorder() {
       if (!audioRef.current) {
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
-
+        
         audio.onloadedmetadata = () => {
           console.log('Audio duration loaded:', audio.duration);
           if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
@@ -240,7 +188,7 @@ export function useAudioRecorder() {
             setCurrentPlaybackTime(audio.currentTime);
           }
         };
-
+        
         audio.onpause = () => {
           setIsPlaying(false);
           if (playbackTimerRef.current) {
@@ -248,7 +196,7 @@ export function useAudioRecorder() {
             playbackTimerRef.current = null;
           }
         };
-
+        
         audio.onended = () => {
           setIsPlaying(false);
           setCurrentPlaybackTime(0);
@@ -271,25 +219,25 @@ export function useAudioRecorder() {
         };
 
         audioRef.current = audio;
-
+        
         // Set fallback duration immediately
         if (audioDuration === 0 || isNaN(audioDuration)) {
           setAudioDuration(recordingTime);
         }
-
+        
         // Set to current playback position if resuming
         if (currentPlaybackTime > 0) {
           audio.currentTime = currentPlaybackTime;
         }
       }
-
+      
       audioRef.current.play().catch(error => {
         console.error('Audio play failed:', error);
         setIsPlaying(false);
       });
-
+      
       setIsPlaying(true);
-
+      
       // Start tracking playback time
       playbackTimerRef.current = setInterval(() => {
         if (audioRef.current && !isNaN(audioRef.current.currentTime)) {
