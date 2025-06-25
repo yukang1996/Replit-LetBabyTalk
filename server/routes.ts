@@ -54,7 +54,15 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/')) {
+    const allowedMimes = [
+      'audio/webm',
+      'audio/mp4',
+      'audio/wav', 
+      'audio/ogg',
+      'audio/mpeg',
+      'audio/mp3'
+    ];
+    if (allowedMimes.includes(file.mimetype) || file.mimetype.startsWith('audio/')) {
       cb(null, true);
     } else {
       cb(new Error('Only audio files are allowed'));
@@ -868,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Step 2: Creating audio-recordings bucket...');
             const { data: newBucket, error: createError } = await supabase.storage.createBucket('audio-recordings', {
               public: false,
-              allowedMimeTypes: ['audio/webm', 'audio/wav', 'audio/mp3', 'audio/mp4', 'audio/mpeg', 'audio/ogg'],
+              allowedMimeTypes: ['audio/webm', 'audio/wav', 'audio/mp3', 'audio/mp4', 'audio/mpeg', 'audio/ogg', 'audio/aac'],
               fileSizeLimit: 10485760 // 10MB
             });
 
