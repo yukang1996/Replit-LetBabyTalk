@@ -52,10 +52,11 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
   });
 
   // Get cry reason description for the predicted class
-  const { data: mainCryReason } = useQuery<CryReasonDescription>({
+  const { data: mainCryReason, isLoading: isLoadingCryReason } = useQuery<CryReasonDescription>({
     queryKey: ["/api/cry-reasons", recording?.predictClass],
     queryFn: async () => {
       if (!recording?.predictClass) throw new Error("No predicted class");
+      console.log("Fetching cry reason for class:", recording.predictClass);
       return await apiRequest("GET", `/api/cry-reasons/${recording.predictClass}`);
     },
     enabled: !!recording?.predictClass,
@@ -173,6 +174,12 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     );
   }
 
+  // Debug logging
+  console.log("Recording data:", recording);
+  console.log("Predicted class:", recording.predictClass);
+  console.log("Main cry reason:", mainCryReason);
+  console.log("Is loading cry reason:", isLoadingCryReason);
+
   const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
   const otherProbs = getOtherProbabilities();
 
@@ -235,7 +242,16 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           )}
 
           {/* Section 3: Explanation */}
-          {mainCryReason && (
+          {isLoadingCryReason ? (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500 text-sm">Loading explanation...</p>
+              </CardContent>
+            </Card>
+          ) : mainCryReason ? (
             <Card className="glass-effect">
               <CardHeader>
                 <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
@@ -246,10 +262,30 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                 </p>
               </CardContent>
             </Card>
-          )}
+          ) : recording?.predictClass ? (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500 text-sm">
+                  No detailed explanation available for {recording.predictClass.replace(/_/g, ' ')}.
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Section 4: Recommendations */}
-          {mainCryReason && (
+          {isLoadingCryReason ? (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500 text-sm">Loading recommendations...</p>
+              </CardContent>
+            </Card>
+          ) : mainCryReason && mainCryReason.recommendations && mainCryReason.recommendations.length > 0 ? (
             <Card className="glass-effect">
               <CardHeader>
                 <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
@@ -265,7 +301,18 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                 </div>
               </CardContent>
             </Card>
-          )}
+          ) : recording?.predictClass ? (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500 text-sm">
+                  No specific recommendations available for {recording.predictClass.replace(/_/g, ' ')}.
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Section 5: Rating and Correction */}
           <Card className="glass-effect">

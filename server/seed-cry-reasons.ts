@@ -141,12 +141,19 @@ async function seedCryReasons() {
     
     // Check if data already exists
     const existingCount = await db.select().from(cryReasonDescriptions);
+    console.log("Existing cry reason descriptions count:", existingCount.length);
+    console.log("Target cry reasons count:", cryReasons.length);
+    
     if (existingCount.length >= cryReasons.length) {
       console.log("Cry reason descriptions already seeded!");
+      // Log existing class names for debugging
+      const existingClassNames = existingCount.map(r => r.className);
+      console.log("Existing class names:", existingClassNames);
       return;
     }
     
     for (const reason of cryReasons) {
+      console.log("Seeding cry reason:", reason.className);
       await db.insert(cryReasonDescriptions)
         .values(reason)
         .onConflictDoUpdate({

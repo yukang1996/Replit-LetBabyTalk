@@ -1308,9 +1308,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cry-reasons/:className", async (req, res) => {
     try {
       const className = req.params.className;
+      console.log("Fetching cry reason description for class:", className);
+      
       const description = await storage.getCryReasonDescription(className);
+      console.log("Found cry reason description:", description);
 
       if (!description) {
+        console.log("No cry reason description found for class:", className);
         return res
           .status(404)
           .json({ message: "Cry reason description not found" });
