@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -7,23 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ThumbsUp, ThumbsDown, Clock, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BearMascot from "@/components/bear-mascot";
 
 interface Recording {
   id: number;
-  analysisResult?: {
-    cryType: string;
-    confidence: number;
-    recommendations: string[];
-    rawResult?: {
-      class: string;
-      probs: Record<string, number>;
-      show: boolean;
-    };
-  };
+  analysisResult?: Record<string, number>;
+  predictClass?: string;
   rateState?: string;
   duration?: number;
   recordedAt: string;
+}
+
+interface CryReasonDescription {
+  id: number;
+  className: string;
+  title: string;
+  description: string;
+  recommendations: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ResultsDialogProps {
@@ -35,6 +39,8 @@ interface ResultsDialogProps {
 export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showCorrectionSelector, setShowCorrectionSelector] = useState(false);
+  const [selectedCorrection, setSelectedCorrection] = useState<string>("");
 
   const { data: recording, isLoading } = useQuery<Recording>({
     queryKey: ["/api/recordings", recordingId],
@@ -43,6 +49,26 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
       return await apiRequest("GET", `/api/recordings/${recordingId}`);
     },
     enabled: !!recordingId && isOpen,
+  });
+
+  // Get cry reason description for the predicted class
+  const { data: mainCryReason } = useQuery<CryReasonDescription>({
+    queryKey: ["/api/cry-reasons", recording?.predictClass],
+    queryFn: async () => {
+      if (!recording?.predictClass) throw new Error("No predicted class");
+      return await apiRequest("GET", `/api/cry-reasons/${recording.predictClass}`);
+    },
+    enabled: !!recording?.predictClass,
+  });
+
+  // Get all cry reasons for the correction selector
+  const { data: allCryReasons = [] } = useQuery<CryReasonDescription[]>({
+    queryKey: ["/api/cry-reasons"],
+    queryFn: async () => {
+      // We'll need to create this endpoint to get all cry reasons
+      return await apiRequest("GET", "/api/cry-reasons");
+    },
+    enabled: showCorrectionSelector,
   });
 
   const rateMutation = useMutation({
@@ -66,7 +92,22 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
   });
 
   const handleRate = (rateState: string) => {
-    rateMutation.mutate({ rateState });
+    if (rateState === 'bad') {
+      setShowCorrectionSelector(true);
+    } else {
+      rateMutation.mutate({ rateState });
+    }
+  };
+
+  const handleCorrection = () => {
+    if (selectedCorrection) {
+      rateMutation.mutate({ 
+        rateState: 'bad', 
+        rateReason: `User corrected to: ${selectedCorrection}` 
+      });
+      setShowCorrectionSelector(false);
+      setSelectedCorrection("");
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -76,27 +117,31 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     });
   };
 
-  const getCryTypeDisplay = (cryType: string) => {
-    const typeMap: Record<string, { label: string; emoji: string; color: string }> = {
-      'hunger': { label: 'Hungry', emoji: '🍼', color: 'bg-orange-100 text-orange-800' },
-      'tired': { label: 'Tired', emoji: '😴', color: 'bg-blue-100 text-blue-800' },
-      'discomfort': { label: 'Uncomfortable', emoji: '😣', color: 'bg-yellow-100 text-yellow-800' },
-      'pain': { label: 'Pain', emoji: '😢', color: 'bg-red-100 text-red-800' },
-      'normal': { label: 'Normal', emoji: '😊', color: 'bg-green-100 text-green-800' },
-      'no_cry': { label: 'No Cry Detected', emoji: '🤫', color: 'bg-gray-100 text-gray-800' },
-      'unknown': { label: 'Unknown', emoji: '❓', color: 'bg-gray-100 text-gray-800' },
+  const getCryIcon = (className: string) => {
+    const iconMap: Record<string, string> = {
+      'hunger_food': '🍼',
+      'hunger_milk': '🍼',
+      'sleepiness': '😴',
+      'lack_of_security': '🤗',
+      'diaper_urine': '💧',
+      'diaper_bowel': '💩',
+      'internal_pain': '😢',
+      'external_pain': '😣',
+      'physical_discomfort': '😫',
+      'unmet_needs': '😰',
+      'breathing_difficulties': '😤',
+      'normal': '😊',
+      'no_cry_detected': '🤫',
+      'unknown': '❓',
     };
-    return typeMap[cryType] || typeMap['unknown'];
+    return iconMap[className] || '❓';
   };
 
   const getOtherProbabilities = () => {
-    if (!recording?.analysisResult?.rawResult?.probs) return [];
+    if (!recording?.analysisResult || !recording?.predictClass) return [];
 
-    const mainClass = recording.analysisResult.rawResult.class;
-    const probs = recording.analysisResult.rawResult.probs;
-
-    return Object.entries(probs)
-      .filter(([key]) => key !== mainClass)
+    return Object.entries(recording.analysisResult)
+      .filter(([key]) => key !== recording.predictClass)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 3);
   };
@@ -128,8 +173,7 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     );
   }
 
-  const mainCryType = getCryTypeDisplay(recording.analysisResult?.cryType || 'unknown');
-  const confidence = recording.analysisResult?.confidence || 0;
+  const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
   const otherProbs = getOtherProbabilities();
 
   return (
@@ -140,21 +184,22 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Bear Mascot and Main Result */}
+          {/* Section 1: Main Result with Large Icon and Probability */}
           <div className="text-center">
             <div className="w-32 h-32 mx-auto mb-4 bg-white rounded-3xl border-4 border-blue-200 flex items-center justify-center shadow-lg">
-              <BearMascot className="w-24 h-24" />
+              <div className="text-6xl">
+                {getCryIcon(recording.predictClass || 'unknown')}
+              </div>
             </div>
 
             <div className="text-4xl font-bold text-gray-800 mb-3">
-              {Math.round(confidence * 100)}%
+              {Math.round(mainProbability * 100)}%
             </div>
 
             <div className="flex items-center justify-center mb-4">
-              <span className="text-2xl mr-2">{mainCryType.emoji}</span>
-              <Badge className={`${mainCryType.color} text-lg px-4 py-2 rounded-full`}>
-                {mainCryType.label}
-              </Badge>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {mainCryReason?.title || recording.predictClass?.replace(/_/g, ' ') || 'Unknown'}
+              </h2>
             </div>
 
             <div className="flex items-center justify-center text-sm text-gray-500">
@@ -163,137 +208,162 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
             </div>
           </div>
 
-          {/* Other Probabilities */}
+          {/* Section 2: Other Probabilities */}
           {otherProbs.length > 0 && (
             <Card className="glass-effect">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  {otherProbs.map(([key, prob]) => {
-                    const typeInfo = getCryTypeDisplay(key === 'hunger_food' ? 'hunger' : 
-                                                      key === 'sleepiness' ? 'tired' : 
-                                                      key.includes('pain') ? 'pain' : 'discomfort');
-                    return (
-                      <div key={key} className="flex items-center justify-between py-2">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-lg">{typeInfo.emoji}</span>
-                          <span className="text-gray-700 font-medium">{typeInfo.label}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 font-bold">
-                            {Math.round(prob * 100)}%
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <CardHeader>
+                <CardTitle className="text-base">Other Possibilities</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {otherProbs.map(([key, prob]) => (
+                  <div key={key} className="flex items-center justify-between py-2">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-lg">{getCryIcon(key)}</span>
+                      <span className="text-gray-700 font-medium">
+                        {key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-600 font-bold">
+                        {Math.round(prob * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Section 3: Explanation */}
+          {mainCryReason && (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 leading-relaxed text-sm">
+                  {mainCryReason.description}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Section 4: Recommendations */}
+          {mainCryReason && (
+            <Card className="glass-effect">
+              <CardHeader>
+                <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {mainCryReason.recommendations.map((rec, index) => (
+                    <div key={index} className="flex items-start space-x-2">
+                      <span className="text-pink-500 mt-1">•</span>
+                      <span className="text-gray-600 text-sm">{rec}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Explanation */}
-          <Card className="glass-effect">
-            <CardHeader>
-              <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 leading-relaxed text-sm">
-                {recording.analysisResult?.cryType === 'hunger' ? 
-                  "Your baby may be feeling hungry. This type of cry is usually rhythmic and persistent, indicating the baby needs feeding." :
-                recording.analysisResult?.cryType === 'tired' ?
-                  "Your baby may be feeling tired. Tired cries are usually more intermittent, and the baby needs rest." :
-                recording.analysisResult?.cryType === 'discomfort' ?
-                  "Your baby may be feeling uncomfortable. This could be due to a wet diaper, being too hot or too cold." :
-                recording.analysisResult?.cryType === 'pain' ?
-                  "Your baby may be in pain. This type of cry is usually sharper and more persistent, requiring immediate attention." :
-                  "Based on the audio analysis, we detected your baby's cry pattern, but need more information to determine the specific cause."
-                }
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Recommendations */}
-          <Card className="glass-effect">
-            <CardHeader>
-              <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {recording.analysisResult?.recommendations?.map((rec, index) => (
-                  <div key={index} className="flex items-start space-x-2">
-                    <span className="text-pink-500 mt-1">•</span>
-                    <span className="text-gray-600 text-sm">{rec}</span>
-                  </div>
-                )) || (
-                  <div className="space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <span className="text-pink-500 mt-1">•</span>
-                      <span className="text-gray-600 text-sm">Stay calm and observe other signs from your baby</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <span className="text-pink-500 mt-1">•</span>
-                      <span className="text-gray-600 text-sm">Try common soothing methods like holding or gentle rocking</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <span className="text-pink-500 mt-1">•</span>
-                      <span className="text-gray-600 text-sm">If crying persists, consult your pediatrician</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Feedback Section */}
+          {/* Section 5: Rating and Correction */}
           <Card className="glass-effect">
             <CardContent className="p-4">
-              <h3 className="text-base font-medium text-gray-800 text-center mb-4">
-                Rate the prediction accuracy
-              </h3>
-              <div className="flex justify-center space-x-6">
-                <Button
-                  variant={recording.rateState === 'good' ? 'default' : 'outline'}
-                  size="lg"
-                  className={`rounded-full w-16 h-16 shadow-lg transition-all ${
-                    recording.rateState === 'good' 
-                      ? 'bg-pink-500 hover:bg-pink-600 scale-105' 
-                      : 'border-2 border-pink-300 hover:bg-pink-50 hover:scale-105'
-                  }`}
-                  onClick={() => handleRate('good')}
-                  disabled={rateMutation.isPending}
-                >
-                  <ThumbsUp className={`w-6 h-6 ${
-                    recording.rateState === 'good' ? 'text-white' : 'text-pink-500'
-                  }`} />
-                </Button>
+              {!showCorrectionSelector ? (
+                <>
+                  <h3 className="text-base font-medium text-gray-800 text-center mb-4">
+                    Rate the prediction accuracy
+                  </h3>
+                  <div className="flex justify-center space-x-6">
+                    <Button
+                      variant={recording.rateState === 'good' ? 'default' : 'outline'}
+                      size="lg"
+                      className={`rounded-full w-16 h-16 shadow-lg transition-all ${
+                        recording.rateState === 'good' 
+                          ? 'bg-pink-500 hover:bg-pink-600 scale-105' 
+                          : 'border-2 border-pink-300 hover:bg-pink-50 hover:scale-105'
+                      }`}
+                      onClick={() => handleRate('good')}
+                      disabled={rateMutation.isPending || !!recording.rateState}
+                    >
+                      <ThumbsUp className={`w-6 h-6 ${
+                        recording.rateState === 'good' ? 'text-white' : 'text-pink-500'
+                      }`} />
+                    </Button>
 
-                <Button
-                  variant={recording.rateState === 'bad' ? 'default' : 'outline'}
-                  size="lg"
-                  className={`rounded-full w-16 h-16 shadow-lg transition-all ${
-                    recording.rateState === 'bad' 
-                      ? 'bg-blue-500 hover:bg-blue-600 scale-105' 
-                      : 'border-2 border-blue-300 hover:bg-blue-50 hover:scale-105'
-                  }`}
-                  onClick={() => handleRate('bad')}
-                  disabled={rateMutation.isPending}
-                >
-                  <ThumbsDown className={`w-6 h-6 ${
-                    recording.rateState === 'bad' ? 'text-white' : 'text-blue-500'
-                  }`} />
-                </Button>
-              </div>
+                    <Button
+                      variant={recording.rateState === 'bad' ? 'default' : 'outline'}
+                      size="lg"
+                      className={`rounded-full w-16 h-16 shadow-lg transition-all ${
+                        recording.rateState === 'bad' 
+                          ? 'bg-blue-500 hover:bg-blue-600 scale-105' 
+                          : 'border-2 border-blue-300 hover:bg-blue-50 hover:scale-105'
+                      }`}
+                      onClick={() => handleRate('bad')}
+                      disabled={rateMutation.isPending || !!recording.rateState}
+                    >
+                      <ThumbsDown className={`w-6 h-6 ${
+                        recording.rateState === 'bad' ? 'text-white' : 'text-blue-500'
+                      }`} />
+                    </Button>
+                  </div>
 
-              {recording.rateState && (
-                <p className="text-center text-sm text-gray-500 mt-4">
-                  Thank you for your feedback!
-                </p>
-              )}
+                  {recording.rateState && (
+                    <p className="text-center text-sm text-gray-500 mt-4">
+                      Thank you for your feedback!
+                    </p>
+                  )}
 
-              {rateMutation.isPending && (
-                <p className="text-center text-sm text-gray-500 mt-4">
-                  Recording your feedback...
-                </p>
+                  {rateMutation.isPending && (
+                    <p className="text-center text-sm text-gray-500 mt-4">
+                      Recording your feedback...
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h3 className="text-base font-medium text-gray-800 text-center mb-4">
+                    What do you think is the correct reason?
+                  </h3>
+                  <div className="space-y-4">
+                    <Select value={selectedCorrection} onValueChange={setSelectedCorrection}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select the correct cry reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allCryReasons.map((reason) => (
+                          <SelectItem key={reason.className} value={reason.className}>
+                            <div className="flex items-center space-x-2">
+                              <span>{getCryIcon(reason.className)}</span>
+                              <span>{reason.title}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <div className="flex space-x-2">
+                      <Button 
+                        onClick={handleCorrection}
+                        disabled={!selectedCorrection || rateMutation.isPending}
+                        className="flex-1"
+                      >
+                        Submit Correction
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setShowCorrectionSelector(false);
+                          setSelectedCorrection("");
+                        }}
+                        disabled={rateMutation.isPending}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

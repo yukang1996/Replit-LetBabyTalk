@@ -1325,6 +1325,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all cry reason descriptions
+  app.get("/api/cry-reasons", async (req, res) => {
+    try {
+      const descriptions = await storage.getAllCryReasonDescriptions();
+      res.json(descriptions);
+    } catch (error) {
+      console.error("Error fetching cry reason descriptions:", error);
+      res
+        .status(500)
+        .json({ message: "Failed to fetch cry reason descriptions" });
+    }
+  });
+
   // Initialize cry reasons if needed
   app.post("/api/init-cry-reasons", async (req, res) => {
     try {

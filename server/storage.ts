@@ -239,7 +239,7 @@ export class DatabaseStorage implements IStorage {
     return recording;
   }
 
-  async getCryReasonDescription(className: string) {
+  async getCryReasonDescription(className: string): Promise<CryReasonDescription | undefined> {
     const [description] = await db
       .select()
       .from(cryReasonDescriptions)
@@ -248,7 +248,7 @@ export class DatabaseStorage implements IStorage {
     return description;
   }
 
-  async getAllCryReasonDescriptions() {
+  async getAllCryReasonDescriptions(): Promise<CryReasonDescription[]> {
     return await db
       .select()
       .from(cryReasonDescriptions);

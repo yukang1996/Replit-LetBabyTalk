@@ -92,8 +92,6 @@ export default function AudioRecorder() {
         title: "Analysis Complete!",
         description: `Detected: ${data.predictClass?.replace(/_/g, ' ') || 'Unknown cry type'}`,
       });
-      // Navigate to results page
-      //navigate(`/results/${data.id}`);
       setCurrentRecordingId(data.id);
       setShowResultsDialog(true);
     },
