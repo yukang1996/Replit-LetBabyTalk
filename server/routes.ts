@@ -1142,9 +1142,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
         }
 
-        // Call external AI API
+        // Call AI API (mock in development, real in production)
         let analysisResult;
         try {
+          const useMockAPI = process.env.NODE_ENV === "development" || process.env.USE_MOCK_API === "true";
+          const apiUrl = useMockAPI 
+            ? `${req.protocol}://${req.get('host')}/api/mock_process_audio`
+            : "https://api.letbabytalk.com/process_audio";
+
+          console.log(`Using ${useMockAPI ? 'MOCK' : 'REAL'} AI API: ${apiUrl}`);
+
           const FormData = await import("form-data");
           const fetch = await import("node-fetch");
 
@@ -1164,17 +1171,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           formData.append("metadata", JSON.stringify(metadata));
 
-          const response = await fetch.default(
-            "https://api.letbabytalk.com/process_audio",
-            {
-              method: "POST",
-              headers: {
-                ...formData.getHeaders(),
-              },
-              body: formData,
-              timeout: 30000, // 30 seconds timeout
+          const response = await fetch.default(apiUrl, {
+            method: "POST",
+            headers: {
+              ...formData.getHeaders(),
             },
-          );
+            body: formData,
+            timeout: 30000, // 30 seconds timeout
+          });
           console.log("see: ", response);
           if (!response.ok) {
             const errorText = await response.text(); // Read the response body
@@ -1255,6 +1259,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching recording:", error);
       res.status(500).json({ message: "Failed to fetch recording" });
+    }
+  });
+
+  // Mock process_audio endpoint for development
+  app.post("/api/mock_process_audio", upload.single("audio"), async (req, res) => {
+    try {
+      console.log("Mock AI API called with:", {
+        filename: req.file?.originalname,
+        mimetype: req.file?.mimetype,
+        metadata: req.body.metadata
+      });
+
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Return hardcoded successful response
+      const mockResponse = {
+        "data": {
+          "result": {
+            "class": "hunger_food",
+            "probs": {
+              "hunger_food": 0.961,
+              "hunger_milk": 0.02,
+              "sleepiness": 0.04,
+              "lack_of_security": 0.022,
+              "diaper_urine": 0.032,
+              "diaper_bowel": 0.03,
+              "internal_pain": 0.02,
+              "external_pain": 0.001,
+              "physical_discomfort": 0.01,
+              "unmet_needs": 0.003,
+              "breathing_difficulties": 0.001,
+              "normal": 0.09,
+              "no_cry_detected": 0.03
+            },
+            "show": true
+          }
+        }
+      };
+
+      res.json(mockResponse);
+    } catch (error) {
+      console.error("Mock AI API Error:", error);
+      res.status(500).json({ error: "Mock API failed" });
     }
   });
 
