@@ -5,9 +5,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ThumbsUp, ThumbsDown, Clock, X } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import BearMascot from "@/components/bear-mascot";
 
 interface Recording {
@@ -35,7 +46,11 @@ interface ResultsDialogProps {
   recordingId: number | null;
 }
 
-export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsDialogProps) {
+export default function ResultsDialog({
+  isOpen,
+  onClose,
+  recordingId,
+}: ResultsDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showCorrectionSelector, setShowCorrectionSelector] = useState(false);
@@ -45,41 +60,58 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     queryKey: ["/api/recordings", recordingId],
     queryFn: async () => {
       if (!recordingId) throw new Error("No recording ID");
-      return await apiRequest("GET", `/api/recordings/${recordingId}`);
+      const res = await apiRequest("GET", `/api/recordings/${recordingId}`);
+      return await res.json(); // ✅ Manually parse JSON here
     },
     enabled: !!recordingId && isOpen,
   });
 
   // Get cry reason description for the predicted class
-  const { data: mainCryReason, isLoading: isLoadingCryReason } = useQuery<CryReasonDescription>({
-    queryKey: ["/api/cry-reasons", recording?.predictClass],
-    queryFn: async () => {
-      if (!recording?.predictClass) throw new Error("No predicted class");
-      console.log("Fetching cry reason for class:", recording.predictClass);
-      return await apiRequest("GET", `/api/cry-reasons/${recording.predictClass}`);
-    },
-    enabled: !!recording?.predictClass,
-  });
+  const { data: mainCryReason, isLoading: isLoadingCryReason } =
+    useQuery<CryReasonDescription>({
+      queryKey: ["/api/cry-reasons", recording?.predictClass],
+      queryFn: async () => {
+        if (!recording?.predictClass) throw new Error("No predicted class");
+        console.log("Fetching cry reason for class:", recording.predictClass);
+        const res = await apiRequest(
+          "GET",
+          `/api/cry-reasons/${recording.predictClass}`,
+        );
+        return await res.json();
+      },
+      enabled: !!recording?.predictClass,
+    });
 
   // Get all cry reasons for the correction selector
-  const { data: allCryReasons = [], isError: allCryReasonsError } = useQuery<CryReasonDescription[]>({
+  const { data: allCryReasons = [], isError: allCryReasonsError } = useQuery<
+    CryReasonDescription[]
+  >({
     queryKey: ["/api/cry-reasons"],
     queryFn: async () => {
       console.log("Fetching all cry reasons...");
-      const result = await apiRequest("GET", "/api/cry-reasons");
+      const res = await apiRequest("GET", "/api/cry-reasons");
+      const result = await res.json(); // ✅ Important fix
       console.log("All cry reasons result:", result);
-      // Ensure we always return an array
       return Array.isArray(result) ? result : [];
     },
     enabled: showCorrectionSelector,
   });
 
   const rateMutation = useMutation({
-    mutationFn: async (rateData: { rateState: string; rateReason?: string }) => {
-      return await apiRequest("POST", `/api/recordings/${recordingId}/rate`, rateData);
+    mutationFn: async (rateData: {
+      rateState: string;
+      rateReason?: string;
+    }) => {
+      return await apiRequest(
+        "POST",
+        `/api/recordings/${recordingId}/rate`,
+        rateData,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/recordings", recordingId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/recordings", recordingId],
+      });
       toast({
         title: "Feedback Submitted",
         description: "Thank you for your feedback!",
@@ -95,7 +127,7 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
   });
 
   const handleRate = (rateState: string) => {
-    if (rateState === 'bad') {
+    if (rateState === "bad") {
       setShowCorrectionSelector(true);
     } else {
       rateMutation.mutate({ rateState });
@@ -104,9 +136,9 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
 
   const handleCorrection = () => {
     if (selectedCorrection) {
-      rateMutation.mutate({ 
-        rateState: 'bad', 
-        rateReason: `User corrected to: ${selectedCorrection}` 
+      rateMutation.mutate({
+        rateState: "bad",
+        rateReason: `User corrected to: ${selectedCorrection}`,
       });
       setShowCorrectionSelector(false);
       setSelectedCorrection("");
@@ -114,30 +146,30 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getCryIcon = (className: string) => {
     const iconMap: Record<string, string> = {
-      'hunger_food': '🍼',
-      'hunger_milk': '🍼',
-      'sleepiness': '😴',
-      'lack_of_security': '🤗',
-      'diaper_urine': '💧',
-      'diaper_bowel': '💩',
-      'internal_pain': '😢',
-      'external_pain': '😣',
-      'physical_discomfort': '😫',
-      'unmet_needs': '😰',
-      'breathing_difficulties': '😤',
-      'normal': '😊',
-      'no_cry_detected': '🤫',
-      'unknown': '❓',
+      hunger_food: "🍼",
+      hunger_milk: "🍼",
+      sleepiness: "😴",
+      lack_of_security: "🤗",
+      diaper_urine: "💧",
+      diaper_bowel: "💩",
+      internal_pain: "😢",
+      external_pain: "😣",
+      physical_discomfort: "😫",
+      unmet_needs: "😰",
+      breathing_difficulties: "😤",
+      normal: "😊",
+      no_cry_detected: "🤫",
+      unknown: "❓",
     };
-    return iconMap[className] || '❓';
+    return iconMap[className] || "❓";
   };
 
   const getOtherProbabilities = () => {
@@ -145,7 +177,7 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
 
     return Object.entries(recording.analysisResult)
       .filter(([key]) => key !== recording.predictClass)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3);
   };
 
@@ -187,15 +219,18 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
   console.log("Recording error:", null);
   console.log("=== END DEBUG ===");
 
-  const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
+  const mainProbability =
+    recording.analysisResult?.[recording.predictClass || "unknown"] || 0;
   const otherProbs = getOtherProbabilities();
 
-   if (!recording.analysisResult && !recording.predictClass) {
+  if (!recording.analysisResult && !recording.predictClass) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md">
           <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">No analysis results available for this recording.</p>
+            <p className="text-gray-500 mb-4">
+              No analysis results available for this recording.
+            </p>
             <Button onClick={onClose}>Close</Button>
           </div>
         </DialogContent>
@@ -207,7 +242,9 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center text-lg font-semibold">Analysis Results</DialogTitle>
+          <DialogTitle className="text-center text-lg font-semibold">
+            Analysis Results
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -215,7 +252,7 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           <div className="text-center">
             <div className="w-32 h-32 mx-auto mb-4 bg-white rounded-3xl border-4 border-blue-200 flex items-center justify-center shadow-lg">
               <div className="text-6xl">
-                {getCryIcon(recording.predictClass || 'unknown')}
+                {getCryIcon(recording.predictClass || "unknown")}
               </div>
             </div>
 
@@ -225,7 +262,9 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
 
             <div className="flex items-center justify-center mb-4">
               <h2 className="text-xl font-semibold text-gray-800">
-                {mainCryReason?.title || recording.predictClass?.replace(/_/g, ' ') || 'Unknown'}
+                {mainCryReason?.title ||
+                  recording.predictClass?.replace(/_/g, " ") ||
+                  "Unknown"}
               </h2>
             </div>
 
@@ -243,11 +282,16 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
               </CardHeader>
               <CardContent className="space-y-3">
                 {otherProbs.map(([key, prob]) => (
-                  <div key={key} className="flex items-center justify-between py-2">
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-2"
+                  >
                     <div className="flex items-center space-x-3">
                       <span className="text-lg">{getCryIcon(key)}</span>
                       <span className="text-gray-700 font-medium">
-                        {key.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}
+                        {key
+                          .replace(/_/g, " ")
+                          .replace(/^\w/, (c) => c.toUpperCase())}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -265,7 +309,9 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           {isLoadingCryReason ? (
             <Card className="glass-effect">
               <CardHeader>
-                <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  Explanation
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-500 text-sm">Loading explanation...</p>
@@ -274,7 +320,9 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           ) : mainCryReason ? (
             <Card className="glass-effect">
               <CardHeader>
-                <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  Explanation
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 leading-relaxed text-sm">
@@ -285,11 +333,14 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           ) : recording?.predictClass ? (
             <Card className="glass-effect">
               <CardHeader>
-                <CardTitle className="text-base text-gray-800">Explanation</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  Explanation
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-500 text-sm">
-                  No detailed explanation available for {recording.predictClass.replace(/_/g, ' ')}.
+                  No detailed explanation available for{" "}
+                  {recording.predictClass.replace(/_/g, " ")}.
                 </p>
               </CardContent>
             </Card>
@@ -299,16 +350,24 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           {isLoadingCryReason ? (
             <Card className="glass-effect">
               <CardHeader>
-                <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  Recommendations
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500 text-sm">Loading recommendations...</p>
+                <p className="text-gray-500 text-sm">
+                  Loading recommendations...
+                </p>
               </CardContent>
             </Card>
-          ) : mainCryReason && mainCryReason.recommendations && mainCryReason.recommendations.length > 0 ? (
+          ) : mainCryReason &&
+            mainCryReason.recommendations &&
+            mainCryReason.recommendations.length > 0 ? (
             <Card className="glass-effect">
               <CardHeader>
-                <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  Recommendations
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -324,11 +383,14 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
           ) : recording?.predictClass ? (
             <Card className="glass-effect">
               <CardHeader>
-                <CardTitle className="text-base text-gray-800">Recommendations</CardTitle>
+                <CardTitle className="text-base text-gray-800">
+                  Recommendations
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-500 text-sm">
-                  No specific recommendations available for {recording.predictClass.replace(/_/g, ' ')}.
+                  No specific recommendations available for{" "}
+                  {recording.predictClass.replace(/_/g, " ")}.
                 </p>
               </CardContent>
             </Card>
@@ -344,35 +406,47 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                   </h3>
                   <div className="flex justify-center space-x-6">
                     <Button
-                      variant={recording.rateState === 'good' ? 'default' : 'outline'}
+                      variant={
+                        recording.rateState === "good" ? "default" : "outline"
+                      }
                       size="lg"
                       className={`rounded-full w-16 h-16 shadow-lg transition-all ${
-                        recording.rateState === 'good' 
-                          ? 'bg-pink-500 hover:bg-pink-600 scale-105' 
-                          : 'border-2 border-pink-300 hover:bg-pink-50 hover:scale-105'
+                        recording.rateState === "good"
+                          ? "bg-pink-500 hover:bg-pink-600 scale-105"
+                          : "border-2 border-pink-300 hover:bg-pink-50 hover:scale-105"
                       }`}
-                      onClick={() => handleRate('good')}
+                      onClick={() => handleRate("good")}
                       disabled={rateMutation.isPending || !!recording.rateState}
                     >
-                      <ThumbsUp className={`w-6 h-6 ${
-                        recording.rateState === 'good' ? 'text-white' : 'text-pink-500'
-                      }`} />
+                      <ThumbsUp
+                        className={`w-6 h-6 ${
+                          recording.rateState === "good"
+                            ? "text-white"
+                            : "text-pink-500"
+                        }`}
+                      />
                     </Button>
 
                     <Button
-                      variant={recording.rateState === 'bad' ? 'default' : 'outline'}
+                      variant={
+                        recording.rateState === "bad" ? "default" : "outline"
+                      }
                       size="lg"
                       className={`rounded-full w-16 h-16 shadow-lg transition-all ${
-                        recording.rateState === 'bad' 
-                          ? 'bg-blue-500 hover:bg-blue-600 scale-105' 
-                          : 'border-2 border-blue-300 hover:bg-blue-50 hover:scale-105'
+                        recording.rateState === "bad"
+                          ? "bg-blue-500 hover:bg-blue-600 scale-105"
+                          : "border-2 border-blue-300 hover:bg-blue-50 hover:scale-105"
                       }`}
-                      onClick={() => handleRate('bad')}
+                      onClick={() => handleRate("bad")}
                       disabled={rateMutation.isPending || !!recording.rateState}
                     >
-                      <ThumbsDown className={`w-6 h-6 ${
-                        recording.rateState === 'bad' ? 'text-white' : 'text-blue-500'
-                      }`} />
+                      <ThumbsDown
+                        className={`w-6 h-6 ${
+                          recording.rateState === "bad"
+                            ? "text-white"
+                            : "text-blue-500"
+                        }`}
+                      />
                     </Button>
                   </div>
 
@@ -394,14 +468,21 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                     What do you think is the correct reason?
                   </h3>
                   <div className="space-y-4">
-                    <Select value={selectedCorrection} onValueChange={setSelectedCorrection}>
+                    <Select
+                      value={selectedCorrection}
+                      onValueChange={setSelectedCorrection}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select the correct cry reason" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.isArray(allCryReasons) && allCryReasons.length > 0 ? (
+                        {Array.isArray(allCryReasons) &&
+                        allCryReasons.length > 0 ? (
                           allCryReasons.map((reason) => (
-                            <SelectItem key={reason.className} value={reason.className}>
+                            <SelectItem
+                              key={reason.className}
+                              value={reason.className}
+                            >
                               <div className="flex items-center space-x-2">
                                 <span>{getCryIcon(reason.className)}</span>
                                 <span>{reason.title}</span>
@@ -409,20 +490,22 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem disabled value="">No cry reasons available</SelectItem>
+                          <SelectItem disabled value="">
+                            No cry reasons available
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
 
                     <div className="flex space-x-2">
-                      <Button 
+                      <Button
                         onClick={handleCorrection}
                         disabled={!selectedCorrection || rateMutation.isPending}
                         className="flex-1"
                       >
                         Submit Correction
                       </Button>
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => {
                           setShowCorrectionSelector(false);
