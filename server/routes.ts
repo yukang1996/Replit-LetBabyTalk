@@ -1308,6 +1308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cry-reasons/:className", async (req, res) => {
     try {
       const className = req.params.className;
+      console.log("=== CRY REASON DESCRIPTION API DEBUG ===");
       console.log("Fetching cry reason description for class:", className);
       
       const description = await storage.getCryReasonDescription(className);
@@ -1315,14 +1316,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!description) {
         console.log("No cry reason description found for class:", className);
+        console.log("=== END CRY REASON DEBUG ===");
         return res
           .status(404)
           .json({ message: "Cry reason description not found" });
       }
 
+      console.log("Successfully returning cry reason description");
+      console.log("=== END CRY REASON DEBUG ===");
       res.json(description);
     } catch (error) {
       console.error("Error fetching cry reason description:", error);
+      console.log("=== END CRY REASON DEBUG ===");
       res
         .status(500)
         .json({ message: "Failed to fetch cry reason description" });
@@ -1332,10 +1337,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all cry reason descriptions
   app.get("/api/cry-reasons", async (req, res) => {
     try {
+      console.log("=== ALL CRY REASONS API DEBUG ===");
       const descriptions = await storage.getAllCryReasonDescriptions();
+      console.log("Fetched cry reason descriptions count:", descriptions.length);
+      console.log("Sample descriptions:", descriptions.slice(0, 2));
+      console.log("=== END ALL CRY REASONS DEBUG ===");
       res.json(descriptions);
     } catch (error) {
       console.error("Error fetching cry reason descriptions:", error);
+      console.log("=== END ALL CRY REASONS DEBUG ===");
       res
         .status(500)
         .json({ message: "Failed to fetch cry reason descriptions" });

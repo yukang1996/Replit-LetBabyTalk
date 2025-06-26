@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -174,11 +173,16 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     );
   }
 
-  // Debug logging
+  console.log("=== RESULTS DIALOG DEBUG ===");
+  console.log("Recording ID:", recordingId);
   console.log("Recording data:", recording);
-  console.log("Predicted class:", recording.predictClass);
+  console.log("Predicted class:", recording?.predictClass);
+  console.log("All cry reasons:", allCryReasons);
   console.log("Main cry reason:", mainCryReason);
+  console.log("Is loading recording:", isLoading);
   console.log("Is loading cry reason:", isLoadingCryReason);
+  console.log("Recording error:", null);
+  console.log("=== END DEBUG ===");
 
   const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
   const otherProbs = getOtherProbabilities();
@@ -389,7 +393,7 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                         ))}
                       </SelectContent>
                     </Select>
-                    
+
                     <div className="flex space-x-2">
                       <Button 
                         onClick={handleCorrection}
