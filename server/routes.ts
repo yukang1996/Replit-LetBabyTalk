@@ -1192,15 +1192,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           const aiResponse = await response.json();
+          console.log("AI API Response:", JSON.stringify(aiResponse, null, 2));
+          
           const result = aiResponse.data?.result;
 
           if (!result) {
+            console.error("Invalid AI response structure:", aiResponse);
             throw new Error("Invalid response format from AI API");
           }
 
           // Extract predict_class and probs for new schema
           predictClass = result.class || "unknown";
-          const probs = result.probs;
+          const probs = result.probs || {};
+
+          console.log("Extracted predictClass:", predictClass);
+          console.log("Extracted probs:", probs);
 
           // Store only probs in analysis_result (JSONB)
           analysisResult = probs;
@@ -1225,6 +1231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           predictClass: predictClass, // Store the AI prediction class
         };
 
+        console.log("Recording data to save:", JSON.stringify(recordingData, null, 2));
+
         const validatedData = insertRecordingSchema.parse(recordingData);
         const recording = await storage.createRecording(userId, validatedData);
 
@@ -1247,12 +1255,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const recordingId = parseInt(req.params.id);
+      console.log("=== FETCHING RECORDING DEBUG ===");
+      console.log("Recording ID:", recordingId);
+      console.log("User ID:", userId);
+      
       const recording = await storage.getRecording(recordingId, userId);
+      console.log("Raw recording from database:", recording);
 
       if (!recording) {
+        console.log("Recording not found in database");
         return res.status(404).json({ message: "Recording not found" });
       }
 
+      console.log("Returning recording:", JSON.stringify(recording, null, 2));
+      console.log("=== END FETCHING RECORDING DEBUG ===");
       res.json(recording);
     } catch (error) {
       console.error("Error fetching recording:", error);
