@@ -1145,6 +1145,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Call AI API (mock in development, real in production)
         let analysisResult;
+        let predictClass = "unknown"; // Initialize with default value
+        
         try {
           const useMockAPI = process.env.NODE_ENV === "development" || process.env.USE_MOCK_API === "true";
           const apiUrl = useMockAPI 
@@ -1197,7 +1199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Extract predict_class and probs for new schema
-          const predictClass = result.class;
+          predictClass = result.class || "unknown";
           const probs = result.probs;
 
           // Store only probs in analysis_result (JSONB)
@@ -1205,7 +1207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (aiError) {
           console.error("AI API Error:", aiError);
           // Fallback to basic analysis if AI API fails
-          const predictClass = "unknown";
+          predictClass = "unknown";
           analysisResult = {
             unknown: 1.0,
             error: aiError.message,
