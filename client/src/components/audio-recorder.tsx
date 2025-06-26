@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import ResultsDialog from "@/components/results-dialog"
 
 export default function AudioRecorder() {
   const { toast } = useToast();
@@ -368,31 +369,3 @@ export default function AudioRecorder() {
   );
 }
 
-function ResultsDialog({ isOpen, onClose, recordingId }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["/api/recordings", recordingId],
-    queryFn: () => apiRequest(`/api/recordings/${recordingId}`),
-    enabled: isOpen && !!recordingId,
-  });
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Analysis Results</DialogTitle>
-          <DialogDescription>
-            Here are the results of the analysis.
-          </DialogDescription>
-        </DialogHeader>
-        {isLoading && <p>Loading...</p>}
-        {isError && <p>Error loading results.</p>}
-        {data && (
-          <div>
-            <p>Cry Type: {data.analysisResult?.cryType || "Unknown"}</p>
-            <p>Additional Notes: Analysis is complete</p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
