@@ -62,11 +62,14 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
   });
 
   // Get all cry reasons for the correction selector
-  const { data: allCryReasons = [] } = useQuery<CryReasonDescription[]>({
+  const { data: allCryReasons = [], isError: allCryReasonsError } = useQuery<CryReasonDescription[]>({
     queryKey: ["/api/cry-reasons"],
     queryFn: async () => {
-      // We'll need to create this endpoint to get all cry reasons
-      return await apiRequest("GET", "/api/cry-reasons");
+      console.log("Fetching all cry reasons...");
+      const result = await apiRequest("GET", "/api/cry-reasons");
+      console.log("All cry reasons result:", result);
+      // Ensure we always return an array
+      return Array.isArray(result) ? result : [];
     },
     enabled: showCorrectionSelector,
   });
@@ -186,6 +189,19 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
 
   const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
   const otherProbs = getOtherProbabilities();
+
+   if (!recording.analysisResult && !recording.predictClass) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <div className="text-center py-8">
+            <p className="text-gray-500 mb-4">No analysis results available for this recording.</p>
+            <Button onClick={onClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -383,14 +399,18 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
                         <SelectValue placeholder="Select the correct cry reason" />
                       </SelectTrigger>
                       <SelectContent>
-                        {allCryReasons.map((reason) => (
-                          <SelectItem key={reason.className} value={reason.className}>
-                            <div className="flex items-center space-x-2">
-                              <span>{getCryIcon(reason.className)}</span>
-                              <span>{reason.title}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {Array.isArray(allCryReasons) && allCryReasons.length > 0 ? (
+                          allCryReasons.map((reason) => (
+                            <SelectItem key={reason.className} value={reason.className}>
+                              <div className="flex items-center space-x-2">
+                                <span>{getCryIcon(reason.className)}</span>
+                                <span>{reason.title}</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem disabled value="">No cry reasons available</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
 
