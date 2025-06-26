@@ -203,11 +203,27 @@ export class DatabaseStorage implements IStorage {
 
   // Recording operations
   async getRecordings(userId: string): Promise<Recording[]> {
-    return await db
+    const rawRecordings = await db
       .select()
       .from(recordings)
       .where(eq(recordings.userId, userId))
       .orderBy(desc(recordings.recordedAt));
+
+    // Transform snake_case database fields to camelCase for frontend
+    return rawRecordings.map(recording => ({
+      id: recording.id,
+      userId: recording.userId,
+      filename: recording.filename,
+      audioUrl: recording.audioUrl,
+      duration: recording.duration,
+      babyProfileId: recording.babyProfileId,
+      analysisResult: recording.analysisResult,
+      rateState: recording.rateState,
+      predictClass: recording.predictClass, // This should now properly map
+      rateTime: recording.rateTime,
+      rateReason: recording.rateReason,
+      recordedAt: recording.recordedAt
+    }));
   }
 
   async createRecording(userId: string, recording: InsertRecording): Promise<Recording> {
@@ -215,7 +231,22 @@ export class DatabaseStorage implements IStorage {
       .insert(recordings)
       .values({ ...recording, userId })
       .returning();
-    return newRecording;
+    
+    // Transform snake_case database fields to camelCase for frontend
+    return {
+      id: newRecording.id,
+      userId: newRecording.userId,
+      filename: newRecording.filename,
+      audioUrl: newRecording.audioUrl,
+      duration: newRecording.duration,
+      babyProfileId: newRecording.babyProfileId,
+      analysisResult: newRecording.analysisResult,
+      rateState: newRecording.rateState,
+      predictClass: newRecording.predictClass, // This should now properly map
+      rateTime: newRecording.rateTime,
+      rateReason: newRecording.rateReason,
+      recordedAt: newRecording.recordedAt
+    };
   }
 
   async getRecording(id: number, userId: string): Promise<Recording | undefined> {
@@ -223,7 +254,26 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(recordings)
       .where(eq(recordings.id, id) && eq(recordings.userId, userId));
-    return recording;
+    
+    if (!recording) {
+      return undefined;
+    }
+
+    // Transform snake_case database fields to camelCase for frontend
+    return {
+      id: recording.id,
+      userId: recording.userId,
+      filename: recording.filename,
+      audioUrl: recording.audioUrl,
+      duration: recording.duration,
+      babyProfileId: recording.babyProfileId,
+      analysisResult: recording.analysisResult,
+      rateState: recording.rateState,
+      predictClass: recording.predictClass, // This should now properly map
+      rateTime: recording.rateTime,
+      rateReason: recording.rateReason,
+      recordedAt: recording.recordedAt
+    };
   }
 
   async updateRecordingRate(id: number, userId: string, rateState: string, rateReason?: string): Promise<Recording | undefined> {
@@ -236,7 +286,26 @@ export class DatabaseStorage implements IStorage {
       })
       .where(and(eq(recordings.id, id), eq(recordings.userId, userId)))
       .returning();
-    return recording;
+    
+    if (!recording) {
+      return undefined;
+    }
+
+    // Transform snake_case database fields to camelCase for frontend
+    return {
+      id: recording.id,
+      userId: recording.userId,
+      filename: recording.filename,
+      audioUrl: recording.audioUrl,
+      duration: recording.duration,
+      babyProfileId: recording.babyProfileId,
+      analysisResult: recording.analysisResult,
+      rateState: recording.rateState,
+      predictClass: recording.predictClass, // This should now properly map
+      rateTime: recording.rateTime,
+      rateReason: recording.rateReason,
+      recordedAt: recording.recordedAt
+    };
   }
 
   async getCryReasonDescription(className: string): Promise<CryReasonDescription | undefined> {

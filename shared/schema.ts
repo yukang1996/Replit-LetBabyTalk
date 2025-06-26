@@ -100,7 +100,21 @@ export const insertRecordingSchema = createInsertSchema(recordings, {
   recordedAt: true,
 });
 export type InsertRecording = z.infer<typeof insertRecordingSchema>;
-export type Recording = typeof recordings.$inferSelect;
+// Define Recording type with camelCase properties for frontend compatibility
+export type Recording = {
+  id: number;
+  userId: string;
+  filename: string;
+  audioUrl: string | null;
+  duration: number | null;
+  babyProfileId: number | null;
+  analysisResult: any;
+  rateState: string | null;
+  predictClass: string | null; // This is the camelCase version of predict_class
+  rateTime: Date | null;
+  rateReason: string | null;
+  recordedAt: Date;
+};
 
 // Cry reason descriptions table
 export const cryReasonDescriptions = pgTable("cry_reason_descriptions", {
