@@ -395,26 +395,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Recording vote endpoint
+  // Recording rate endpoint (updated from vote)
   app.post(
-    "/api/recordings/:id/vote",
+    "/api/recordings/:id/rate",
     isAuthenticated,
     async (req: any, res) => {
       try {
         const recordingId = parseInt(req.params.id);
-        const { vote } = req.body;
+        const { rateState, rateReason } = req.body;
         const userId = req.user.id;
 
-        if (!["good", "bad"].includes(vote)) {
+        if (!["good", "bad"].includes(rateState)) {
           return res
             .status(400)
-            .json({ message: "Vote must be 'good' or 'bad'" });
+            .json({ message: "Rate state must be 'good' or 'bad'" });
         }
 
-        const updatedRecording = await storage.updateRecordingVote(
+        const updatedRecording = await storage.updateRecordingRate(
           recordingId,
           userId,
-          vote,
+          rateState,
+          rateReason,
         );
         if (!updatedRecording) {
           return res.status(404).json({ message: "Recording not found" });
@@ -422,8 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json(updatedRecording);
       } catch (error) {
-        console.error("Vote update error:", error);
-        res.status(500).json({ message: "Failed to update vote" });
+        console.error("Rate update error:", error);
+        res.status(500).json({ message: "Failed to update rate" });
       }
     },
   );
@@ -1195,24 +1196,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             throw new Error("Invalid response format from AI API");
           }
 
-          // Store the full AIresponse as per requirements
-          analysisResult = {
-            cryType: result.class, // Store the exact class name
-            confidence: result.probs[result.class] || 0,
-            recommendations: [], // Will be fetched from database
-            rawResult: result, // Store complete raw result including probs and show
-          };
+          // Extract predict_class and probs for new schema
+          const predictClass = result.class;
+          const probs = result.probs;
+
+          // Store only probs in analysis_result (JSONB)
+          analysisResult = probs;
         } catch (aiError) {
           console.error("AI API Error:", aiError);
           // Fallback to basic analysis if AI API fails
+          const predictClass = "unknown";
           analysisResult = {
-            cryType: "unknown",
-            confidence: 0,
-            recommendations: [
-              "AI analysis temporarily unavailable",
-              "Try common comfort measures",
-              "Monitor baby's behavior closely",
-            ],
+            unknown: 1.0,
             error: aiError.message,
           };
         }
@@ -1224,7 +1219,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           audioUrl: audioUrl, // Store the Supabase URL or local URL
           duration: duration ? parseInt(duration) : undefined,
           babyProfileId: babyProfileId ? parseInt(babyProfileId) : undefined,
-          analysisResult: analysisResult,
+          analysisResult: analysisResult, // Store probs object
+          predictClass: predictClass, // Store the AI prediction class
         };
 
         const validatedData = insertRecordingSchema.parse(recordingData);

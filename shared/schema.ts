@@ -65,7 +65,10 @@ export const recordings = pgTable("recordings", {
   duration: integer("duration"),
   babyProfileId: integer("baby_profile_id").references(() => babyProfiles.id),
   analysisResult: jsonb("analysis_result"),
-  vote: text("vote"), // 'good' or 'bad'
+  rateState: text("rate_state"), // 'good' or 'bad' (renamed from vote)
+  predictClass: text("predict_class"), // AI prediction class
+  rateTime: timestamp("rate_time"), // When user rated the prediction
+  rateReason: text("rate_reason"), // User's reason for rating
   recordedAt: timestamp("recorded_at").defaultNow().notNull(),
 });
 
@@ -88,7 +91,10 @@ export const insertRecordingSchema = createInsertSchema(recordings, {
   duration: z.number().optional(),
   babyProfileId: z.number().optional(),
   analysisResult: z.any().optional(),
-  vote: z.string().optional(),
+  rateState: z.string().optional(),
+  predictClass: z.string().optional(),
+  rateTime: z.date().optional(),
+  rateReason: z.string().optional(),
 }).omit({
   id: true,
   recordedAt: true,

@@ -44,7 +44,7 @@ export interface IStorage {
   getRecordings(userId: string): Promise<Recording[]>;
   createRecording(userId: string, recording: InsertRecording): Promise<Recording>;
   getRecording(id: number, userId: string): Promise<Recording | undefined>;
-  updateRecordingVote(id: number, userId: string, vote: string): Promise<Recording | undefined>;
+  updateRecordingRate(id: number, userId: string, rateState: string, rateReason?: string): Promise<Recording | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -226,10 +226,14 @@ export class DatabaseStorage implements IStorage {
     return recording;
   }
 
-  async updateRecordingVote(id: number, userId: string, vote: string): Promise<Recording | undefined> {
+  async updateRecordingRate(id: number, userId: string, rateState: string, rateReason?: string): Promise<Recording | undefined> {
     const [recording] = await db
       .update(recordings)
-      .set({ vote })
+      .set({ 
+        rateState,
+        rateTime: new Date(),
+        rateReason
+      })
       .where(and(eq(recordings.id, id), eq(recordings.userId, userId)))
       .returning();
     return recording;

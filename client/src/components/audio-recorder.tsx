@@ -90,7 +90,7 @@ export default function AudioRecorder() {
       queryClient.invalidateQueries({ queryKey: ["/api/recordings"] });
       toast({
         title: "Analysis Complete!",
-        description: `Detected: ${data.analysisResult?.cryType || 'Unknown cry type'}`,
+        description: `Detected: ${data.predictClass?.replace(/_/g, ' ') || 'Unknown cry type'}`,
       });
       // Navigate to results page
       //navigate(`/results/${data.id}`);

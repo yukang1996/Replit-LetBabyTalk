@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -22,7 +21,7 @@ interface Recording {
       show: boolean;
     };
   };
-  vote?: string;
+  rateState?: string;
   duration?: number;
   recordedAt: string;
 }
@@ -46,35 +45,28 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
     enabled: !!recordingId && isOpen,
   });
 
-  const voteMutation = useMutation({
-    mutationFn: async (vote: string) => {
-      if (!recordingId) throw new Error("No recording ID");
-      return await apiRequest("POST", `/api/recordings/${recordingId}/vote`, { vote });
+  const rateMutation = useMutation({
+    mutationFn: async (rateData: { rateState: string; rateReason?: string }) => {
+      return await apiRequest("POST", `/api/recordings/${recordingId}/rate`, rateData);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/recordings", recordingId] });
-      queryClient.setQueryData(["/api/recordings", recordingId], (oldData: Recording | undefined) => {
-        if (oldData) {
-          return { ...oldData, vote: data.vote };
-        }
-        return oldData;
-      });
       toast({
-        title: "Feedback Recorded",
+        title: "Feedback Submitted",
         description: "Thank you for your feedback!",
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message || "Failed to record feedback",
+        description: "Failed to submit feedback",
         variant: "destructive",
       });
     },
   });
 
-  const handleVote = (vote: string) => {
-    voteMutation.mutate(vote);
+  const handleRate = (rateState: string) => {
+    rateMutation.mutate({ rateState });
   };
 
   const formatTime = (dateString: string) => {
@@ -99,10 +91,10 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
 
   const getOtherProbabilities = () => {
     if (!recording?.analysisResult?.rawResult?.probs) return [];
-    
+
     const mainClass = recording.analysisResult.rawResult.class;
     const probs = recording.analysisResult.rawResult.probs;
-    
+
     return Object.entries(probs)
       .filter(([key]) => key !== mainClass)
       .sort(([,a], [,b]) => b - a)
@@ -146,25 +138,25 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
         <DialogHeader>
           <DialogTitle className="text-center text-lg font-semibold">Analysis Results</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Bear Mascot and Main Result */}
           <div className="text-center">
             <div className="w-32 h-32 mx-auto mb-4 bg-white rounded-3xl border-4 border-blue-200 flex items-center justify-center shadow-lg">
               <BearMascot className="w-24 h-24" />
             </div>
-            
+
             <div className="text-4xl font-bold text-gray-800 mb-3">
               {Math.round(confidence * 100)}%
             </div>
-            
+
             <div className="flex items-center justify-center mb-4">
               <span className="text-2xl mr-2">{mainCryType.emoji}</span>
               <Badge className={`${mainCryType.color} text-lg px-4 py-2 rounded-full`}>
                 {mainCryType.label}
               </Badge>
             </div>
-            
+
             <div className="flex items-center justify-center text-sm text-gray-500">
               <Clock className="w-4 h-4 mr-1" />
               <span>Recorded at {formatTime(recording.recordedAt)}</span>
@@ -260,45 +252,45 @@ export default function ResultsDialog({ isOpen, onClose, recordingId }: ResultsD
               </h3>
               <div className="flex justify-center space-x-6">
                 <Button
-                  variant={recording.vote === 'good' ? 'default' : 'outline'}
+                  variant={recording.rateState === 'good' ? 'default' : 'outline'}
                   size="lg"
                   className={`rounded-full w-16 h-16 shadow-lg transition-all ${
-                    recording.vote === 'good' 
+                    recording.rateState === 'good' 
                       ? 'bg-pink-500 hover:bg-pink-600 scale-105' 
                       : 'border-2 border-pink-300 hover:bg-pink-50 hover:scale-105'
                   }`}
-                  onClick={() => handleVote('good')}
-                  disabled={voteMutation.isPending}
+                  onClick={() => handleRate('good')}
+                  disabled={rateMutation.isPending}
                 >
                   <ThumbsUp className={`w-6 h-6 ${
-                    recording.vote === 'good' ? 'text-white' : 'text-pink-500'
+                    recording.rateState === 'good' ? 'text-white' : 'text-pink-500'
                   }`} />
                 </Button>
-                
+
                 <Button
-                  variant={recording.vote === 'bad' ? 'default' : 'outline'}
+                  variant={recording.rateState === 'bad' ? 'default' : 'outline'}
                   size="lg"
                   className={`rounded-full w-16 h-16 shadow-lg transition-all ${
-                    recording.vote === 'bad' 
+                    recording.rateState === 'bad' 
                       ? 'bg-blue-500 hover:bg-blue-600 scale-105' 
                       : 'border-2 border-blue-300 hover:bg-blue-50 hover:scale-105'
                   }`}
-                  onClick={() => handleVote('bad')}
-                  disabled={voteMutation.isPending}
+                  onClick={() => handleRate('bad')}
+                  disabled={rateMutation.isPending}
                 >
                   <ThumbsDown className={`w-6 h-6 ${
-                    recording.vote === 'bad' ? 'text-white' : 'text-blue-500'
+                    recording.rateState === 'bad' ? 'text-white' : 'text-blue-500'
                   }`} />
                 </Button>
               </div>
-              
-              {recording.vote && (
+
+              {recording.rateState && (
                 <p className="text-center text-sm text-gray-500 mt-4">
                   Thank you for your feedback!
                 </p>
               )}
-              
-              {voteMutation.isPending && (
+
+              {rateMutation.isPending && (
                 <p className="text-center text-sm text-gray-500 mt-4">
                   Recording your feedback...
                 </p>
