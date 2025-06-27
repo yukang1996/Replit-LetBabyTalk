@@ -211,6 +211,7 @@ export default function ResultsDialog({
   console.log("=== RESULTS DIALOG DEBUG ===");
   console.log("Recording ID:", recordingId);
   console.log("Recording data:", recording);
+  console.log("Recording ID matches requested:", recording?.id === recordingId);
   console.log("Predicted class:", recording?.predictClass);
   console.log("All cry reasons:", allCryReasons);
   console.log("Main cry reason:", mainCryReason);
