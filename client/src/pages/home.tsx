@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import { useQuery } from "@tanstack/react-query";
+import { useBabySelection } from "@/hooks/useBabySelection";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +13,7 @@ export default function Home() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const { t } = useLanguage();
+  const { selectedBaby } = useBabySelection();
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["/api/baby-profiles"],
@@ -22,7 +21,7 @@ export default function Home() {
   });
 
   // Get the first/selected baby profile
-  const selectedBaby = profiles.length > 0 ? profiles[0] : null;
+  // const selectedBaby = profiles.length > 0 ? profiles[0] : null;
 
   // Redirect to home if not authenticated
   useEffect(() => {

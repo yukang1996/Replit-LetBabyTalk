@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
+import { useBabySelection } from "@/hooks/useBabySelection";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
@@ -32,7 +33,7 @@ export default function BabySelection() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
-  const [selectedBabyId, setSelectedBabyId] = useState<number | null>(null);
+  const { selectedBabyId, selectedBaby, selectBaby, profiles } = useBabySelection();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingBabyId, setEditingBabyId] = useState<number | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function BabySelection() {
   const urlParams = new URLSearchParams(window.location.search);
   const referrer = urlParams.get('from') || '/';
 
-  const { data: profiles = [], isLoading: profilesLoading } = useQuery({
+  const { isLoading: profilesLoading } = useQuery({
     queryKey: ["/api/baby-profiles"],
     enabled: isAuthenticated,
   });
@@ -156,9 +157,9 @@ export default function BabySelection() {
         const remainingProfiles = typedProfiles.filter(p => p.id !== deletedId);
         if (remainingProfiles.length > 0) {
           // Select the next baby in the list
-          setSelectedBabyId(remainingProfiles[0].id);
+          selectBaby(remainingProfiles[0].id);
         } else {
-          setSelectedBabyId(null);
+          selectBaby(null);
         }
       }
 
@@ -204,11 +205,7 @@ export default function BabySelection() {
     }
   }, [isAuthenticated, isLoading, toast, t]);
 
-  useEffect(() => {
-    if (typedProfiles.length > 0 && !selectedBabyId) {
-      setSelectedBabyId(typedProfiles[0].id);
-    }
-  }, [typedProfiles, selectedBabyId]);
+  
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -555,7 +552,7 @@ export default function BabySelection() {
                     "glass-effect cursor-pointer transition-all duration-200 hover:shadow-lg",
                     selectedBabyId === profile.id ? "ring-2 ring-pink-400 shadow-lg" : ""
                   )}
-                  onClick={() => setSelectedBabyId(profile.id)}
+                  onClick={() => selectBaby(profile.id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -661,7 +658,7 @@ export default function BabySelection() {
                   navigate(destination);
                 }}
               >
-                Continue with {selectedBabyId ? typedProfiles.find(p => p.id === selectedBabyId)?.name : 'Baby'}
+                Continue with {selectedBaby?.name || 'Baby'}
               </Button>
             </div>
           </div>

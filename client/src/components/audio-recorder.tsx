@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import ResultsDialog from "@/components/results-dialog"
+import { useBabySelection } from "@/hooks/useBabySelection";
 
 export default function AudioRecorder() {
   const { toast } = useToast();
@@ -50,12 +51,12 @@ export default function AudioRecorder() {
   });
 
   // Get the first/selected baby profile (you can modify this logic as needed)
-  const selectedBaby = profiles.length > 0 ? profiles[0] : null;
+  const { selectedBaby } = useBabySelection();
 
   const uploadMutation = useMutation({
     mutationFn: async (audioBlob: Blob) => {
       const formData = new FormData();
-      
+
       // Determine correct file extension based on blob type
       let filename = 'recording.webm'; // default
       if (audioBlob.type.includes('mp4')) {
@@ -65,10 +66,10 @@ export default function AudioRecorder() {
       } else if (audioBlob.type.includes('ogg')) {
         filename = 'recording.ogg';
       }
-      
+
       formData.append('audio', audioBlob, filename);
       formData.append('duration', Math.floor(recordingTime).toString());
-      
+
       // Add baby profile ID if available
       if (selectedBaby?.id) {
         formData.append('babyProfileId', selectedBaby.id.toString());
@@ -370,4 +371,3 @@ export default function AudioRecorder() {
     </>
   );
 }
-
