@@ -203,6 +203,8 @@ export default function AudioRecorder() {
   const handleCloseResultsDialog = () => {
     setShowResultsDialog(false);
     setCurrentRecordingId(null);
+    // Reset to recording state after viewing results
+    deleteRecording();
   };
 
   // Show recording interface when no audio or currently recording
