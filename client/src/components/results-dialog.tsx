@@ -83,18 +83,19 @@ export default function ResultsDialog({
     });
 
   // Get all cry reasons for the correction selector
-  const { data: allCryReasons = [], isError: allCryReasonsError } = useQuery<
+  const { data: allCryReasons = [], isError: allCryReasonsError, isLoading: isLoadingAllCryReasons } = useQuery<
     CryReasonDescription[]
   >({
     queryKey: ["/api/cry-reasons"],
     queryFn: async () => {
       console.log("Fetching all cry reasons...");
       const res = await apiRequest("GET", "/api/cry-reasons");
-      const result = await res.json(); // ✅ Important fix
+      const result = await res.json();
       console.log("All cry reasons result:", result);
       return Array.isArray(result) ? result : [];
     },
-    enabled: showCorrectionSelector,
+    enabled: true, // Always enable this query so data is available when needed
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const rateMutation = useMutation({
@@ -469,34 +470,44 @@ export default function ResultsDialog({
                     What do you think is the correct reason?
                   </h3>
                   <div className="space-y-4">
-                    <Select
-                      value={selectedCorrection}
-                      onValueChange={setSelectedCorrection}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select the correct cry reason" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(allCryReasons) &&
-                        allCryReasons.length > 0 ? (
-                          allCryReasons.map((reason) => (
-                            <SelectItem
-                              key={reason.className}
-                              value={reason.className}
-                            >
-                              <div className="flex items-center space-x-2">
-                                <span>{getCryIcon(reason.className)}</span>
-                                <span>{reason.title}</span>
-                              </div>
+                    {isLoadingAllCryReasons ? (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-gray-500">Loading options...</p>
+                      </div>
+                    ) : allCryReasonsError ? (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-red-500">Failed to load cry reasons</p>
+                      </div>
+                    ) : (
+                      <Select
+                        value={selectedCorrection}
+                        onValueChange={setSelectedCorrection}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select the correct cry reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(allCryReasons) &&
+                          allCryReasons.length > 0 ? (
+                            allCryReasons.map((reason) => (
+                              <SelectItem
+                                key={reason.className}
+                                value={reason.className}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <span>{getCryIcon(reason.className)}</span>
+                                  <span>{reason.title}</span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem disabled value="no-data">
+                              No cry reasons available
                             </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem disabled value="">
-                            No cry reasons available
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
 
                     <div className="flex space-x-2">
                       <Button
