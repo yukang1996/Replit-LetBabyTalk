@@ -139,7 +139,7 @@ export default function ResultsDialog({
     if (selectedCorrection) {
       rateMutation.mutate({
         rateState: "bad",
-        rateReason: `User corrected to: ${selectedCorrection}`,
+        rateReason: `${selectedCorrection}`,
       });
       setShowCorrectionSelector(false);
       setSelectedCorrection("");
