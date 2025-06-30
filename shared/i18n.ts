@@ -79,8 +79,8 @@ export const translations = {
     'history.noRecordingsInRange': 'No recordings for selected time range',
     'history.noRecordingsInCustomRange': 'No recordings for selected date range',
     'history.showing': 'Showing',
-    'history.showMore': "Show More",
-    'history.showLess': "Show Less",
+    'history.showMore': 'Show More',
+    'history.showLess': 'Show Less',
     'history.babySelection': "Baby Selection",
     'history.allBabies': "All Babies",
     'history.showingRecordsFor': "Showing records for",
@@ -128,6 +128,14 @@ export const translations = {
 
     'settings.termsDesc': 'Review our terms of service',
     'settings.privacyDesc': 'Learn how we protect your data',
+
+    'history.unknownBaby': 'Unknown Baby',
+    'history.total': 'total',
+    'history.noRecordingsTitle': 'No Recordings Found',
+    'history.confidence': 'confidence',
+    'history.viewAnalysis': 'View Analysis',
+    'history.helpful': 'Helpful',
+    'history.notHelpful': 'Not Helpful',
   },
 
   zh: {

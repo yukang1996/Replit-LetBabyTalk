@@ -198,6 +198,7 @@ export default function HistoryPage() {
   const queryClient = useQueryClient();
   
   const [playingId, setPlayingId] = useState<number | null>(null);
+  const [audioElements, setAudioElements] = useState<Record<number, HTMLAudioElement>>({});
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const [selectedRecordingId, setSelectedRecordingId] = useState<number | null>(null);
   const [isResultsDialogOpen, setIsResultsDialogOpen] = useState(false);
@@ -321,12 +322,59 @@ export default function HistoryPage() {
       }));
   }, [statistics]);
 
-  const handlePlayPause = (recordingId: number) => {
+  const handlePlayPause = (recording: Recording) => {
+    const recordingId = recording.id;
+    
     if (playingId === recordingId) {
+      // Pause current audio
+      const audio = audioElements[recordingId];
+      if (audio) {
+        audio.pause();
+      }
       setPlayingId(null);
     } else {
-      setPlayingId(recordingId);
-      // In a real implementation, you would play the audio here
+      // Stop any currently playing audio
+      Object.values(audioElements).forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+      
+      // Start playing new audio
+      if (recording.audioUrl) {
+        let audio = audioElements[recordingId];
+        if (!audio) {
+          audio = new Audio(recording.audioUrl);
+          audio.onended = () => setPlayingId(null);
+          audio.onerror = () => {
+            console.error('Error playing audio');
+            setPlayingId(null);
+            toast({
+              title: "Playback Error",
+              description: "Unable to play this recording",
+              variant: "destructive",
+            });
+          };
+          setAudioElements(prev => ({ ...prev, [recordingId]: audio }));
+        }
+        
+        audio.play().then(() => {
+          setPlayingId(recordingId);
+        }).catch((error) => {
+          console.error('Error playing audio:', error);
+          setPlayingId(null);
+          toast({
+            title: "Playback Error", 
+            description: "Unable to play this recording",
+            variant: "destructive",
+          });
+        });
+      } else {
+        toast({
+          title: "No Audio Available",
+          description: "This recording doesn't have audio data",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -348,6 +396,12 @@ export default function HistoryPage() {
 
   const getTotalRecordings = () => {
     return filteredRecordings.length;
+  };
+
+  const getBabyName = (babyProfileId: number | null) => {
+    if (!babyProfileId) return t('history.unknownBaby') || 'Unknown Baby';
+    const baby = profiles.find(p => p.id === babyProfileId);
+    return baby?.name || t('history.unknownBaby') || 'Unknown Baby';
   };
 
   const handleTimeRangeChange = (range: TimeRange) => {
@@ -557,12 +611,21 @@ export default function HistoryPage() {
 
             {/* Recordings List */}
             <div className="space-y-4">
-              <h3 className="font-medium text-gray-800">{t('history.recordings') || 'Recordings'}</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-gray-800 text-lg">{t('history.recordings') || 'Recordings'}</h3>
+                <Badge variant="secondary" className="text-xs">
+                  {filteredRecordings.length} {t('history.total') || 'total'}
+                </Badge>
+              </div>
+              
               {filteredRecordings.length === 0 ? (
                 <Card className="glass-effect">
                   <CardContent className="p-8 text-center">
-                    <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">
+                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-medium text-gray-600 mb-2">
+                      {t('history.noRecordingsTitle') || 'No Recordings Found'}
+                    </h4>
+                    <p className="text-gray-500 text-sm">
                       {timeRange === 'custom' 
                         ? (t('history.noRecordingsInCustomRange') || 'No recordings for selected date range')
                         : (t('history.noRecordingsInRange') || `No recordings for selected ${timeRange}`)
@@ -571,82 +634,142 @@ export default function HistoryPage() {
                   </CardContent>
                 </Card>
               ) : (
-                filteredRecordings
-                  .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
-                  .map((recording) => {
-                    const categoryInfo = getCategoryInfo(recording.predictClass || 'unknown');
-                    const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
-                    
-                    return (
-                      <Card 
-                        key={recording.id} 
-                        className="glass-effect cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => handleRecordingClick(recording.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <span className="text-2xl">{categoryInfo.icon}</span>
-                                <div>
-                                  <Badge className={`${categoryInfo.color} text-white`}>
-                                    {categoryInfo.title}
-                                  </Badge>
-                                  {mainProbability > 0 && (
-                                    <span className="text-xs text-gray-500 ml-2">
-                                      {Math.round(mainProbability * 100)}%
-                                    </span>
+                <div className="space-y-3">
+                  {filteredRecordings
+                    .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
+                    .map((recording) => {
+                      const categoryInfo = getCategoryInfo(recording.predictClass || 'unknown');
+                      const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
+                      const babyName = getBabyName(recording.babyProfileId);
+                      
+                      return (
+                        <Card 
+                          key={recording.id} 
+                          className="glass-effect hover:shadow-lg transition-all duration-200 border-l-4 border-l-pink-300 hover:border-l-pink-500"
+                        >
+                          <CardContent className="p-0">
+                            <div className="p-4">
+                              {/* Header Section */}
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-start space-x-3 flex-1">
+                                  <div className="w-12 h-12 bg-white rounded-xl border-2 border-pink-200 flex items-center justify-center shadow-sm">
+                                    <span className="text-xl">{categoryInfo.icon}</span>
+                                  </div>
+                                  
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center flex-wrap gap-2 mb-1">
+                                      <Badge className={`${categoryInfo.color} text-white text-xs font-medium`}>
+                                        {categoryInfo.title}
+                                      </Badge>
+                                      {mainProbability > 0 && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {Math.round(mainProbability * 100)}% {t('history.confidence') || 'confidence'}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Baby Info */}
+                                    <div className="flex items-center space-x-1 mb-2">
+                                      <span className="text-sm font-medium text-pink-600">👶</span>
+                                      <span className="text-sm font-medium text-gray-700">{babyName}</span>
+                                    </div>
+                                    
+                                    {/* Time and Duration Info */}
+                                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                      <div className="flex items-center space-x-1">
+                                        <Clock className="w-3 h-3" />
+                                        <span>{formatTime(recording.recordedAt)}</span>
+                                      </div>
+                                      <span>{formatDate(recording.recordedAt)}</span>
+                                      {recording.duration && (
+                                        <span className="px-2 py-0.5 bg-gray-100 rounded-full">
+                                          {recording.duration}s
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Play Button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`rounded-full w-10 h-10 transition-all ${
+                                    playingId === recording.id 
+                                      ? 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg' 
+                                      : 'text-pink-500 hover:bg-pink-50 border border-pink-200'
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayPause(recording);
+                                  }}
+                                >
+                                  {playingId === recording.id ? (
+                                    <Pause className="w-4 h-4" />
+                                  ) : (
+                                    <Play className="w-4 h-4" />
                                   )}
+                                </Button>
+                              </div>
+
+                              {/* Audio Waveform Visualization */}
+                              <div className="mb-3">
+                                <div className="flex items-end justify-center space-x-0.5 h-8 bg-gray-50 rounded-lg p-2">
+                                  {Array.from({ length: 32 }).map((_, i) => {
+                                    const height = Math.random() * 16 + 4;
+                                    const isActive = playingId === recording.id;
+                                    return (
+                                      <div
+                                        key={i}
+                                        className={`rounded-sm transition-all duration-200 ${
+                                          isActive 
+                                            ? 'bg-gradient-to-t from-pink-500 to-pink-300' 
+                                            : 'bg-gradient-to-t from-gray-300 to-gray-200'
+                                        }`}
+                                        style={{
+                                          width: '3px',
+                                          height: `${height}px`,
+                                          opacity: isActive ? 0.9 : 0.6,
+                                          transform: isActive ? 'scaleY(1.1)' : 'scaleY(1)',
+                                        }}
+                                      />
+                                    );
+                                  })}
                                 </div>
                               </div>
-                              
-                              <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                <div className="flex items-center space-x-1">
-                                  <Clock className="w-4 h-4" />
-                                  <span>{formatTime(recording.recordedAt)}</span>
-                                </div>
-                                <span>{formatDate(recording.recordedAt)}</span>
-                                {recording.duration && (
-                                  <span>{recording.duration}s</span>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRecordingClick(recording.id)}
+                                  className="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                                >
+                                  <BarChart3 className="w-3 h-3 mr-1" />
+                                  {t('history.viewAnalysis') || 'View Analysis'}
+                                </Button>
+                                
+                                {recording.rateState && (
+                                  <div className="flex items-center space-x-1">
+                                    {recording.rateState === 'good' ? (
+                                      <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                                        👍 {t('history.helpful') || 'Helpful'}
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
+                                        👎 {t('history.notHelpful') || 'Not Helpful'}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 )}
                               </div>
-
-                              {/* Waveform placeholder */}
-                              <div className="mt-3 flex items-center space-x-1">
-                                {Array.from({ length: 20 }).map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className="bg-pink-300 rounded"
-                                    style={{
-                                      width: '2px',
-                                      height: `${Math.random() * 20 + 8}px`,
-                                      opacity: playingId === recording.id ? 0.8 : 0.4
-                                    }}
-                                  />
-                                ))}
-                              </div>
                             </div>
-
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-pink-500 hover:bg-pink-50 rounded-full w-12 h-12"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayPause(recording.id);
-                              }}
-                            >
-                              {playingId === recording.id ? (
-                                <Pause className="w-5 h-5" />
-                              ) : (
-                                <Play className="w-5 h-5" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                </div>
               )}
             </div>
           </div>
