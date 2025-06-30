@@ -293,61 +293,64 @@ export default function AudioRecorder() {
               <span>{formatTime((audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime)}</span>
             </div>
 
-            {/* Progress bar */}
-            <div 
-              className="relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
-              onMouseDown={handleMouseDown}
-              onClick={!isDragging ? handleSeek : undefined}
-            >
+            {/* Combined Progress Bar and Controls Row */}
+            <div className="flex items-center space-x-4">
+              {/* Progress bar - takes up remaining space */}
               <div 
-                className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
-                style={{ 
-                  width: (() => {
-                    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
-                    const effectiveTime = currentPlaybackTime || 0;
-                    return effectiveDuration > 0 && !isNaN(effectiveTime) 
-                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
-                      : '0%';
-                  })()
-                }}
-              />
-              {/* Scrubber */}
-              <div 
-                className={cn(
-                  "absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150",
-                  isDragging ? "scale-125" : "group-hover:scale-110"
-                )}
-                style={{ 
-                  left: (() => {
-                    const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
-                    const effectiveTime = currentPlaybackTime || 0;
-                    return effectiveDuration > 0 && !isNaN(effectiveTime)
-                      ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
-                      : '0%';
-                  })()
-                }}
-              />
+                className="flex-1 relative h-2 bg-gray-200 rounded-full cursor-pointer group progress-bar"
+                onMouseDown={handleMouseDown}
+                onClick={!isDragging ? handleSeek : undefined}
+              >
+                <div 
+                  className="absolute h-full bg-gradient-to-r from-pink-400 to-purple-400 rounded-full transition-all duration-150"
+                  style={{ 
+                    width: (() => {
+                      const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+                      const effectiveTime = currentPlaybackTime || 0;
+                      return effectiveDuration > 0 && !isNaN(effectiveTime) 
+                        ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                        : '0%';
+                    })()
+                  }}
+                />
+                {/* Scrubber */}
+                <div 
+                  className={cn(
+                    "absolute w-4 h-4 bg-white border-2 border-pink-400 rounded-full shadow-lg transform -translate-y-1 -translate-x-2 transition-all duration-150",
+                    isDragging ? "scale-125" : "group-hover:scale-110"
+                  )}
+                  style={{ 
+                    left: (() => {
+                      const effectiveDuration = (audioDuration && !isNaN(audioDuration)) ? audioDuration : recordingTime;
+                      const effectiveTime = currentPlaybackTime || 0;
+                      return effectiveDuration > 0 && !isNaN(effectiveTime)
+                        ? `${Math.min(100, Math.max(0, (effectiveTime / effectiveDuration) * 100))}%` 
+                        : '0%';
+                    })()
+                  }}
+                />
+              </div>
+
+              {/* Control Buttons */}
+              <div className="flex space-x-2">
+                {/* Play/Pause Button */}
+                <Button
+                  onClick={isPlaying ? pausePlayback : playRecording}
+                  className="w-12 h-12 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </Button>
+
+                {/* Delete Button */}
+                <Button
+                  onClick={handleDelete}
+                  variant="outline"
+                  className="w-12 h-12 rounded-full border-red-300 text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-
-          {/* Control Buttons */}
-          <div className="flex justify-center space-x-4">
-            {/* Play/Pause Button */}
-            <Button
-              onClick={isPlaying ? pausePlayback : playRecording}
-              className="w-16 h-16 rounded-full gradient-bg text-white shadow-lg hover:opacity-90"
-            >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-            </Button>
-
-            {/* Delete Button */}
-            <Button
-              onClick={handleDelete}
-              variant="outline"
-              className="w-16 h-16 rounded-full border-red-300 text-red-500 hover:bg-red-50"
-            >
-              <Trash2 className="w-6 h-6" />
-            </Button>
           </div>
 
           {/* Submit Button */}
