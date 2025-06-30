@@ -1,0 +1,30 @@
+= END ALL CRY REASONS DEBUG ===
+10:39:39 AM [express] GET /api/cry-reasons 304 in 457ms :: [{"id":1,"className":"hunger_food","title"…
+10:43:46 AM [vite] hmr update /src/pages/history.tsx, /src/index.css?v=N--c0ogTnTpa8aQfUnSzS
+10:43:50 AM [vite] Internal server error: /home/runner/workspace/client/src/pages/history.tsx: Unexpected token (791:70)
+
+  789 |                                     <Play className="w-4 h-4" />
+  790 |                                   )}
+> 791 |                                 </Button                              </div>
+      |                                                                       ^
+  792 |
+  793 |                               {/* Audio Waveform Visualization */}
+  794 |                               <div className="mb-3">
+  Plugin: vite:react-babel
+  File: /home/runner/workspace/client/src/pages/history.tsx:791:70
+  789|                                      <Play className="w-4 h-4" />
+  790|                                    )}
+  791|                                  </Button                              </div>
+     |                                                                        ^
+  792|  
+  793|                                {/* Audio Waveform Visualization */}
+      at toParseError (/home/runner/workspace/node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at raise (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1497:19)
+      at unexpected (/home/runner/workspace/node_modules/@babel/parser/src/tokenizer/index.ts:1537:16)
+      at checkExpressionErrors (/home/runner/workspace/node_modules/@babel/parser/src/parser/util.ts:258:12)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:341:12)
+      at parseMaybeAssign (/home/runner/workspace/node_modules/@babel/parser/src/plugins/typescript/index.ts:3607:22)
+      at parseExpressionBase (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:221:23)
+      at callback (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:39)
+      at allowInAnd (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:3117:12)
+      at parseExpression (/home/runner/workspace/node_modules/@babel/parser/src/parser/expression.ts:212:17)
