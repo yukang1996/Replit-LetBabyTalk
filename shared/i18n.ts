@@ -72,10 +72,13 @@ export const translations = {
     'history.day': 'Day',
     'history.week': 'Week',
     'history.month': 'Month',
+    'history.custom': 'Custom',
     'history.statistics': 'Statistics',
     'history.total': 'Total',
     'history.recordings': 'Recordings',
     'history.noRecordingsInRange': 'No recordings for selected time range',
+    'history.noRecordingsInCustomRange': 'No recordings for selected date range',
+    'history.showing': 'Showing',
 
     // Categories
     'categories.hunger_food': 'Hunger (Food)',
@@ -182,10 +185,13 @@ export const translations = {
     'history.day': '今天',
     'history.week': '本周',
     'history.month': '本月',
+    'history.custom': '自定义',
     'history.statistics': '统计',
     'history.total': '总计',
     'history.recordings': '录音记录',
     'history.noRecordingsInRange': '所选时间范围内没有录音',
+    'history.noRecordingsInCustomRange': '所选日期范围内没有录音',
+    'history.showing': '显示',
 
     // Categories
     'categories.hunger_food': '饥饿 (食物)',
@@ -292,10 +298,13 @@ export const translations = {
     'history.day': 'اليوم',
     'history.week': 'الأسبوع',
     'history.month': 'الشهر',
+    'history.custom': 'مخصص',
     'history.statistics': 'الإحصائيات',
     'history.total': 'المجموع',
     'history.recordings': 'التسجيلات',
     'history.noRecordingsInRange': 'لا توجد تسجيلات في النطاق الزمني المحدد',
+    'history.noRecordingsInCustomRange': 'لا توجد تسجيلات في النطاق الزمني المخصص',
+    'history.showing': 'عرض',
 
     // Categories
     'categories.hunger_food': 'الجوع (طعام)',
@@ -402,10 +411,13 @@ export const translations = {
     'history.day': 'Hari',
     'history.week': 'Minggu',
     'history.month': 'Bulan',
+    'history.custom': 'Kustom',
     'history.statistics': 'Statistik',
     'history.total': 'Total',
     'history.recordings': 'Rekaman',
     'history.noRecordingsInRange': 'Tidak ada rekaman untuk rentang waktu yang dipilih',
+    'history.noRecordingsInCustomRange': 'Tidak ada rekaman untuk rentang tanggal yang dipilih',
+    'history.showing': 'Menampilkan',
 
     // Categories
     'categories.hunger_food': 'Lapar (Makanan)',

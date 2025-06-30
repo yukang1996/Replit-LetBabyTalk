@@ -10,13 +10,18 @@ import ResultsDialog from "@/components/results-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Play, 
   Pause, 
   Calendar,
   BarChart3,
-  Clock
+  Clock,
+  CalendarDays
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface Recording {
   id: number;
@@ -33,7 +38,7 @@ interface Recording {
   recordedAt: string;
 }
 
-type TimeRange = 'day' | 'week' | 'month';
+type TimeRange = 'day' | 'week' | 'month' | 'custom';
 
 export default function HistoryPage() {
   const { isAuthenticated, user } = useAuth();
@@ -45,6 +50,14 @@ export default function HistoryPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
   const [selectedRecordingId, setSelectedRecordingId] = useState<number | null>(null);
   const [isResultsDialogOpen, setIsResultsDialogOpen] = useState(false);
+  const [customDateRange, setCustomDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined
+  });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const { data: recordings = [], isLoading } = useQuery<Recording[]>({
     queryKey: ["/api/recordings"],
@@ -58,6 +71,26 @@ export default function HistoryPage() {
     const startOfWeek = new Date(startOfDay);
     startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    if (timeRange === 'custom') {
+      if (!customDateRange.from) return recordings;
+      
+      return recordings.filter(recording => {
+        const recordingDate = new Date(recording.recordedAt);
+        const fromDate = new Date(customDateRange.from!);
+        fromDate.setHours(0, 0, 0, 0);
+        
+        if (customDateRange.to) {
+          const toDate = new Date(customDateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          return recordingDate >= fromDate && recordingDate <= toDate;
+        } else {
+          const endOfDay = new Date(fromDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          return recordingDate >= fromDate && recordingDate <= endOfDay;
+        }
+      });
+    }
 
     let cutoffDate: Date;
     switch (timeRange) {
@@ -77,7 +110,7 @@ export default function HistoryPage() {
     return recordings.filter(recording => 
       new Date(recording.recordedAt) >= cutoffDate
     );
-  }, [recordings, timeRange]);
+  }, [recordings, timeRange, customDateRange]);
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -154,6 +187,20 @@ export default function HistoryPage() {
     return filteredRecordings.length;
   };
 
+  const handleTimeRangeChange = (range: TimeRange) => {
+    setTimeRange(range);
+    if (range !== 'custom') {
+      setCustomDateRange({ from: undefined, to: undefined });
+    }
+  };
+
+  const handleDateSelect = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
+    if (range) {
+      setCustomDateRange(range);
+      setTimeRange('custom');
+    }
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -210,19 +257,74 @@ export default function HistoryPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium text-gray-800">{t('history.timeRange') || 'Time Range'}</h3>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   {['day', 'week', 'month'].map((range) => (
                     <Button
                       key={range}
                       variant={timeRange === range ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setTimeRange(range as TimeRange)}
+                      onClick={() => handleTimeRangeChange(range as TimeRange)}
                       className={timeRange === range ? "gradient-bg text-white" : ""}
                     >
                       {t(`history.${range}`) || range.charAt(0).toUpperCase() + range.slice(1)}
                     </Button>
                   ))}
+                  
+                  {/* Custom Date Range Picker */}
+                  <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={timeRange === 'custom' ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "justify-start text-left font-normal",
+                          timeRange === 'custom' ? "gradient-bg text-white" : "",
+                          !customDateRange.from && timeRange !== 'custom' && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {timeRange === 'custom' && customDateRange.from ? (
+                          customDateRange.to ? (
+                            <>
+                              {format(customDateRange.from, "LLL dd")} -{" "}
+                              {format(customDateRange.to, "LLL dd")}
+                            </>
+                          ) : (
+                            format(customDateRange.from, "LLL dd, y")
+                          )
+                        ) : (
+                          <span>{t('history.custom') || 'Custom'}</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        initialFocus
+                        mode="range"
+                        defaultMonth={customDateRange.from}
+                        selected={{
+                          from: customDateRange.from,
+                          to: customDateRange.to
+                        }}
+                        onSelect={handleDateSelect}
+                        numberOfMonths={2}
+                        disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
+                
+                {/* Display selected custom range info */}
+                {timeRange === 'custom' && customDateRange.from && (
+                  <div className="mt-3 p-2 bg-blue-50 rounded-md">
+                    <p className="text-sm text-blue-800">
+                      {customDateRange.to
+                        ? `${t('history.showing') || 'Showing'}: ${format(customDateRange.from, "MMM dd, yyyy")} - ${format(customDateRange.to, "MMM dd, yyyy")}`
+                        : `${t('history.showing') || 'Showing'}: ${format(customDateRange.from, "MMM dd, yyyy")}`
+                      }
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -272,7 +374,10 @@ export default function HistoryPage() {
                   <CardContent className="p-8 text-center">
                     <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500">
-                      {t('history.noRecordingsInRange') || `No recordings for selected ${timeRange}`}
+                      {timeRange === 'custom' 
+                        ? (t('history.noRecordingsInCustomRange') || 'No recordings for selected date range')
+                        : (t('history.noRecordingsInRange') || `No recordings for selected ${timeRange}`)
+                      }
                     </p>
                   </CardContent>
                 </Card>
