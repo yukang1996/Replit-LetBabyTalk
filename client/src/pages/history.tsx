@@ -788,7 +788,8 @@ export default function HistoryPage() {
                                   ) : (
                                     <Play className="w-4 h-4" />
                                   )}
-                                </Button                              </div>
+                                </Button>
+                              </div>
 
                               {/* Audio Waveform Visualization */}
                               <div className="mb-3">
