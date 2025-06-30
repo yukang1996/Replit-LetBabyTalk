@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -112,7 +111,7 @@ function StatisticsChart({
         {displayedStats.map(({ category, count, title, color, icon }) => {
           const percentage = totalRecordings > 0 ? (count / totalRecordings) * 100 : 0;
           const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
-          
+
           return (
             <div key={category} className="bg-white/50 rounded-lg p-3 border border-gray-100">
               <div className="flex items-center justify-between mb-2">
@@ -127,7 +126,7 @@ function StatisticsChart({
                   )}
                 </div>
               </div>
-              
+
               {/* Progress Bar */}
               <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div 
@@ -206,7 +205,7 @@ export default function HistoryPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [audioElements, setAudioElements] = useState<Record<number, HTMLAudioElement>>({});
   const [timeRange, setTimeRange] = useState<TimeRange>('day');
@@ -248,12 +247,12 @@ export default function HistoryPage() {
     // Then filter by time range
     if (timeRange === 'custom') {
       if (!customDateRange.from) return babyFilteredRecordings;
-      
+
       return babyFilteredRecordings.filter(recording => {
         const recordingDate = new Date(recording.recordedAt);
         const fromDate = new Date(customDateRange.from!);
         fromDate.setHours(0, 0, 0, 0);
-        
+
         if (customDateRange.to) {
           const toDate = new Date(customDateRange.to);
           toDate.setHours(23, 59, 59, 999);
@@ -289,7 +288,7 @@ export default function HistoryPage() {
   // Calculate statistics
   const statistics = useMemo(() => {
     const stats: Record<string, number> = {};
-    
+
     filteredRecordings.forEach(recording => {
       const category = recording.predictClass || 'unknown';
       stats[category] = (stats[category] || 0) + 1;
@@ -334,7 +333,7 @@ export default function HistoryPage() {
 
   const handlePlayPause = (recording: Recording) => {
     const recordingId = recording.id;
-    
+
     if (playingId === recordingId) {
       // Pause current audio
       const audio = audioElements[recordingId];
@@ -348,16 +347,16 @@ export default function HistoryPage() {
         audio.pause();
         audio.currentTime = 0;
       });
-      
+
       // Start playing new audio
       if (recording.audioUrl) {
         let audio = audioElements[recordingId];
         if (!audio) {
           audio = new Audio();
-          
+
           // Set CORS mode to handle cross-origin requests
           audio.crossOrigin = "anonymous";
-          
+
           // Enhanced error handling
           audio.onerror = (event) => {
             console.error('Audio playback error:', event);
@@ -368,7 +367,7 @@ export default function HistoryPage() {
               readyState: audio.readyState
             });
             setPlayingId(null);
-            
+
             // More specific error messages
             let errorMessage = "Unable to play this recording";
             if (audio.error) {
@@ -387,32 +386,32 @@ export default function HistoryPage() {
                   break;
               }
             }
-            
+
             toast({
               title: "Playback Error",
               description: errorMessage,
               variant: "destructive",
             });
           };
-          
+
           audio.onended = () => setPlayingId(null);
-          
+
           // Set the source
           audio.src = recording.audioUrl;
-          
+
           setAudioElements(prev => ({ ...prev, [recordingId]: audio }));
         }
-        
+
         // Attempt to play with better error handling
         const playPromise = audio.play();
-        
+
         if (playPromise !== undefined) {
           playPromise.then(() => {
             setPlayingId(recordingId);
           }).catch((error) => {
             console.error('Play promise rejected:', error);
             setPlayingId(null);
-            
+
             let errorMessage = "Unable to start playback";
             if (error.name === 'NotAllowedError') {
               errorMessage = "Please allow audio playback in your browser";
@@ -421,7 +420,7 @@ export default function HistoryPage() {
             } else if (error.name === 'AbortError') {
               errorMessage = "Playback was interrupted";
             }
-            
+
             toast({
               title: "Playback Error", 
               description: errorMessage,
@@ -556,7 +555,7 @@ export default function HistoryPage() {
                     </Button>
                   ))}
                 </div>
-                
+
                 {/* Display selected baby info */}
                 {selectedBabyFilter !== 'all' && (
                   <div className="mt-3 p-2 bg-pink-50 rounded-md">
@@ -586,7 +585,7 @@ export default function HistoryPage() {
                       {t(`history.${range}`) || range.charAt(0).toUpperCase() + range.slice(1)}
                     </Button>
                   ))}
-                  
+
                   {/* Custom Date Range Picker */}
                   <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
                     <PopoverTrigger asChild>
@@ -630,7 +629,7 @@ export default function HistoryPage() {
                     </PopoverContent>
                   </Popover>
                 </div>
-                
+
                 {/* Display selected custom range info */}
                 {timeRange === 'custom' && customDateRange.from && (
                   <div className="mt-3 p-2 bg-blue-50 rounded-md">
@@ -660,7 +659,7 @@ export default function HistoryPage() {
                     <div className="text-xs text-gray-500 uppercase tracking-wide">{t('history.total') || 'Total'}</div>
                   </div>
                 </div>
-                
+
                 <StatisticsChart 
                   statistics={statistics} 
                   totalRecordings={filteredRecordings.length}
@@ -678,7 +677,7 @@ export default function HistoryPage() {
                   {filteredRecordings.length} {t('history.total') || 'total'}
                 </Badge>
               </div>
-              
+
               {filteredRecordings.length === 0 ? (
                 <Card className="glass-effect">
                   <CardContent className="p-8 text-center">
@@ -702,7 +701,14 @@ export default function HistoryPage() {
                       const categoryInfo = getCategoryInfo(recording.predictClass || 'unknown');
                       const mainProbability = recording.analysisResult?.[recording.predictClass || 'unknown'] || 0;
                       const babyName = getBabyName(recording.babyProfileId);
-                      
+
+                      // Calculate progress
+                      const effectiveDuration = recording.duration || 0;
+                      const audio = audioElements[recording.id];
+                      const currentTime = audio?.currentTime || 0;
+                      const progressPercentage = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
+                      const recordingTime = recording.duration || 0;
+
                       return (
                         <Card 
                           key={recording.id} 
@@ -716,7 +722,7 @@ export default function HistoryPage() {
                                   <div className="w-12 h-12 bg-white rounded-xl border-2 border-pink-200 flex items-center justify-center shadow-sm">
                                     <span className="text-xl">{categoryInfo.icon}</span>
                                   </div>
-                                  
+
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center flex-wrap gap-2 mb-1">
                                       <Badge className={`${categoryInfo.color} text-white text-xs font-medium`}>
@@ -728,13 +734,13 @@ export default function HistoryPage() {
                                         </Badge>
                                       )}
                                     </div>
-                                    
+
                                     {/* Baby Info */}
                                     <div className="flex items-center space-x-1 mb-2">
                                       <span className="text-sm font-medium text-pink-600">👶</span>
                                       <span className="text-sm font-medium text-gray-700">{babyName}</span>
                                     </div>
-                                    
+
                                     {/* Time and Duration Info */}
                                     <div className="flex items-center space-x-4 text-xs text-gray-500">
                                       <div className="flex items-center space-x-1">
@@ -799,6 +805,33 @@ export default function HistoryPage() {
                                 </div>
                               </div>
 
+                              {/* Progress Bar - Interactive */}
+                              <div 
+                                className="w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
+                                onClick={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const clickX = e.clientX - rect.left;
+                                  const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                                  const effectiveDuration = (recording.duration || 0);
+                                  const seekTime = percentage * effectiveDuration;
+
+                                  if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                                    // Seek to the clicked position in the audio
+                                    const audio = audioElements[recording.id];
+                                    if (audio) {
+                                      audio.currentTime = seekTime;
+                                    }
+                                  }
+                                }}
+                              >
+                                <div 
+                                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
+                                  style={{ 
+                                    width: `${Math.max(2, progressPercentage)}%`
+                                  }}
+                                />
+                              </div>
+
                               {/* Action Buttons */}
                               <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                                 <Button
@@ -810,7 +843,7 @@ export default function HistoryPage() {
                                   <BarChart3 className="w-3 h-3 mr-1" />
                                   {t('history.viewAnalysis') || 'View Analysis'}
                                 </Button>
-                                
+
                                 {recording.rateState && (
                                   <div className="flex items-center space-x-1">
                                     {recording.rateState === 'good' ? (
