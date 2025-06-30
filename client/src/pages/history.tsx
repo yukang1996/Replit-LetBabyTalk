@@ -41,6 +41,16 @@ interface Recording {
   recordedAt: string;
 }
 
+// MediaError interface for better error handling
+interface MediaError {
+  readonly MEDIA_ERR_ABORTED: 1;
+  readonly MEDIA_ERR_NETWORK: 2;
+  readonly MEDIA_ERR_DECODE: 3;
+  readonly MEDIA_ERR_SRC_NOT_SUPPORTED: 4;
+  readonly code: 1 | 2 | 3 | 4;
+  readonly message: string;
+}
+
 type TimeRange = 'day' | 'week' | 'month' | 'custom';
 
 // Statistics Chart Component
@@ -343,31 +353,82 @@ export default function HistoryPage() {
       if (recording.audioUrl) {
         let audio = audioElements[recordingId];
         if (!audio) {
-          audio = new Audio(recording.audioUrl);
-          audio.onended = () => setPlayingId(null);
-          audio.onerror = () => {
-            console.error('Error playing audio');
+          audio = new Audio();
+          
+          // Set CORS mode to handle cross-origin requests
+          audio.crossOrigin = "anonymous";
+          
+          // Enhanced error handling
+          audio.onerror = (event) => {
+            console.error('Audio playback error:', event);
+            console.error('Audio error details:', {
+              audioUrl: recording.audioUrl,
+              error: audio.error,
+              networkState: audio.networkState,
+              readyState: audio.readyState
+            });
             setPlayingId(null);
+            
+            // More specific error messages
+            let errorMessage = "Unable to play this recording";
+            if (audio.error) {
+              switch (audio.error.code) {
+                case MediaError.MEDIA_ERR_ABORTED:
+                  errorMessage = "Playback was aborted";
+                  break;
+                case MediaError.MEDIA_ERR_NETWORK:
+                  errorMessage = "Network error occurred";
+                  break;
+                case MediaError.MEDIA_ERR_DECODE:
+                  errorMessage = "Audio format not supported";
+                  break;
+                case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                  errorMessage = "Audio source not supported";
+                  break;
+              }
+            }
+            
             toast({
               title: "Playback Error",
-              description: "Unable to play this recording",
+              description: errorMessage,
               variant: "destructive",
             });
           };
+          
+          audio.onended = () => setPlayingId(null);
+          
+          // Set the source
+          audio.src = recording.audioUrl;
+          
           setAudioElements(prev => ({ ...prev, [recordingId]: audio }));
         }
         
-        audio.play().then(() => {
-          setPlayingId(recordingId);
-        }).catch((error) => {
-          console.error('Error playing audio:', error);
-          setPlayingId(null);
-          toast({
-            title: "Playback Error", 
-            description: "Unable to play this recording",
-            variant: "destructive",
+        // Attempt to play with better error handling
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            setPlayingId(recordingId);
+          }).catch((error) => {
+            console.error('Play promise rejected:', error);
+            setPlayingId(null);
+            
+            let errorMessage = "Unable to start playback";
+            if (error.name === 'NotAllowedError') {
+              errorMessage = "Please allow audio playback in your browser";
+            } else if (error.name === 'NotSupportedError') {
+              errorMessage = "Audio format not supported by browser";
+            } else if (error.name === 'AbortError') {
+              errorMessage = "Playback was interrupted";
+            }
+            
+            toast({
+              title: "Playback Error", 
+              description: errorMessage,
+              variant: "destructive",
+            });
           });
-        });
+        }
       } else {
         toast({
           title: "No Audio Available",
