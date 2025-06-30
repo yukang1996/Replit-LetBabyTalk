@@ -789,6 +789,57 @@ export default function HistoryPage() {
                                     <Play className="w-4 h-4" />
                                   )}
                                 </Button>
+
+                                {/* Progress Bar - Interactive */}
+                                <div 
+                                  className="flex-1 ml-3 h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
+                                  onMouseDown={(e) => {
+                                    setIsDragging(true);
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const clickX = e.clientX - rect.left;
+                                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                                    const effectiveDuration = (recording.duration || 0);
+                                    const seekTime = percentage * effectiveDuration;
+                                    
+                                    if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                                      const audio = audioElements[recording.id];
+                                      if (audio) {
+                                        audio.currentTime = seekTime;
+                                        setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
+                                      }
+                                    }
+                                  }}
+                                  onMouseMove={(e) => {
+                                    if (isDragging) {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      const clickX = e.clientX - rect.left;
+                                      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                                      const effectiveDuration = (recording.duration || 0);
+                                      const seekTime = percentage * effectiveDuration;
+                                      
+                                      if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                                        const audio = audioElements[recording.id];
+                                        if (audio) {
+                                          audio.currentTime = seekTime;
+                                          setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
+                                        }
+                                      }
+                                    }
+                                  }}
+                                  onMouseUp={() => {
+                                    setIsDragging(false);
+                                  }}
+                                  onMouseLeave={() => {
+                                    setIsDragging(false);
+                                  }}
+                                >
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
+                                    style={{ 
+                                      width: `${Math.max(2, progressPercentage)}%`
+                                    }}
+                                  />
+                                </div>
                               </div>
 
                               {/* Audio Waveform Visualization */}
@@ -815,57 +866,6 @@ export default function HistoryPage() {
                                     );
                                   })}
                                 </div>
-                              </div>
-
-                              {/* Progress Bar - Interactive */}
-                              <div 
-                                className="w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
-                                onMouseDown={(e) => {
-                                  setIsDragging(true);
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const clickX = e.clientX - rect.left;
-                                  const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-                                  const effectiveDuration = (recording.duration || 0);
-                                  const seekTime = percentage * effectiveDuration;
-                                  
-                                  if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                    const audio = audioElements[recording.id];
-                                    if (audio) {
-                                      audio.currentTime = seekTime;
-                                      setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
-                                    }
-                                  }
-                                }}
-                                onMouseMove={(e) => {
-                                  if (isDragging) {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const clickX = e.clientX - rect.left;
-                                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-                                    const effectiveDuration = (recording.duration || 0);
-                                    const seekTime = percentage * effectiveDuration;
-                                    
-                                    if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                      const audio = audioElements[recording.id];
-                                      if (audio) {
-                                        audio.currentTime = seekTime;
-                                        setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
-                                      }
-                                    }
-                                  }
-                                }}
-                                onMouseUp={() => {
-                                  setIsDragging(false);
-                                }}
-                                onMouseLeave={() => {
-                                  setIsDragging(false);
-                                }}
-                              >
-                                <div 
-                                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
-                                  style={{ 
-                                    width: `${Math.max(2, progressPercentage)}%`
-                                  }}
-                                />
                               </div>
 
                               {/* Action Buttons */}
