@@ -769,80 +769,103 @@ export default function HistoryPage() {
                                   </div>
                                 </div>
 
-                                {/* Progress Bar and Play Button Container */}
-                                <div className="flex items-center space-x-3">
-                                  {/* Progress Bar - Interactive */}
-                                  <div 
-                                    className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
-                                    onMouseDown={(e) => {
-                                      setIsDragging(true);
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      const clickX = e.clientX - rect.left;
-                                      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-                                      const effectiveDuration = (recording.duration || 0);
-                                      const seekTime = percentage * effectiveDuration;
+                                {/* Play Button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`rounded-full w-10 h-10 transition-all ${
+                                    playingId === recording.id 
+                                      ? 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg' 
+                                      : 'text-pink-500 hover:bg-pink-50 border border-pink-200'
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayPause(recording);
+                                  }}
+                                >
+                                  {playingId === recording.id ? (
+                                    <Pause className="w-4 h-4" />
+                                  ) : (
+                                    <Play className="w-4 h-4" />
+                                  )}
+                                </Button>
+                              </div>
 
-                                      if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                        const audio = audioElements[recording.id];
-                                        if (audio) {
-                                          audio.currentTime = seekTime;
-                                          setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
-                                        }
-                                      }
-                                    }}
-                                    onMouseMove={(e) => {
-                                      if (isDragging) {
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        const clickX = e.clientX - rect.left;
-                                        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-                                        const effectiveDuration = (recording.duration || 0);
-                                        const seekTime = percentage * effectiveDuration;
-
-                                        if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                          const audio = audioElements[recording.id];
-                                          if (audio) {
-                                            audio.currentTime = seekTime;
-                                            setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
-                                          }
-                                        }
-                                      }
-                                    }}
-                                    onMouseUp={() => {
-                                      setIsDragging(false);
-                                    }}
-                                    onMouseLeave={() => {
-                                      setIsDragging(false);
-                                    }}
-                                  >
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
-                                      style={{ 
-                                        width: `${Math.max(2, progressPercentage)}%`
-                                      }}
-                                    />
-                                  </div>
-
-                                  {/* Play Button */}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`rounded-full w-10 h-10 transition-all ${
-                                      playingId === recording.id 
-                                        ? 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg' 
-                                        : 'text-pink-500 hover:bg-pink-50 border border-pink-200'
-                                    }`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePlayPause(recording);
-                                    }}
-                                  >
-                                    {playingId === recording.id ? (
-                                      <Pause className="w-4 h-4" />
-                                    ) : (
-                                      <Play className="w-4 h-4" />
-                                    )}
-                                  </Button>
+                              {/* Audio Waveform Visualization */}
+                              <div className="mb-3">
+                                <div className="flex items-end justify-center space-x-0.5 h-8 bg-gray-50 rounded-lg p-2">
+                                  {Array.from({ length: 32 }).map((_, i) => {
+                                    const height = Math.random() * 16 + 4;
+                                    const isActive = playingId === recording.id;
+                                    return (
+                                      <div
+                                        key={i}
+                                        className={`rounded-sm transition-all duration-200 ${
+                                          isActive 
+                                            ? 'bg-gradient-to-t from-pink-500 to-pink-300' 
+                                            : 'bg-gradient-to-t from-gray-300 to-gray-200'
+                                        }`}
+                                        style={{
+                                          width: '3px',
+                                          height: `${height}px`,
+                                          opacity: isActive ? 0.9 : 0.6,
+                                          transform: isActive ? 'scaleY(1.1)' : 'scaleY(1)',
+                                        }}
+                                      />
+                                    );
+                                  })}
                                 </div>
+                              </div>
+
+                              {/* Progress Bar - Interactive */}
+                              <div 
+                                className="w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
+                                onMouseDown={(e) => {
+                                  setIsDragging(true);
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const clickX = e.clientX - rect.left;
+                                  const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                                  const effectiveDuration = (recording.duration || 0);
+                                  const seekTime = percentage * effectiveDuration;
+                                  
+                                  if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                                    const audio = audioElements[recording.id];
+                                    if (audio) {
+                                      audio.currentTime = seekTime;
+                                      setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
+                                    }
+                                  }
+                                }}
+                                onMouseMove={(e) => {
+                                  if (isDragging) {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const clickX = e.clientX - rect.left;
+                                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                                    const effectiveDuration = (recording.duration || 0);
+                                    const seekTime = percentage * effectiveDuration;
+                                    
+                                    if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                                      const audio = audioElements[recording.id];
+                                      if (audio) {
+                                        audio.currentTime = seekTime;
+                                        setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
+                                      }
+                                    }
+                                  }
+                                }}
+                                onMouseUp={() => {
+                                  setIsDragging(false);
+                                }}
+                                onMouseLeave={() => {
+                                  setIsDragging(false);
+                                }}
+                              >
+                                <div 
+                                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
+                                  style={{ 
+                                    width: `${Math.max(2, progressPercentage)}%`
+                                  }}
+                                />
                               </div>
 
                               {/* Action Buttons */}
