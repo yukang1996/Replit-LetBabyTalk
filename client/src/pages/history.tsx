@@ -18,7 +18,9 @@ import {
   Calendar,
   BarChart3,
   Clock,
-  CalendarDays
+  CalendarDays,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -39,6 +41,154 @@ interface Recording {
 }
 
 type TimeRange = 'day' | 'week' | 'month' | 'custom';
+
+// Statistics Chart Component
+function StatisticsChart({ 
+  statistics, 
+  totalRecordings, 
+  getCategoryInfo, 
+  t 
+}: {
+  statistics: Record<string, number>;
+  totalRecordings: number;
+  getCategoryInfo: (className: string) => { title: string; color: string; icon: string };
+  t: (key: string) => string | undefined;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // All possible cry categories
+  const allCategories = [
+    'hunger_food',
+    'hunger_milk', 
+    'sleepiness',
+    'lack_of_security',
+    'diaper_urine',
+    'diaper_bowel',
+    'internal_pain',
+    'external_pain',
+    'physical_discomfort',
+    'unmet_needs',
+    'breathing_difficulties',
+    'normal',
+    'no_cry_detected',
+    'unknown'
+  ];
+
+  // Create complete statistics with all categories (including zero counts)
+  const completeStats = allCategories.map(category => ({
+    category,
+    count: statistics[category] || 0,
+    ...getCategoryInfo(category)
+  }));
+
+  // Sort by count (descending) and then by category name for consistent ordering
+  const sortedStats = completeStats.sort((a, b) => {
+    if (b.count !== a.count) {
+      return b.count - a.count;
+    }
+    return a.title.localeCompare(b.title);
+  });
+
+  // Show top 5 by default, all when expanded
+  const displayedStats = isExpanded ? sortedStats : sortedStats.slice(0, 5);
+  const hiddenCount = sortedStats.length - 5;
+  const maxCount = Math.max(...sortedStats.map(s => s.count), 1);
+
+  return (
+    <div className="space-y-4">
+      {/* Chart Grid */}
+      <div className="grid grid-cols-1 gap-3">
+        {displayedStats.map(({ category, count, title, color, icon }) => {
+          const percentage = totalRecordings > 0 ? (count / totalRecordings) * 100 : 0;
+          const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+          
+          return (
+            <div key={category} className="bg-white/50 rounded-lg p-3 border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg">{icon}</span>
+                  <span className="text-sm font-medium text-gray-700">{title}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-gray-800">{count}</div>
+                  {totalRecordings > 0 && (
+                    <div className="text-xs text-gray-500">{percentage.toFixed(1)}%</div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${color} transition-all duration-500 ease-out rounded-full`}
+                  style={{ 
+                    width: `${Math.max(2, barWidth)}%`,
+                    opacity: count > 0 ? 1 : 0.3
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Expand/Collapse Button */}
+      {hiddenCount > 0 && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="w-4 h-4 mr-1" />
+                {t('history.showLess') || 'Show Less'}
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4 mr-1" />
+                {t('history.showMore') || `Show ${hiddenCount} More`}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Summary Stats */}
+      {totalRecordings > 0 && (
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+          <div className="text-center">
+            <div className="text-sm font-medium text-gray-600">
+              {t('history.topCategory') || 'Top Category'}
+            </div>
+            <div className="text-xs text-gray-500 mt-1 flex items-center justify-center space-x-1">
+              <span>{sortedStats[0].icon}</span>
+              <span>{sortedStats[0].title}</span>
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm font-medium text-gray-600">
+              {t('history.categories') || 'Categories'}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {sortedStats.filter(s => s.count > 0).length} / {sortedStats.length}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm font-medium text-gray-600">
+              {t('history.avgPerCategory') || 'Avg/Category'}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {(totalRecordings / Math.max(sortedStats.filter(s => s.count > 0).length, 1)).toFixed(1)}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HistoryPage() {
   const { isAuthenticated, user } = useAuth();
@@ -329,42 +479,29 @@ export default function HistoryPage() {
             </Card>
 
             {/* Statistics Summary */}
-            {topCategories.length > 0 && (
-              <Card className="glass-effect">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-gray-800">{t('history.statistics') || 'Statistics'}</h3>
-                    <span className="text-sm text-gray-500">
-                      {t('history.total') || 'Total'}: {filteredRecordings.length}
-                    </span>
+            <Card className="glass-effect">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="font-medium text-gray-800 text-lg">{t('history.statistics') || 'Statistics'}</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {t('history.total') || 'Total'}: {filteredRecordings.length} {t('history.recordings') || 'recordings'}
+                    </p>
                   </div>
-                  
-                  <div className="space-y-3">
-                    {topCategories.map(({ category, count, title, color, icon }) => (
-                      <div key={category} className="flex items-center space-x-3">
-                        <div className="flex items-center space-x-2 flex-1">
-                          <span className="text-lg">{icon}</span>
-                          <span className="text-sm font-medium text-gray-700">{title}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${color} transition-all duration-300`}
-                              style={{ 
-                                width: `${Math.max(10, (count / filteredRecordings.length) * 100)}%` 
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-bold text-gray-600 min-w-[2rem] text-right">
-                            {count}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{filteredRecordings.length}</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide">{t('history.total') || 'Total'}</div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+                
+                <StatisticsChart 
+                  statistics={statistics} 
+                  totalRecordings={filteredRecordings.length}
+                  getCategoryInfo={getCategoryInfo}
+                  t={t}
+                />
+              </CardContent>
+            </Card>
 
             {/* Recordings List */}
             <div className="space-y-4">

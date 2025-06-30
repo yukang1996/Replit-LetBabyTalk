@@ -79,6 +79,11 @@ export const translations = {
     'history.noRecordingsInRange': 'No recordings for selected time range',
     'history.noRecordingsInCustomRange': 'No recordings for selected date range',
     'history.showing': 'Showing',
+    'history.showMore': "Show More",
+    'history.showLess': "Show Less",
+    'history.topCategory': "Top Category",
+    'history.categories': "Categories",
+    'history.avgPerCategory': "Avg/Category",
 
     // Categories
     'categories.hunger_food': 'Hunger (Food)',
@@ -192,6 +197,11 @@ export const translations = {
     'history.noRecordingsInRange': '所选时间范围内没有录音',
     'history.noRecordingsInCustomRange': '所选日期范围内没有录音',
     'history.showing': '显示',
+    'history.showMore': "显示更多",
+    'history.showLess': "显示更少",
+    'history.topCategory': "最多类别",
+    'history.categories': "类别",
+    'history.avgPerCategory': "平均/类别",
 
     // Categories
     'categories.hunger_food': '饥饿 (食物)',
@@ -418,6 +428,11 @@ export const translations = {
     'history.noRecordingsInRange': 'Tidak ada rekaman untuk rentang waktu yang dipilih',
     'history.noRecordingsInCustomRange': 'Tidak ada rekaman untuk rentang tanggal yang dipilih',
     'history.showing': 'Menampilkan',
+    'history.showMore': "Tampilkan Lebih Banyak",
+    'history.showLess': "Tampilkan Lebih Sedikit",
+    'history.topCategory': "Kategori Teratas",
+    'history.categories': "Kategori",
+    'history.avgPerCategory': "Rata-rata/Kategori",
 
     // Categories
     'categories.hunger_food': 'Lapar (Makanan)',
