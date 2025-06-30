@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useToast } from "@/hooks/use-toast";
+import { useBabySelection } from "@/hooks/useBabySelection";
 import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import ResultsDialog from "@/components/results-dialog";
@@ -208,13 +209,16 @@ export default function HistoryPage() {
     to: undefined
   });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [selectedBabyFilter, setSelectedBabyFilter] = useState<number | 'all'>('all');
 
   const { data: recordings = [], isLoading } = useQuery<Recording[]>({
     queryKey: ["/api/recordings"],
     enabled: isAuthenticated,
   });
 
-  // Filter recordings based on time range
+  const { selectedBaby, profiles } = useBabySelection();
+
+  // Filter recordings based on time range and baby selection
   const filteredRecordings = useMemo(() => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -222,10 +226,19 @@ export default function HistoryPage() {
     startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // First filter by baby selection
+    let babyFilteredRecordings = recordings;
+    if (selectedBabyFilter !== 'all') {
+      babyFilteredRecordings = recordings.filter(recording => 
+        recording.babyProfileId === selectedBabyFilter
+      );
+    }
+
+    // Then filter by time range
     if (timeRange === 'custom') {
-      if (!customDateRange.from) return recordings;
+      if (!customDateRange.from) return babyFilteredRecordings;
       
-      return recordings.filter(recording => {
+      return babyFilteredRecordings.filter(recording => {
         const recordingDate = new Date(recording.recordedAt);
         const fromDate = new Date(customDateRange.from!);
         fromDate.setHours(0, 0, 0, 0);
@@ -257,10 +270,10 @@ export default function HistoryPage() {
         cutoffDate = startOfDay;
     }
 
-    return recordings.filter(recording => 
+    return babyFilteredRecordings.filter(recording => 
       new Date(recording.recordedAt) >= cutoffDate
     );
-  }, [recordings, timeRange, customDateRange]);
+  }, [recordings, timeRange, customDateRange, selectedBabyFilter]);
 
   // Calculate statistics
   const statistics = useMemo(() => {
@@ -401,6 +414,45 @@ export default function HistoryPage() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Baby Selection */}
+            <Card className="glass-effect">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-medium text-gray-800">{t('history.babySelection') || 'Baby Selection'}</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={selectedBabyFilter === 'all' ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedBabyFilter('all')}
+                    className={selectedBabyFilter === 'all' ? "gradient-bg text-white" : ""}
+                  >
+                    {t('history.allBabies') || 'All Babies'}
+                  </Button>
+                  {profiles.map((baby) => (
+                    <Button
+                      key={baby.id}
+                      variant={selectedBabyFilter === baby.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedBabyFilter(baby.id)}
+                      className={selectedBabyFilter === baby.id ? "gradient-bg text-white" : ""}
+                    >
+                      {baby.name}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Display selected baby info */}
+                {selectedBabyFilter !== 'all' && (
+                  <div className="mt-3 p-2 bg-pink-50 rounded-md">
+                    <p className="text-sm text-pink-800">
+                      {t('history.showingRecordsFor') || 'Showing records for'}: {profiles.find(p => p.id === selectedBabyFilter)?.name}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Time Range Selector */}
             <Card className="glass-effect">
               <CardContent className="p-4">
