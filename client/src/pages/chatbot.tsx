@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import Navigation from "@/components/navigation";
@@ -28,6 +28,43 @@ export default function Chatbot() {
     },
   ]);
   const [inputText, setInputText] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Common emojis for quick access
+  const commonEmojis = ["😊", "😂", "😢", "😍", "😘", "👶", "🍼", "😴", "🤗", "❤️", "👍", "👎"];
+
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For now, just add a message indicating an image was uploaded
+      // In a real implementation, you'd upload the image and display it
+      const userMessage: Message = {
+        id: Date.now().toString() + "_user",
+        text: `📷 Image uploaded: ${file.name}`,
+        isUser: true,
+        timestamp: new Date(),
+      };
+
+      const botMessage: Message = {
+        id: Date.now().toString() + "_bot",
+        text: "Hi, I am LetBabyTalk Chatbot.",
+        isUser: false,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, userMessage, botMessage]);
+    }
+  };
+
+  const handleEmojiClick = (emoji: string) => {
+    setInputText(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
@@ -106,6 +143,25 @@ export default function Chatbot() {
       {/* Input Area */}
       <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 p-4">
         <div className="max-w-lg mx-auto">
+          {/* Emoji Picker */}
+          {showEmojiPicker && (
+            <div className="mb-3 p-3 bg-gray-50 rounded-2xl border">
+              <div className="grid grid-cols-6 gap-2">
+                {commonEmojis.map((emoji, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-lg hover:bg-pink-100"
+                    onClick={() => handleEmojiClick(emoji)}
+                  >
+                    {emoji}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-end space-x-2">
             <div className="flex-1 relative">
               <Textarea
@@ -121,6 +177,7 @@ export default function Chatbot() {
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                  onClick={handleImageUpload}
                 >
                   <Image className="w-4 h-4" />
                 </Button>
@@ -128,6 +185,7 @@ export default function Chatbot() {
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
                   <Smile className="w-4 h-4" />
                 </Button>
@@ -141,6 +199,15 @@ export default function Chatbot() {
               <Send className="w-5 h-5" />
             </Button>
           </div>
+
+          {/* Hidden file input for image upload */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
           
           {/* Bottom Action Buttons */}
           <div className="flex justify-center mt-3 space-x-4">
