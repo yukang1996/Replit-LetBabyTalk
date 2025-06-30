@@ -220,6 +220,8 @@ export default function HistoryPage() {
   });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedBabyFilter, setSelectedBabyFilter] = useState<number | 'all'>('all');
+  const [audioCurrentTimes, setAudioCurrentTimes] = useState<Record<number, number>>({});
+  const [isDragging, setIsDragging] = useState(false);
 
   const { data: recordings = [], isLoading } = useQuery<Recording[]>({
     queryKey: ["/api/recordings"],
@@ -394,7 +396,17 @@ export default function HistoryPage() {
             });
           };
 
-          audio.onended = () => setPlayingId(null);
+          audio.onended = () => {
+            setPlayingId(null);
+            setAudioCurrentTimes(prev => ({ ...prev, [recordingId]: 0 }));
+          };
+
+          // Track time updates
+          audio.ontimeupdate = () => {
+            if (!isDragging) {
+              setAudioCurrentTimes(prev => ({ ...prev, [recordingId]: audio.currentTime }));
+            }
+          };
 
           // Set the source
           audio.src = recording.audioUrl;
@@ -705,7 +717,7 @@ export default function HistoryPage() {
                       // Calculate progress
                       const effectiveDuration = recording.duration || 0;
                       const audio = audioElements[recording.id];
-                      const currentTime = audio?.currentTime || 0;
+                      const currentTime = audioCurrentTimes[recording.id] || 0;
                       const progressPercentage = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
                       const recordingTime = recording.duration || 0;
 
@@ -776,8 +788,7 @@ export default function HistoryPage() {
                                   ) : (
                                     <Play className="w-4 h-4" />
                                   )}
-                                </Button>
-                              </div>
+                                </Button                              </div>
 
                               {/* Audio Waveform Visualization */}
                               <div className="mb-3">
@@ -808,20 +819,44 @@ export default function HistoryPage() {
                               {/* Progress Bar - Interactive */}
                               <div 
                                 className="w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
-                                onClick={(e) => {
+                                onMouseDown={(e) => {
+                                  setIsDragging(true);
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const clickX = e.clientX - rect.left;
                                   const percentage = Math.max(0, Math.min(1, clickX / rect.width));
                                   const effectiveDuration = (recording.duration || 0);
                                   const seekTime = percentage * effectiveDuration;
-
+                                  
                                   if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                    // Seek to the clicked position in the audio
                                     const audio = audioElements[recording.id];
                                     if (audio) {
                                       audio.currentTime = seekTime;
+                                      setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
                                     }
                                   }
+                                }}
+                                onMouseMove={(e) => {
+                                  if (isDragging) {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const clickX = e.clientX - rect.left;
+                                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                                    const effectiveDuration = (recording.duration || 0);
+                                    const seekTime = percentage * effectiveDuration;
+                                    
+                                    if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                                      const audio = audioElements[recording.id];
+                                      if (audio) {
+                                        audio.currentTime = seekTime;
+                                        setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
+                                      }
+                                    }
+                                  }
+                                }}
+                                onMouseUp={() => {
+                                  setIsDragging(false);
+                                }}
+                                onMouseLeave={() => {
+                                  setIsDragging(false);
                                 }}
                               >
                                 <div 
