@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Image, Smile, Plus } from "lucide-react";
 import BearMascot from "@/components/bear-mascot";
+import { Link } from "wouter";
 
 interface Message {
   id: string;
@@ -41,18 +42,19 @@ export default function Chatbot() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // For now, just add a message indicating an image was uploaded
-      // In a real implementation, you'd upload the image and display it
+      // Create image URL for display
+      const imageUrl = URL.createObjectURL(file);
+      
       const userMessage: Message = {
         id: Date.now().toString() + "_user",
-        text: `📷 Image uploaded: ${file.name}`,
+        text: `<img src="${imageUrl}" alt="Uploaded image" class="max-w-full h-auto rounded-lg shadow-sm" />`,
         isUser: true,
         timestamp: new Date(),
       };
 
       const botMessage: Message = {
         id: Date.now().toString() + "_bot",
-        text: "Hi, I am LetBabyTalk Chatbot.",
+        text: "I can see the image you shared! How can I help you with your baby today?",
         isUser: false,
         timestamp: new Date(),
       };
@@ -100,14 +102,15 @@ export default function Chatbot() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-400 to-pink-500 p-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-            <BearMascot size="small" />
-          </div>
-          <div>
-            <h1 className="text-white font-semibold text-lg">Hi, Baby 👶</h1>
-            <p className="text-white/90 text-sm">Age: 10 weeks</p>
-          </div>
+        <div className="flex items-center justify-between">
+          <Link href="/baby-selection?from=/chatbot">
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <BearMascot size="small" baby={user?.selectedBaby} />
+              <span className="text-white font-medium">
+                {user?.selectedBaby ? user.selectedBaby.name : 'Select Baby'}
+              </span>
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -133,7 +136,14 @@ export default function Chatbot() {
                     : "bg-white text-gray-800 shadow-sm border"
                 }`}
               >
-                <p className="text-sm leading-relaxed">{message.text}</p>
+                {message.text.includes('<img') ? (
+                  <div 
+                    className="text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: message.text }}
+                  />
+                ) : (
+                  <p className="text-sm leading-relaxed">{message.text}</p>
+                )}
               </div>
             </div>
           </div>
@@ -209,23 +219,7 @@ export default function Chatbot() {
             className="hidden"
           />
           
-          {/* Bottom Action Buttons */}
-          <div className="flex justify-center mt-3 space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <Smile className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <Plus className="w-5 h-5" />
-            </Button>
-          </div>
+          
         </div>
       </div>
 
