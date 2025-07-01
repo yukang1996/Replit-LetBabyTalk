@@ -30,8 +30,8 @@ export default function Home() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: t('error.unauthorized'),
-        description: t('error.unauthorized'),
+        title: t("error.unauthorized"),
+        description: t("error.unauthorized"),
         variant: "destructive",
       });
       setTimeout(() => {
@@ -46,7 +46,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <BearMascot size="medium" className="mx-auto bear-float mb-4" />
-          <p className="text-gray-600">{t('common.loading')}</p>
+          <p className="text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -64,17 +64,17 @@ export default function Home() {
           <div className="flex items-center space-x-3 cursor-pointer">
             <BearMascot size="small" baby={selectedBaby} />
             <span className="text-white font-medium">
-              {selectedBaby ? selectedBaby.name : t('home.enterBabyInfo')}
+              {selectedBaby ? selectedBaby.name : t("home.enterBabyInfo")}
             </span>
           </div>
         </Link>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="sm"
           className="text-white hover:bg-white/20"
-          onClick={() => navigate("/subscription?from=/home")}
+          onClick={() => navigate("/subscription?from=/")}
         >
-          {t('home.premium')}
+          {t("home.premium")}
         </Button>
       </div>
 
