@@ -654,7 +654,8 @@ export default function BabySelection() {
                 onClick={() => {
                   // Navigate back to the referrer page, defaulting to record if no specific referrer
                   const destination = referrer === '/settings' ? '/settings' : 
-                                    referrer === '/record' ? '/record' : '/record';
+                                    referrer === '/record' ? '/record' :
+                                    referrer === '/chatbot' ? '/chatbot' : '/record';
                   navigate(destination);
                 }}
               >
