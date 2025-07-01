@@ -121,7 +121,12 @@ export default function Chatbot() {
         <Dialog open={showPremiumDialog} onOpenChange={(open) => {
           if (!open) {
             setShowPremiumDialog(false);
-            navigate(-1); // Go back to previous page
+            // Check if there's previous history, otherwise go to home
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/');
+            }
           }
         }}>
           <DialogContent className="max-w-md [&>button]:hidden">
