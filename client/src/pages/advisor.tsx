@@ -123,44 +123,10 @@ export default function Advisor() {
                       <IconComponent className={`w-6 h-6 ${module.iconColor}`} />
                     </div>
                   </div>
-                  
-                  {/* Premium indicator for non-premium users */}
-                  {module.disabled && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Premium Feature</span>
-                        <Crown className="w-4 h-4 text-yellow-500" />
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             );
           })}
-          
-          {/* Upgrade prompt for non-premium users */}
-          {!user?.isPremium && (
-            <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200 mt-6">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Crown className="w-6 h-6 text-pink-600" />
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-2">
-                  Unlock Health Advisor
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Get access to personalized health guidance, vaccination schedules, and nutrition tips for your baby.
-                </p>
-                <Button 
-                  className="w-full bg-gradient-to-r from-pink-400 to-pink-500 text-white rounded-2xl hover:opacity-90 transition-opacity"
-                  onClick={() => navigate("/subscription?from=/advisor")}
-                >
-                  <Crown className="w-4 h-4 mr-2" />
-                  Upgrade to Premium
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 
