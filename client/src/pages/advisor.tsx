@@ -1,9 +1,16 @@
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Crown, ArrowLeft, ChefHat, Syringe, BookOpen } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -11,6 +18,14 @@ export default function Advisor() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [, navigate] = useLocation();
+  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
+
+  // Check premium access on component mount
+  useEffect(() => {
+    if (user && !user.isPremium) {
+      setShowPremiumDialog(true);
+    }
+  }, [user]);
 
   const advisorModules = [
     {
@@ -52,6 +67,58 @@ export default function Advisor() {
     // Handle navigation to specific module (implement later)
     console.log(`Navigate to ${moduleId}`);
   };
+
+  const handleGoPremium = () => {
+    navigate("/subscription?from=/advisor");
+  };
+
+  // If user is not premium, show premium dialog
+  if (showPremiumDialog && user && !user.isPremium) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Dialog
+          open={showPremiumDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowPremiumDialog(false);
+              // Check if there's previous history, otherwise go to settings
+              navigate("/settings");
+            }
+          }}
+        >
+          <DialogContent className="max-w-md [&>button]:hidden">
+            <DialogHeader>
+              <DialogTitle className="text-center flex items-center justify-center space-x-2">
+                <Crown className="w-6 h-6 text-yellow-500" />
+                <span>Premium Feature</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center space-y-4 py-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <Crown className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Please subscribe to premium to unlock health advisor access
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Get unlimited access to our health advisor and premium features
+              </p>
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={handleGoPremium}
+                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Go Premium
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Navigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
