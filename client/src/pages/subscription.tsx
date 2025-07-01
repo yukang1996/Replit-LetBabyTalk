@@ -21,6 +21,7 @@ interface SubscriptionPlan {
   isCurrentPlan?: boolean;
   isPremium: boolean;
   badge?: string;
+  disabled?: boolean;
 }
 
 export default function Subscription() {
@@ -117,7 +118,7 @@ export default function Subscription() {
     if (isProcessing) return;
     
     const plan = plans.find(p => p.id === planId);
-    if (!plan) return;
+    if (!plan || plan.disabled) return;
 
     // If selecting current plan, do nothing
     if (plan.isCurrentPlan) {
@@ -206,14 +207,16 @@ export default function Subscription() {
           {plans.map((plan) => (
             <Card 
               key={plan.id}
-              className={`cursor-pointer transition-all duration-200 border-2 ${
-                plan.isCurrentPlan 
-                  ? 'border-pink-300 bg-pink-50' 
+              className={`transition-all duration-200 border-2 ${
+                plan.disabled 
+                  ? 'cursor-not-allowed opacity-50 bg-gray-100 border-gray-300'
+                  : plan.isCurrentPlan 
+                  ? 'cursor-pointer border-pink-300 bg-pink-50' 
                   : selectedPlan === plan.id
-                  ? 'border-pink-400 bg-pink-25'
-                  : 'border-gray-200 bg-white hover:border-pink-200 hover:shadow-md'
+                  ? 'cursor-pointer border-pink-400 bg-pink-25'
+                  : 'cursor-pointer border-gray-200 bg-white hover:border-pink-200 hover:shadow-md'
               } ${isProcessing && selectedPlan === plan.id ? 'opacity-50' : ''}`}
-              onClick={() => handlePlanSelect(plan.id)}
+              onClick={() => plan.disabled ? null : handlePlanSelect(plan.id)}
             >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
@@ -262,8 +265,12 @@ export default function Subscription() {
                 <div className="space-y-2">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-start space-x-2">
-                      <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-600">{feature}</span>
+                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                        plan.disabled ? 'text-gray-400' : 'text-green-500'
+                      }`} />
+                      <span className={`text-sm ${
+                        plan.disabled ? 'text-gray-500' : 'text-gray-600'
+                      }`}>{feature}</span>
                     </div>
                   ))}
                 </div>
