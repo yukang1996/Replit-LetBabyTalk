@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -7,7 +6,12 @@ import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Send, Image, Smile, Plus, Crown } from "lucide-react";
 import BearMascot from "@/components/bear-mascot";
 import { Link, useLocation } from "wouter";
@@ -45,7 +49,20 @@ export default function Chatbot() {
   }, [user]);
 
   // Common emojis for quick access
-  const commonEmojis = ["😊", "😂", "😢", "😍", "😘", "👶", "🍼", "😴", "🤗", "❤️", "👍", "👎"];
+  const commonEmojis = [
+    "😊",
+    "😂",
+    "😢",
+    "😍",
+    "😘",
+    "👶",
+    "🍼",
+    "😴",
+    "🤗",
+    "❤️",
+    "👍",
+    "👎",
+  ];
 
   const handleImageUpload = () => {
     fileInputRef.current?.click();
@@ -56,7 +73,7 @@ export default function Chatbot() {
     if (file) {
       // Create image URL for display
       const imageUrl = URL.createObjectURL(file);
-      
+
       const userMessage: Message = {
         id: Date.now().toString() + "_user",
         text: `<img src="${imageUrl}" alt="Uploaded image" class="max-w-full h-auto rounded-lg shadow-sm" />`,
@@ -71,12 +88,12 @@ export default function Chatbot() {
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, userMessage, botMessage]);
+      setMessages((prev) => [...prev, userMessage, botMessage]);
     }
   };
 
   const handleEmojiClick = (emoji: string) => {
-    setInputText(prev => prev + emoji);
+    setInputText((prev) => prev + emoji);
     setShowEmojiPicker(false);
   };
 
@@ -99,7 +116,7 @@ export default function Chatbot() {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage, botMessage]);
+    setMessages((prev) => [...prev, userMessage, botMessage]);
     setInputText("");
   };
 
@@ -111,24 +128,23 @@ export default function Chatbot() {
   };
 
   const handleGoPremium = () => {
-    navigate('/subscription');
+    navigate("/subscription");
   };
 
   // If user is not premium, show premium dialog
   if (showPremiumDialog && user && !user.isPremium) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Dialog open={showPremiumDialog} onOpenChange={(open) => {
-          if (!open) {
-            setShowPremiumDialog(false);
-            // Check if there's previous history, otherwise go to home
-            if (window.history.length > 1) {
-              navigate(-1);
-            } else {
-              navigate('/');
+        <Dialog
+          open={showPremiumDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowPremiumDialog(false);
+              // Check if there's previous history, otherwise go to home
+              navigate("/record");
             }
-          }
-        }}>
+          }}
+        >
           <DialogContent className="max-w-md [&>button]:hidden">
             <DialogHeader>
               <DialogTitle className="text-center flex items-center justify-center space-x-2">
@@ -172,7 +188,7 @@ export default function Chatbot() {
             <div className="flex items-center space-x-3 cursor-pointer">
               <BearMascot size="small" baby={selectedBaby} />
               <span className="text-white font-medium">
-                {selectedBaby ? selectedBaby.name : 'Select Baby'}
+                {selectedBaby ? selectedBaby.name : "Select Baby"}
               </span>
             </div>
           </Link>
@@ -182,8 +198,13 @@ export default function Chatbot() {
       {/* Chat Messages */}
       <div className="flex-1 p-4 pb-24 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
         {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}>
-            <div className={`flex items-start space-x-2 max-w-[80%] ${message.isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
+          <div
+            key={message.id}
+            className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`flex items-start space-x-2 max-w-[80%] ${message.isUser ? "flex-row-reverse space-x-reverse" : ""}`}
+            >
               {!message.isUser && (
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <BearMascot size="small" className="w-6 h-6" />
@@ -201,8 +222,8 @@ export default function Chatbot() {
                     : "bg-white text-gray-800 shadow-sm border"
                 }`}
               >
-                {message.text.includes('<img') ? (
-                  <div 
+                {message.text.includes("<img") ? (
+                  <div
                     className="text-sm leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: message.text }}
                   />
@@ -283,8 +304,6 @@ export default function Chatbot() {
             onChange={handleFileChange}
             className="hidden"
           />
-          
-          
         </div>
       </div>
 
