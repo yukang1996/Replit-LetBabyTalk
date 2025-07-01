@@ -524,6 +524,7 @@ export default function BabySelection() {
           variant="ghost" 
           size="sm"
           className="text-white hover:bg-white/20"
+          onClick={() => navigate(`/subscription?from=/baby-selection&originalFrom=${encodeURIComponent(referrer)}`)}
         >
           {t('home.premium')}
         </Button>
@@ -655,7 +656,8 @@ export default function BabySelection() {
                   // Navigate back to the referrer page, defaulting to record if no specific referrer
                   const destination = referrer === '/settings' ? '/settings' : 
                                     referrer === '/record' ? '/record' :
-                                    referrer === '/chatbot' ? '/chatbot' : '/record';
+                                    referrer === '/chatbot' ? '/chatbot' : 
+                                    referrer === '/subscription' ? '/subscription' : '/record';
                   navigate(destination);
                 }}
               >

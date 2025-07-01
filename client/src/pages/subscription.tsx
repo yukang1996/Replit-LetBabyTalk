@@ -34,7 +34,16 @@ export default function Subscription() {
   // Get the 'from' parameter from URL or default to settings
   const getBackPath = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('from') || '/settings';
+    const from = urlParams.get('from');
+    
+    // If coming from baby-selection, check if we should go to a different page
+    if (from === '/baby-selection') {
+      // Get the original referrer from baby-selection page
+      const originalFrom = urlParams.get('originalFrom');
+      return originalFrom || '/record';
+    }
+    
+    return from || '/settings';
   };
 
   const plans: SubscriptionPlan[] = [
