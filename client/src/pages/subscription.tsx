@@ -31,6 +31,12 @@ export default function Subscription() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Get the 'from' parameter from URL or default to settings
+  const getBackPath = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('from') || '/settings';
+  };
+
   const plans: SubscriptionPlan[] = [
     {
       id: "free",
@@ -158,11 +164,14 @@ export default function Subscription() {
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-400 to-pink-500 p-4">
         <div className="flex items-center">
-          <Link href="/home">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 mr-3 p-2">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-white hover:bg-white/20 mr-3 p-2"
+            onClick={() => navigate(getBackPath())}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
           <h1 className="text-white font-medium text-lg">
             Subscription
           </h1>

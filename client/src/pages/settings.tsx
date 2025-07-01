@@ -152,7 +152,7 @@ export default function Settings() {
     {
       icon: CreditCard,
       label: t('settings.subscription'),
-      onClick: () => console.log("Subscription settings"),
+      onClick: () => window.location.href = "/subscription",
     },
     {
       icon: FileText,

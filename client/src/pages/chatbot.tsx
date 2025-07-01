@@ -128,7 +128,7 @@ export default function Chatbot() {
   };
 
   const handleGoPremium = () => {
-    navigate("/subscription");
+    navigate("/subscription?from=/chatbot");
   };
 
   // If user is not premium, show premium dialog
