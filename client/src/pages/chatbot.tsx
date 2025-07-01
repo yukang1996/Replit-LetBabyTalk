@@ -118,8 +118,12 @@ export default function Chatbot() {
   if (showPremiumDialog && user && !user.isPremium) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Dialog open={showPremiumDialog} onOpenChange={() => {}}>
-          <DialogContent className="max-w-md">
+        <Dialog open={showPremiumDialog} onOpenChange={(open) => {
+          if (!open) {
+            setShowPremiumDialog(false);
+          }
+        }}>
+          <DialogContent className="max-w-md [&>button]:hidden">
             <DialogHeader>
               <DialogTitle className="text-center flex items-center justify-center space-x-2">
                 <Crown className="w-6 h-6 text-yellow-500" />
@@ -136,20 +140,13 @@ export default function Chatbot() {
               <p className="text-gray-600 text-sm">
                 Get unlimited access to our AI chatbot and premium features
               </p>
-              <div className="flex space-x-3 pt-4">
+              <div className="flex justify-center pt-4">
                 <Button
                   onClick={handleGoPremium}
-                  className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
+                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
                 >
                   <Crown className="w-4 h-4 mr-2" />
                   Go Premium
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/')}
-                  className="flex-1"
-                >
-                  Back to Home
                 </Button>
               </div>
             </div>
