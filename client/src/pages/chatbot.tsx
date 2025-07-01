@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useBabySelection } from "@/hooks/useBabySelection";
@@ -7,9 +7,10 @@ import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Image, Smile, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Send, Image, Smile, Plus, Crown } from "lucide-react";
 import BearMascot from "@/components/bear-mascot";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface Message {
   id: string;
@@ -22,6 +23,8 @@ export default function Chatbot() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { selectedBaby } = useBabySelection();
+  const [, navigate] = useLocation();
+  const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -33,6 +36,13 @@ export default function Chatbot() {
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check premium access on component mount
+  useEffect(() => {
+    if (user && !user.isPremium) {
+      setShowPremiumDialog(true);
+    }
+  }, [user]);
 
   // Common emojis for quick access
   const commonEmojis = ["😊", "😂", "😢", "😍", "😘", "👶", "🍼", "😴", "🤗", "❤️", "👍", "👎"];
@@ -99,6 +109,56 @@ export default function Chatbot() {
       handleSendMessage();
     }
   };
+
+  const handleGoPremium = () => {
+    navigate('/subscription');
+  };
+
+  // If user is not premium, show premium dialog
+  if (showPremiumDialog && user && !user.isPremium) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Dialog open={showPremiumDialog} onOpenChange={() => {}}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center flex items-center justify-center space-x-2">
+                <Crown className="w-6 h-6 text-yellow-500" />
+                <span>Premium Feature</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center space-y-4 py-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <Crown className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Please subscribe to premium to unlock chatbot access
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Get unlimited access to our AI chatbot and premium features
+              </p>
+              <div className="flex space-x-3 pt-4">
+                <Button
+                  onClick={handleGoPremium}
+                  className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  Go Premium
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/')}
+                  className="flex-1"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Navigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
