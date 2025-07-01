@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useBabySelection } from "@/hooks/useBabySelection";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface Message {
 export default function Chatbot() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { selectedBaby } = useBabySelection();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -105,9 +107,9 @@ export default function Chatbot() {
         <div className="flex items-center justify-between">
           <Link href="/baby-selection?from=/chatbot">
             <div className="flex items-center space-x-3 cursor-pointer">
-              <BearMascot size="small" baby={user?.selectedBaby} />
+              <BearMascot size="small" baby={selectedBaby} />
               <span className="text-white font-medium">
-                {user?.selectedBaby ? user.selectedBaby.name : 'Select Baby'}
+                {selectedBaby ? selectedBaby.name : 'Select Baby'}
               </span>
             </div>
           </Link>
