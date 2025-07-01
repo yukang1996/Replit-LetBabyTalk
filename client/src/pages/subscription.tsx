@@ -40,10 +40,7 @@ export default function Subscription() {
     if (from === '/baby-selection') {
       // Get the original referrer from baby-selection page
       const originalFrom = urlParams.get('originalFrom');
-      if (originalFrom) {
-        return decodeURIComponent(originalFrom);
-      }
-      return '/record';
+      return originalFrom || '/record';
     }
     
     return from || '/settings';

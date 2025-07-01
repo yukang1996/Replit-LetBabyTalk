@@ -43,19 +43,6 @@ export default function BabySelection() {
   const urlParams = new URLSearchParams(window.location.search);
   const referrer = urlParams.get('from') || '/';
 
-  // If user already has a selected baby and came from subscription, redirect immediately
-  useEffect(() => {
-    if (selectedBaby && referrer === '/subscription' && !showCreateForm && !editingBabyId) {
-      // Auto-redirect back to the original page since baby is already selected
-      const originalFrom = urlParams.get('originalFrom');
-      if (originalFrom) {
-        navigate(decodeURIComponent(originalFrom));
-        return;
-      }
-      navigate('/record');
-    }
-  }, [selectedBaby, referrer, showCreateForm, editingBabyId, navigate]);
-
   const { isLoading: profilesLoading } = useQuery({
     queryKey: ["/api/baby-profiles"],
     enabled: isAuthenticated,
