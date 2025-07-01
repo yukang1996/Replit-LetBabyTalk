@@ -121,6 +121,7 @@ export default function Chatbot() {
         <Dialog open={showPremiumDialog} onOpenChange={(open) => {
           if (!open) {
             setShowPremiumDialog(false);
+            navigate(-1); // Go back to previous page
           }
         }}>
           <DialogContent className="max-w-md [&>button]:hidden">
