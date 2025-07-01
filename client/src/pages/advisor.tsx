@@ -99,8 +99,8 @@ export default function Advisor() {
                 }`}
                 onClick={() => handleModuleClick(module.id)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-4">
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-5">
                     {/* Radio button style indicator */}
                     <div className="flex items-center justify-center w-5 h-5 mt-1 flex-shrink-0">
                       <div className="w-4 h-4 border-2 border-gray-300 rounded-full flex items-center justify-center">
@@ -119,8 +119,8 @@ export default function Advisor() {
                     </div>
                     
                     {/* Icon */}
-                    <div className={`w-12 h-12 ${module.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                      <IconComponent className={`w-6 h-6 ${module.iconColor}`} />
+                    <div className={`w-16 h-16 ${module.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                      <IconComponent className={`w-8 h-8 ${module.iconColor}`} />
                     </div>
                   </div>
                 </CardContent>
