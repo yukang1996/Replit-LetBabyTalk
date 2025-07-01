@@ -28,6 +28,7 @@ import {
   type Recording,
   type InsertFeedback,
 } from "@shared/schema";
+import { handleSubscription, handlePaymentWebhook } from "./subscription-routes";
 
 // Temporary in-memory storage for OTPs (use Redis or database in production)
 const otpStorage = new Map<
@@ -1000,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { duration, babyProfileId, pressing = true } = req.body;
         const timestamp = new Date().toISOString();
         const audioFormat = req.file.mimetype || "audio/webm";
-        
+
         console.log('Audio format metadata:', {
           originalName: req.file.originalname,
           detectedMimeType: req.file.mimetype,
@@ -1146,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Call AI API (mock in development, real in production)
         let analysisResult;
         let predictClass = "unknown"; // Initialize with default value
-        
+
         try {
           const useMockAPI = process.env.NODE_ENV === "development" || process.env.USE_MOCK_API === "true";
           const apiUrl = useMockAPI 
@@ -1193,7 +1194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const aiResponse = await response.json();
           console.log("AI API Response:", JSON.stringify(aiResponse, null, 2));
-          
+
           const result = aiResponse.data?.result;
 
           if (!result) {
@@ -1258,7 +1259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("=== FETCHING RECORDING DEBUG ===");
       console.log("Recording ID:", recordingId);
       console.log("User ID:", userId);
-      
+
       const recording = await storage.getRecording(recordingId, userId);
       console.log("Raw recording from database:", recording);
 
@@ -1326,7 +1327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const className = req.params.className;
       console.log("=== CRY REASON DESCRIPTION API DEBUG ===");
       console.log("Fetching cry reason description for class:", className);
-      
+
       const description = await storage.getCryReasonDescription(className);
       console.log("Found cry reason description:", description);
 
@@ -1760,6 +1761,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).json({ message: "Image file not found" });
     }
   });
+
+  app.get("/api/legal/:type", async (req, res) => {
+    try {
+      const { type } = req.params;
+
+      if (!["privacy", "terms"].includes(type)) {
+        return res.status(400).json({ error: "Invalid document type" });
+      }
+
+      const document = await db.query.legalDocuments.findFirst({
+        where: eq(legalDocuments.type, type as "privacy" | "terms"),
+      });
+
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      res.json(document);
+    } catch (error) {
+      console.error(`Error fetching ${req.params.type} document:`, error);
+      res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+
+  // Subscription routes
+  app.post("/api/subscriptions/subscribe", handleSubscription);
+  app.post("/api/subscriptions/webhook", handlePaymentWebhook);
 
   const httpServer = createServer(app);
   return httpServer;
