@@ -26,12 +26,7 @@ import NotFound from "@/pages/not-found";
 import Results from "./pages/results";
 import Privacy from "@/pages/privacy"; // Assuming Privacy Policy page is in privacy.tsx
 import Contact from "@/pages/contact";
-import { lazy } from "react";
-
-const ContactPage = lazy(() => import("@/pages/contact"));
-const TermsPage = lazy(() => import("@/pages/terms"));
-const PrivacyPage = lazy(() => import("@/pages/privacy"));
-const SubscriptionPage = lazy(() => import("@/pages/subscription"));
+import Subscription from "@/pages/subscription";
 
 function Router() {
   const { isAuthenticated, isLoading, refetch } = useAuth();
@@ -172,7 +167,7 @@ function Router() {
           <Route path="/chatbot" component={Chatbot} />
           <Route path="/results" component={Results} />
           <Route path="/contact" component={Contact} />
-          <Route path="/subscription" component={SubscriptionPage} />
+          <Route path="/subscription" component={Subscription} />
           {({ match }) => match === null && <NotFound />}
 
           {/* <Route path="*" component={NotFound} /> */}
