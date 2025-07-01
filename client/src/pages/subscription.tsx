@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -35,16 +34,16 @@ export default function Subscription() {
   // Get the 'from' parameter from URL or default to settings
   const getBackPath = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const from = urlParams.get('from');
-    
+    const from = urlParams.get("from");
+
     // If coming from baby-selection, check if we should go to a different page
-    if (from === '/baby-selection') {
+    if (from === "/baby-selection") {
       // Get the original referrer from baby-selection page
-      const originalFrom = urlParams.get('originalFrom');
-      return originalFrom || '/record';
+      const originalFrom = urlParams.get("originalFrom");
+      return originalFrom || "/record";
     }
-    
-    return from || '/settings';
+
+    return from || "/settings";
   };
 
   const plans: SubscriptionPlan[] = [
@@ -56,11 +55,11 @@ export default function Subscription() {
       features: [
         "Up to 4 crying reasons",
         "Basic cry analysis",
-        "Limited recordings per day"
+        "Limited recordings per day",
       ],
       isCurrentPlan: !user?.isPremium,
       isPremium: false,
-      badge: user?.isPremium ? undefined : "Your current plan"
+      badge: user?.isPremium ? undefined : "Your current plan",
     },
     {
       id: "premium",
@@ -73,19 +72,24 @@ export default function Subscription() {
         "Health advisor",
         "Unlimited recordings",
         "Priority support",
-        "Export reports"
+        "Export reports",
       ],
       isCurrentPlan: user?.isPremium,
+      disabled: true,
       isPremium: true,
-      badge: user?.isPremium ? "Your current plan" : "Subscribe premium"
-    }
+      badge: user?.isPremium ? "Your current plan" : "Subscribe premium",
+    },
   ];
 
   const subscribeMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest("POST", "/api/subscriptions/subscribe", {
-        planId
-      });
+      const response = await apiRequest(
+        "POST",
+        "/api/subscriptions/subscribe",
+        {
+          planId,
+        },
+      );
       return response.json();
     },
     onSuccess: (data) => {
@@ -111,13 +115,13 @@ export default function Subscription() {
     onSettled: () => {
       setIsProcessing(false);
       setSelectedPlan(null);
-    }
+    },
   });
 
   const handlePlanSelect = async (planId: string) => {
     if (isProcessing) return;
-    
-    const plan = plans.find(p => p.id === planId);
+
+    const plan = plans.find((p) => p.id === planId);
     if (!plan || plan.disabled) return;
 
     // If selecting current plan, do nothing
@@ -145,7 +149,8 @@ export default function Subscription() {
     if (planId === "free") {
       toast({
         title: "Welcome!",
-        description: "You're using the free plan. Upgrade anytime for more features!",
+        description:
+          "You're using the free plan. Upgrade anytime for more features!",
       });
       setIsProcessing(false);
       setSelectedPlan(null);
@@ -157,15 +162,19 @@ export default function Subscription() {
   };
 
   // Check if running in mobile app context
-  const isMobileApp = typeof window !== 'undefined' && 
-    (window.navigator.userAgent.includes('Mobile') || window.navigator.userAgent.includes('Android') || window.navigator.userAgent.includes('iPhone'));
+  const isMobileApp =
+    typeof window !== "undefined" &&
+    (window.navigator.userAgent.includes("Mobile") ||
+      window.navigator.userAgent.includes("Android") ||
+      window.navigator.userAgent.includes("iPhone"));
 
   const handleMobileAppPurchase = (planId: string) => {
     // This would integrate with React Native's in-app purchase libraries
     // For now, show a message about mobile app purchases
     toast({
       title: "Mobile App Purchase",
-      description: "In-app purchases will be available in the mobile app version.",
+      description:
+        "In-app purchases will be available in the mobile app version.",
     });
   };
 
@@ -174,17 +183,15 @@ export default function Subscription() {
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-400 to-pink-500 p-4">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-white hover:bg-white/20 mr-3 p-2"
             onClick={() => navigate(getBackPath())}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-white font-medium text-lg">
-            Subscription
-          </h1>
+          <h1 className="text-white font-medium text-lg">Subscription</h1>
         </div>
       </div>
 
@@ -205,18 +212,18 @@ export default function Subscription() {
 
           {/* Subscription Plans */}
           {plans.map((plan) => (
-            <Card 
+            <Card
               key={plan.id}
               className={`transition-all duration-200 border-2 ${
-                plan.disabled 
-                  ? 'cursor-not-allowed opacity-50 bg-gray-100 border-gray-300'
-                  : plan.isCurrentPlan 
-                  ? 'cursor-pointer border-pink-300 bg-pink-50' 
-                  : selectedPlan === plan.id
-                  ? 'cursor-pointer border-pink-400 bg-pink-25'
-                  : 'cursor-pointer border-gray-200 bg-white hover:border-pink-200 hover:shadow-md'
-              } ${isProcessing && selectedPlan === plan.id ? 'opacity-50' : ''}`}
-              onClick={() => plan.disabled ? null : handlePlanSelect(plan.id)}
+                plan.disabled
+                  ? "cursor-not-allowed opacity-50 bg-gray-100 border-gray-300"
+                  : plan.isCurrentPlan
+                    ? "cursor-pointer border-pink-300 bg-pink-50"
+                    : selectedPlan === plan.id
+                      ? "cursor-pointer border-pink-400 bg-pink-25"
+                      : "cursor-pointer border-gray-200 bg-white hover:border-pink-200 hover:shadow-md"
+              } ${isProcessing && selectedPlan === plan.id ? "opacity-50" : ""}`}
+              onClick={() => (plan.disabled ? null : handlePlanSelect(plan.id))}
             >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
@@ -238,13 +245,13 @@ export default function Subscription() {
                       </span>
                     </div>
                   </div>
-                  
+
                   {plan.badge && (
-                    <Badge 
+                    <Badge
                       variant={plan.isCurrentPlan ? "default" : "secondary"}
                       className={
-                        plan.isCurrentPlan 
-                          ? "bg-pink-500 hover:bg-pink-600" 
+                        plan.isCurrentPlan
+                          ? "bg-pink-500 hover:bg-pink-600"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }
                     >
@@ -255,22 +262,27 @@ export default function Subscription() {
 
                 <div className="mb-4">
                   <p className="text-sm text-gray-700 font-medium mb-2">
-                    {plan.id === "free" 
-                      ? "LetBabyTalk beginners, this one's for you" 
-                      : "LetBabyTalk member, let's explore the intricacies"
-                    }
+                    {plan.id === "free"
+                      ? "LetBabyTalk beginners, this one's for you"
+                      : "LetBabyTalk member, let's explore the intricacies"}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-start space-x-2">
-                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                        plan.disabled ? 'text-gray-400' : 'text-green-500'
-                      }`} />
-                      <span className={`text-sm ${
-                        plan.disabled ? 'text-gray-500' : 'text-gray-600'
-                      }`}>{feature}</span>
+                      <Check
+                        className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                          plan.disabled ? "text-gray-400" : "text-green-500"
+                        }`}
+                      />
+                      <span
+                        className={`text-sm ${
+                          plan.disabled ? "text-gray-500" : "text-gray-600"
+                        }`}
+                      >
+                        {feature}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -301,7 +313,8 @@ export default function Subscription() {
                       Mobile App Purchases
                     </h3>
                     <p className="text-sm text-blue-700">
-                      In the mobile app, subscriptions will be handled through your device's app store for a seamless experience.
+                      In the mobile app, subscriptions will be handled through
+                      your device's app store for a seamless experience.
                     </p>
                   </div>
                 </div>
@@ -320,7 +333,8 @@ export default function Subscription() {
                   Why Choose Premium?
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Get the most comprehensive baby cry analysis with advanced AI insights, unlimited recordings, and expert guidance.
+                  Get the most comprehensive baby cry analysis with advanced AI
+                  insights, unlimited recordings, and expert guidance.
                 </p>
                 <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
                   <span>• Cancel anytime</span>
