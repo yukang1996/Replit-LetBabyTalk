@@ -9,13 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AudioRecorder from "@/components/audio-recorder";
 import BearMascot from "@/components/bear-mascot";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function Home() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const { t } = useLanguage();
   const { selectedBaby } = useBabySelection();
+  const [, navigate] = useLocation();
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["/api/baby-profiles"],
@@ -71,6 +72,7 @@ export default function Home() {
           variant="ghost" 
           size="sm"
           className="text-white hover:bg-white/20"
+          onClick={() => navigate("/subscription?from=/home")}
         >
           {t('home.premium')}
         </Button>
