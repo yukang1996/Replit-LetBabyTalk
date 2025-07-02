@@ -2,9 +2,10 @@
 
 ## Prerequisites
 
-1. **Node.js** (version 18 or higher)
+1. **Node.js** (version 20 or higher recommended)
    - Download from [nodejs.org](https://nodejs.org/)
    - Verify installation: `node --version`
+   - **Important**: Use Node.js 20+ for best compatibility
 
 2. **Git** (to clone the repository)
    - Download from [git-scm.com](https://git-scm.com/)
@@ -94,17 +95,21 @@ The application will be available at `http://localhost:5000`
 
 ### Common Issues
 
-1. **Port already in use**
+1. **Vite server error (import.meta.dirname undefined)**
+   - Upgrade to Node.js 20+ which has better ES module support
+   - Or run with: `node --experimental-modules npm run dev`
+
+2. **Port already in use**
    ```bash
    # Use different port
    PORT=3000 npm run dev
    ```
 
-2. **Database connection errors**
+3. **Database connection errors**
    - Verify `SUPABASE_DATABASE_URL` is correct
    - Check if your IP is whitelisted in Supabase
 
-3. **Module not found errors**
+4. **Module not found errors**
    ```bash
    # Clean install
    rm -rf node_modules package-lock.json
