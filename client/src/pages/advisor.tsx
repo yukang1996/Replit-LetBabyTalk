@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -31,7 +30,8 @@ export default function Advisor() {
     {
       id: "food-recipe",
       title: "Food Recipe",
-      description: "Have a look at the how to prepare healthy food for your baby.",
+      description:
+        "Have a look at the how to prepare healthy food for your baby.",
       icon: ChefHat,
       iconBg: "bg-red-100",
       iconColor: "text-red-600",
@@ -40,7 +40,8 @@ export default function Advisor() {
     {
       id: "vaccination",
       title: "Vaccination",
-      description: "Schedule your baby's vaccination appointment for a healthy start.",
+      description:
+        "Schedule your baby's vaccination appointment for a healthy start.",
       icon: Syringe,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
@@ -49,7 +50,8 @@ export default function Advisor() {
     {
       id: "articles",
       title: "Articles",
-      description: "Explore essential articles to help parents understand and support their baby's development.",
+      description:
+        "Explore essential articles to help parents understand and support their baby's development.",
       icon: BookOpen,
       iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
@@ -63,7 +65,7 @@ export default function Advisor() {
       navigate("/subscription?from=/advisor");
       return;
     }
-    
+
     // Handle navigation to specific module (implement later)
     console.log(`Navigate to ${moduleId}`);
   };
@@ -82,7 +84,7 @@ export default function Advisor() {
             if (!open) {
               setShowPremiumDialog(false);
               // Check if there's previous history, otherwise go to settings
-              navigate("/settings");
+              navigate("/record");
             }
           }}
         >
@@ -136,10 +138,10 @@ export default function Advisor() {
             </Button>
             <h1 className="text-white font-medium text-lg">Health Advisor</h1>
           </div>
-          
+
           {user?.isPremium && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="text-white hover:bg-white/20"
             >
@@ -155,7 +157,7 @@ export default function Advisor() {
         <div className="max-w-md mx-auto space-y-4">
           {advisorModules.map((module) => {
             const IconComponent = module.icon;
-            
+
             return (
               <Card
                 key={module.id}
@@ -174,7 +176,7 @@ export default function Advisor() {
                         <div className="w-2 h-2 bg-pink-500 rounded-full opacity-0"></div>
                       </div>
                     </div>
-                    
+
                     {/* Content */}
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 mb-1">
@@ -184,10 +186,14 @@ export default function Advisor() {
                         {module.description}
                       </p>
                     </div>
-                    
+
                     {/* Icon */}
-                    <div className={`w-16 h-16 ${module.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                      <IconComponent className={`w-8 h-8 ${module.iconColor}`} />
+                    <div
+                      className={`w-16 h-16 ${module.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
+                    >
+                      <IconComponent
+                        className={`w-8 h-8 ${module.iconColor}`}
+                      />
                     </div>
                   </div>
                 </CardContent>
