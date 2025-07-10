@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Star, StarIcon } from "lucide-react";
+import instagramIcon from "@assets/instagram-128_1750673149844.png";
+import facebookIcon from "@assets/facebook-128_1750673149845.png";
+import linkedinIcon from "@assets/linkedin-128_1750673149835.png";
 
 export default function Contact() {
   const { t } = useLanguage();
@@ -61,21 +64,21 @@ export default function Contact() {
   const socialLinks = [
     {
       name: "Instagram",
-      url: "https://www.instagram.com/cradleai_uae/",
-      icon: "/attached_assets/instagram-128_1750673149844.png",
-      color: "bg-gradient-to-r from-purple-400 to-pink-400",
+      url: "https://www.instagram.com/cradleai_uae/", 
+      icon: instagramIcon,
+      // color: "bg-gradient-to-r from-purple-400 to-pink-400",
     },
     {
       name: "Facebook",
       url: "https://www.facebook.com/profile.php?id=61563085472789",
-      icon: "/attached_assets/facebook-128_1750673149845.png",
-      color: "bg-blue-500",
+      icon: facebookIcon,
+      // color: "bg-blue-500",
     },
     {
       name: "LinkedIn",
       url: "https://www.linkedin.com/company/cradleai",
-      icon: "/attached_assets/linkedin-128_1750673149835.png",
-      color: "bg-blue-600",
+      icon: linkedinIcon,
+      // color: "bg-blue-600",
     },
   ];
 
@@ -177,7 +180,7 @@ export default function Contact() {
                       <img 
                         src={social.icon} 
                         alt={social.name}
-                        className="w-8 h-8 object-contain filter brightness-0 invert"
+                        className="w-8 h-8 object-contain"
                         onError={(e) => {
                           // Fallback: show colored background if image fails
                           const target = e.target as HTMLImageElement;

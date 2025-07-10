@@ -726,176 +726,181 @@ export default function HistoryPage() {
                           key={recording.id} 
                           className="glass-effect hover:shadow-lg transition-all duration-200 border-l-4 border-l-pink-300 hover:border-l-pink-500"
                         >
+                          
                           <CardContent className="p-0">
-                            <div className="p-4">
-                              {/* Header Section */}
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-start space-x-3 flex-1">
-                                  <div className="w-12 h-12 bg-white rounded-xl border-2 border-pink-200 flex items-center justify-center shadow-sm">
-                                    <span className="text-xl">{categoryInfo.icon}</span>
-                                  </div>
+  <div className="p-4">
+    {/* Header Section */}
+    <div className="flex items-start justify-between mb-3 flex-wrap">
+      <div className="flex items-start space-x-3 flex-1">
+        <div className="w-12 h-12 bg-white rounded-xl border-2 border-pink-200 flex items-center justify-center shadow-sm flex-shrink-0">
+          <span className="text-xl">{categoryInfo.icon}</span>
+        </div>
 
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center flex-wrap gap-2 mb-1">
-                                      <Badge className={`${categoryInfo.color} text-white text-xs font-medium`}>
-                                        {categoryInfo.title}
-                                      </Badge>
-                                      {mainProbability > 0 && (
-                                        <Badge variant="outline" className="text-xs">
-                                          {Math.round(mainProbability * 100)}% {t('history.confidence') || 'confidence'}
-                                        </Badge>
-                                      )}
-                                    </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center flex-wrap gap-2 mb-1">
+            <Badge className={`${categoryInfo.color} text-white text-xs font-medium`}>
+              {categoryInfo.title}
+            </Badge>
+            {mainProbability > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {Math.round(mainProbability * 100)}% {t('history.confidence') || 'confidence'}
+              </Badge>
+            )}
+          </div>
 
-                                    {/* Baby Info */}
-                                    <div className="flex items-center space-x-1 mb-2">
-                                      <span className="text-sm font-medium text-pink-600">👶</span>
-                                      <span className="text-sm font-medium text-gray-700">{babyName}</span>
-                                    </div>
+          {/* Baby Info */}
+          <div className="flex items-center space-x-1 mb-2">
+            <span className="text-sm font-medium text-pink-600">👶</span>
+            <span className="text-sm font-medium text-gray-700">{babyName}</span>
+          </div>
 
-                                    {/* Time and Duration Info */}
-                                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                                      <div className="flex items-center space-x-1">
-                                        <Clock className="w-3 h-3" />
-                                        <span>{formatTime(recording.recordedAt)}</span>
-                                      </div>
-                                      <span>{formatDate(recording.recordedAt)}</span>
-                                      {recording.duration && (
-                                        <span className="px-2 py-0.5 bg-gray-100 rounded-full">
-                                          {recording.duration}s
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
+          {/* Time and Duration Info */}
+          <div className="flex items-center space-x-4 text-xs text-gray-500 flex-wrap mb-2">
+            <div className="flex items-center space-x-1">
+              <Clock className="w-3 h-3" />
+              <span>{formatTime(recording.recordedAt)}</span>
+            </div>
+            <span>{formatDate(recording.recordedAt)}</span>
+            {recording.duration && (
+              <span className="px-2 py-0.5 bg-gray-100 rounded-full">
+                {recording.duration}s
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
-                                {/* Play Button */}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className={`rounded-full w-10 h-10 transition-all ${
-                                    playingId === recording.id 
-                                      ? 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg' 
-                                      : 'text-pink-500 hover:bg-pink-50 border border-pink-200'
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePlayPause(recording);
-                                  }}
-                                >
-                                  {playingId === recording.id ? (
-                                    <Pause className="w-4 h-4" />
-                                  ) : (
-                                    <Play className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              </div>
+      {/* Audio + Play Button */}
+      <div className="flex flex-row items-center w-full sm:w-auto mt-2 sm:mt-0 sm:flex-grow sm:max-w-[600px]">
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Audio Waveform Visualization */}
+          <div className="mb-2 w-full">
+            <div className="flex items-end justify-center space-x-0.5 h-8 bg-gray-50 rounded-lg p-2 w-full">
+              {Array.from({ length: 32 }).map((_, i) => {
+                const height = Math.random() * 16 + 4;
+                const isActive = playingId === recording.id;
+                return (
+                  <div
+                    key={i}
+                    className={`rounded-sm transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-gradient-to-t from-pink-500 to-pink-300' 
+                        : 'bg-gradient-to-t from-gray-300 to-gray-200'
+                    }`}
+                    style={{
+                      width: '3px',
+                      height: `${height}px`,
+                      opacity: isActive ? 0.9 : 0.6,
+                      transform: isActive ? 'scaleY(1.1)' : 'scaleY(1)',
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
-                              {/* Audio Waveform Visualization */}
-                              <div className="mb-3">
-                                <div className="flex items-end justify-center space-x-0.5 h-8 bg-gray-50 rounded-lg p-2">
-                                  {Array.from({ length: 32 }).map((_, i) => {
-                                    const height = Math.random() * 16 + 4;
-                                    const isActive = playingId === recording.id;
-                                    return (
-                                      <div
-                                        key={i}
-                                        className={`rounded-sm transition-all duration-200 ${
-                                          isActive 
-                                            ? 'bg-gradient-to-t from-pink-500 to-pink-300' 
-                                            : 'bg-gradient-to-t from-gray-300 to-gray-200'
-                                        }`}
-                                        style={{
-                                          width: '3px',
-                                          height: `${height}px`,
-                                          opacity: isActive ? 0.9 : 0.6,
-                                          transform: isActive ? 'scaleY(1.1)' : 'scaleY(1)',
-                                        }}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                              </div>
+          {/* Progress Bar */}
+          <div 
+            className="w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer"
+            onMouseDown={(e) => {
+              setIsDragging(true);
+              const rect = e.currentTarget.getBoundingClientRect();
+              const clickX = e.clientX - rect.left;
+              const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+              const effectiveDuration = recording.duration || 0;
+              const seekTime = percentage * effectiveDuration;
+              if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                const audio = audioElements[recording.id];
+                if (audio) {
+                  audio.currentTime = seekTime;
+                  setAudioCurrentTimes((prev) => ({ ...prev, [recording.id]: seekTime }));
+                }
+              }
+            }}
+            onMouseMove={(e) => {
+              if (isDragging) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+                const effectiveDuration = recording.duration || 0;
+                const seekTime = percentage * effectiveDuration;
+                if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
+                  const audio = audioElements[recording.id];
+                  if (audio) {
+                    audio.currentTime = seekTime;
+                    setAudioCurrentTimes((prev) => ({ ...prev, [recording.id]: seekTime }));
+                  }
+                }
+              }
+            }}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
+          >
+            <div 
+              className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
+              style={{ width: `${Math.max(2, progressPercentage)}%` }}
+            />
+          </div>
+        </div>
 
-                              {/* Progress Bar - Interactive */}
-                              <div 
-                                className="w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer progress-bar"
-                                onMouseDown={(e) => {
-                                  setIsDragging(true);
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const clickX = e.clientX - rect.left;
-                                  const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-                                  const effectiveDuration = (recording.duration || 0);
-                                  const seekTime = percentage * effectiveDuration;
-                                  
-                                  if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                    const audio = audioElements[recording.id];
-                                    if (audio) {
-                                      audio.currentTime = seekTime;
-                                      setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
-                                    }
-                                  }
-                                }}
-                                onMouseMove={(e) => {
-                                  if (isDragging) {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const clickX = e.clientX - rect.left;
-                                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-                                    const effectiveDuration = (recording.duration || 0);
-                                    const seekTime = percentage * effectiveDuration;
-                                    
-                                    if (!isNaN(seekTime) && isFinite(seekTime) && seekTime >= 0) {
-                                      const audio = audioElements[recording.id];
-                                      if (audio) {
-                                        audio.currentTime = seekTime;
-                                        setAudioCurrentTimes(prev => ({ ...prev, [recording.id]: seekTime }));
-                                      }
-                                    }
-                                  }
-                                }}
-                                onMouseUp={() => {
-                                  setIsDragging(false);
-                                }}
-                                onMouseLeave={() => {
-                                  setIsDragging(false);
-                                }}
-                              >
-                                <div 
-                                  className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 rounded-full"
-                                  style={{ 
-                                    width: `${Math.max(2, progressPercentage)}%`
-                                  }}
-                                />
-                              </div>
+        {/* Play Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`rounded-full w-10 h-10 ml-2 sm:ml-4 transition-all ${
+            playingId === recording.id 
+              ? 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg' 
+              : 'text-pink-500 hover:bg-pink-50 border border-pink-200'
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlayPause(recording);
+          }}
+        >
+          {playingId === recording.id ? (
+            <Pause className="w-4 h-4" />
+          ) : (
+            <Play className="w-4 h-4" />
+          )}
+        </Button>
+      </div>
+    </div>
 
-                              {/* Action Buttons */}
-                              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRecordingClick(recording.id)}
-                                  className="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-                                >
-                                  <BarChart3 className="w-3 h-3 mr-1" />
-                                  {t('history.viewAnalysis') || 'View Analysis'}
-                                </Button>
+    {/* Action Buttons */}
+    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleRecordingClick(recording.id)}
+        className="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+      >
+        <BarChart3 className="w-3 h-3 mr-1" />
+        {t('history.viewAnalysis') || 'View Analysis'}
+      </Button>
 
-                                {recording.rateState && (
-                                  <div className="flex items-center space-x-1">
-                                    {recording.rateState === 'good' ? (
-                                      <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                                        👍 {t('history.helpful') || 'Helpful'}
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-                                        👎 {t('history.notHelpful') || 'Not Helpful'}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
+      {recording.rateState && (
+        <div className="flex items-center space-x-1">
+          {recording.rateState === 'good' ? (
+            <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+              👍 {t('history.helpful') || 'Helpful'}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
+              👎 {t('history.notHelpful') || 'Not Helpful'}
+            </Badge>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+</CardContent>
+
+
+                          
+
+
+                          
+
                         </Card>
                       );
                     })}
